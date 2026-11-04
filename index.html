@@ -1,0 +1,907 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>CompareIt</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: barra superior fija con modo y estado de sincronización · columna de grupos + área de trabajo; en celular la columna pasa a fila de chips */
+:root{
+  --bg:#F1F2F7; --surface:#FFFFFF; --sunk:#E8EAF2; --ink:#1A1E31; --muted:#5B6181; --line:#D8DBE7;
+  --accent:#3A48C6; --accent-ink:#FFFFFF; --adv:#1B8455; --dis:#BE3B28; --eq:#626D8E; --warn:#A5680F;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11131D; --surface:#191C2A; --sunk:#222638; --ink:#E6E8F2; --muted:#9BA1BE; --line:#2D3147;
+  --accent:#8E99FF; --accent-ink:#11131D; --adv:#4CC48B; --dis:#F17C66; --eq:#9AA1BD; --warn:#E3A94B; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11131D; --surface:#191C2A; --sunk:#222638; --ink:#E6E8F2; --muted:#9BA1BE; --line:#2D3147;
+  --accent:#8E99FF; --accent-ink:#11131D; --adv:#4CC48B; --dis:#F17C66; --eq:#9AA1BD; --warn:#E3A94B; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--surface)}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:1.9rem;font-weight:700}
+h2{font-size:1.3rem;font-weight:700}
+h3{font-size:1rem;font-weight:700}
+p{margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.muted{color:var(--muted)}
+.eyebrow{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.val{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:.9rem}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{font-family:var(--f-display);font-weight:700;font-size:1.35rem;display:flex;align-items:center;gap:8px;margin-right:auto}
+.brand svg{width:26px;height:26px}
+.seg{display:inline-flex;background:var(--sunk);border-radius:999px;padding:3px}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:999px;font-size:.84rem;font-weight:500;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgb(0 0 0 / .15)}
+.chip-sync{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:.84rem;font-weight:500;cursor:pointer}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--adv);flex:none}
+.st-pend .dot{background:var(--warn)} .st-conf .dot{background:var(--dis)} .st-off .dot{background:var(--eq)}
+.st-busy .dot{background:var(--accent);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.st-busy .dot{animation:none}}
+
+.shell{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:240px minmax(0,1fr);gap:28px;padding-block:22px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.side{display:flex;flex-direction:column;gap:8px;min-width:0}
+.side-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}
+.glist{display:flex;flex-direction:column;gap:4px}
+.gitem{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid transparent;background:transparent;border-radius:var(--r);padding:9px 12px;cursor:pointer;width:100%}
+.gitem:hover{background:var(--sunk)}
+.gitem.on{background:var(--surface);border-color:var(--line)}
+.gname{font-weight:600}
+.gmeta{font-size:.78rem;color:var(--muted)}
+.sheetbtn .gname::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:7px;background:var(--adv);vertical-align:0}
+main{min-width:0;display:flex;flex-direction:column;gap:18px}
+
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 13px;font-size:.88rem;font-weight:500;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{background:var(--dis);border-color:var(--dis);color:#fff}
+.btn.ghost{background:transparent}
+.btn.sm{padding:5px 10px;font-size:.82rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+body.ro .ed{display:none!important}
+
+.banner{display:flex;gap:10px;align-items:flex-start;border:1px solid color-mix(in srgb,var(--warn) 45%,var(--line));background:color-mix(in srgb,var(--warn) 9%,var(--surface));border-radius:var(--r);padding:12px 14px;font-size:.9rem}
+.gh{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.gh-t{display:flex;flex-direction:column;gap:4px;min-width:0}
+.lead{color:var(--muted);max-width:65ch}
+.gh-a{display:flex;gap:8px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{border:0;background:transparent;padding:9px 14px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;white-space:nowrap}
+.tab.on{color:var(--ink);border-bottom-color:var(--accent)}
+
+.instbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.instlist{display:flex;gap:6px;flex-wrap:wrap;min-width:0}
+.ichip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:.86rem;font-weight:500;cursor:pointer}
+.ichip span{font-family:var(--f-mono);font-size:.76rem;color:var(--muted);margin-left:4px}
+.ichip.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.ichip.on span{color:var(--bg);opacity:.75}
+.insthead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.insthead > div:first-child{display:flex;flex-direction:column;gap:3px;min-width:0}
+
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:separate;border-spacing:0}
+.cmp{width:100%;min-width:max-content}
+.cmp th,.cmp td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.cmp tbody tr:last-child > *{border-bottom:0}
+.cmp .sticky{position:sticky;left:0;z-index:1;background:var(--surface);min-width:170px;max-width:230px;border-right:1px solid var(--line);font-weight:400}
+.cmp thead th{vertical-align:bottom;min-width:160px}
+.cmp tr.par > *{background:var(--sunk)}
+.cn{display:block;font-weight:600}
+.cw{display:block;font-size:.75rem;color:var(--muted)}
+.ith{display:flex;align-items:center;gap:8px;font-weight:600}
+.rank{font-family:var(--f-mono);font-size:.72rem;font-weight:500;border-radius:5px;padding:1px 6px;background:var(--sunk);color:var(--muted)}
+.rank.r1{background:var(--accent);color:var(--accent-ink)}
+.tot{margin:6px 0 4px;display:flex;align-items:baseline;gap:3px}
+.tot .val{font-size:1.5rem;font-weight:500}
+.bar{height:6px;background:var(--sunk);border-radius:3px;overflow:hidden;min-width:60px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.cmp tr.par .bar{background:var(--surface)}
+.mini{display:flex;align-items:center;gap:8px}
+.mini .bar{flex:1}
+td.cell{cursor:pointer}
+body.ro td.cell{cursor:default}
+td.cell:hover{outline:1px solid var(--line);outline-offset:-4px;border-radius:6px}
+.m-adv{background:color-mix(in srgb,var(--adv) 8%,var(--surface))}
+.m-dis{background:color-mix(in srgb,var(--dis) 8%,var(--surface))}
+.mk{display:inline-block;font-size:.68rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:999px;margin-left:8px;white-space:nowrap}
+.m-adv .mk{color:var(--adv);background:color-mix(in srgb,var(--adv) 15%,transparent)}
+.m-dis .mk{color:var(--dis);background:color-mix(in srgb,var(--dis) 15%,transparent)}
+.m-eq .mk,.m-mid .mk{color:var(--eq);background:color-mix(in srgb,var(--eq) 15%,transparent)}
+
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px;font-size:.9rem}
+.card .pos{color:var(--adv);font-weight:600;font-size:.8rem}
+.card .neg{color:var(--dis);font-weight:600;font-size:.8rem}
+.concl{grid-column:1/-1}
+.concl p{max-width:75ch}
+textarea,input,select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+textarea{resize:vertical}
+
+.empty{border:1px dashed var(--line);border-radius:var(--r);padding:28px 20px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;background:var(--surface)}
+.empty p{color:var(--muted);max-width:60ch}
+
+.tbl{width:100%;min-width:max-content;font-size:.9rem}
+.tbl th,.tbl td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.tbl thead th{font-size:.74rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+.tbl tbody tr:last-child td{border-bottom:0}
+.acts{display:flex;gap:6px;justify-content:flex-end}
+
+.crow{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.crow:last-child{border-bottom:0}
+.crow.top-level{background:var(--sunk)}
+.crow .cname{flex:1;min-width:160px;display:flex;flex-direction:column}
+.badge{font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.crow.top-level .badge{background:var(--surface)}
+.badge.agg{color:var(--accent)}
+
+.overlay{position:fixed;inset:0;background:rgb(10 12 25 / .45);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+.dialog{background:var(--surface);border-radius:14px;width:min(560px,100%);max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgb(0 0 0 / .3)}
+.dialog header,.dialog footer{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.dialog header{border-bottom:1px solid var(--line)}
+.dialog footer{border-top:1px solid var(--line);justify-content:flex-end}
+.dbody{padding:18px 20px;overflow:auto;display:flex;flex-direction:column;gap:14px}
+.fld{display:flex;flex-direction:column;gap:5px;font-size:.88rem;font-weight:500}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.hint{font-size:.82rem;color:var(--muted)}
+.checks{display:flex;flex-direction:column;gap:6px}
+.checks label{display:flex;gap:8px;align-items:center;font-weight:400}
+.checks input{width:auto}
+.x{border:0;background:transparent;font-size:1.3rem;line-height:1;cursor:pointer;color:var(--muted);padding:4px 8px}
+
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--surface);z-index:45;border-left:1px solid var(--line);box-shadow:-10px 0 40px rgb(0 0 0 / .18);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+.drawer header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
+.dr-body{overflow:auto;padding:16px 20px 28px;display:flex;flex-direction:column;gap:20px}
+.dr-sec{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.switch{display:flex;align-items:center;gap:10px;font-size:.9rem;cursor:pointer}
+.switch input{width:auto}
+.plist{display:flex;flex-direction:column;gap:6px;font-size:.88rem}
+.plist div{display:flex;justify-content:space-between;gap:8px;padding:7px 10px;border-radius:8px;background:var(--sunk)}
+.conf{border:1px solid color-mix(in srgb,var(--dis) 40%,var(--line));border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:10px}
+.conf h3{font-size:.95rem}
+.conf table{width:100%;font-size:.84rem}
+.conf td,.conf th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.conf th{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+.opt{display:flex;gap:6px;align-items:flex-start;cursor:pointer}
+.opt input{width:auto;margin-top:3px}
+.opt small{display:block;color:var(--muted);font-size:.72rem}
+.log{font-size:.82rem;display:flex;flex-direction:column;gap:4px}
+.log span{font-family:var(--f-mono);color:var(--muted);margin-right:6px}
+
+.menu{position:fixed;z-index:60;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgb(0 0 0 / .2);padding:6px;display:flex;flex-direction:column;min-width:190px}
+.menu button{border:0;background:transparent;text-align:left;padding:8px 10px;border-radius:6px;cursor:pointer;font-size:.88rem}
+.menu button:hover{background:var(--sunk)}
+.menu .mh{font-size:.72rem;color:var(--muted);padding:4px 10px 6px;text-transform:uppercase;letter-spacing:.05em}
+
+.sheet{display:flex;flex-direction:column;gap:14px}
+.gs{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.gs-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.gs-title{display:flex;align-items:center;gap:8px;font-weight:600;margin-right:auto}
+.gs-title i{width:18px;height:22px;border-radius:3px;background:var(--adv);display:inline-block}
+.grid{font-family:var(--f-mono);font-size:.82rem;min-width:max-content}
+.grid th,.grid td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:0;height:30px}
+.grid .ch,.grid .rh{background:var(--sunk);color:var(--muted);font-weight:500;text-align:center;font-size:.74rem;padding:0 8px}
+.grid .rh{width:40px}
+.grid .hdr td{background:color-mix(in srgb,var(--adv) 10%,var(--surface));font-weight:500}
+.grid input{border:0;border-radius:0;background:transparent;padding:5px 8px;font-family:var(--f-mono);font-size:.82rem;min-width:90px;width:100%}
+.grid input:focus{outline:2px solid var(--adv);outline-offset:-2px}
+.grid .ro-c{padding:5px 8px;color:var(--muted);white-space:nowrap}
+.grid .wide input{min-width:200px}
+.gs-tabs{display:flex;gap:2px;overflow-x:auto;background:var(--sunk);padding:4px 6px 0}
+.gs-tabs button{border:0;background:transparent;padding:7px 14px;font-size:.82rem;border-radius:6px 6px 0 0;cursor:pointer;color:var(--muted);white-space:nowrap}
+.gs-tabs button.on{background:var(--surface);color:var(--adv);font-weight:600}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.88rem;z-index:70;max-width:calc(100% - 32px)}
+
+@media (max-width:860px){
+  .shell{grid-template-columns:minmax(0,1fr);gap:16px;padding-block:14px 40px}
+  .side{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:4px}
+  .side-h{margin:0}
+  .side-h .eyebrow{display:none}
+  .glist{flex-direction:row;gap:6px}
+  .gitem{width:auto;white-space:nowrap;border-color:var(--line);background:var(--surface);padding:7px 12px}
+  .gitem.on{border-color:var(--accent)}
+  .gmeta{display:none}
+  .long{display:none}
+  h1{font-size:1.55rem}
+  .cmp .sticky{min-width:130px;max-width:150px}
+  .cmp thead th{min-width:135px}
+  .cmp th,.cmp td{padding:9px 10px}
+}
+@media (min-width:861px){.short{display:none}}
+</style>
+
+<header class="top"><div class="top-in">
+  <div class="brand"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="3" y="9" width="8" height="14" rx="2" fill="var(--accent)"/><rect x="15" y="4" width="8" height="19" rx="2" fill="var(--ink)" opacity=".85"/><path d="M1 24h24" stroke="var(--muted)" stroke-width="1.5"/></svg>CompareIt</div>
+  <div class="seg" role="group" aria-label="Modo de uso">
+    <button data-act="mode" data-m="app" id="m_app"><span class="long">Editar en la app</span><span class="short">App</span></button>
+    <button data-act="mode" data-m="sheet" id="m_sheet"><span class="long">Cargar en la Sheet</span><span class="short">Sheet</span></button>
+  </div>
+  <button class="chip-sync" id="syncChip" data-act="openSync"><span class="dot"></span><span id="syncTxt">Sincronizado</span></button>
+</div></header>
+
+<div class="shell">
+  <aside class="side" id="side"></aside>
+  <main id="main"></main>
+</div>
+
+<div class="overlay" id="modal" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <header><h2 id="mTitle"></h2><button class="x" data-act="closeModal" aria-label="Cerrar">×</button></header>
+    <div class="dbody" id="mBody"></div>
+    <footer><button class="btn ghost" data-act="closeModal">Cancelar</button><button class="btn primary" id="mSave" data-act="modalSave">Guardar</button></footer>
+  </div>
+</div>
+<aside class="drawer" id="drawer" hidden aria-label="Sincronización">
+  <header><h2>Sincronización</h2><button class="x" data-act="closeSync" aria-label="Cerrar">×</button></header>
+  <div class="dr-body" id="drBody"></div>
+</aside>
+<div class="menu" id="menu" hidden>
+  <div class="mh">Marcar esta celda como</div>
+  <button data-act="setOv" data-v="adv">▲ Ventaja</button>
+  <button data-act="setOv" data-v="dis">▼ Desventaja</button>
+  <button data-act="setOv" data-v="eq">= Similar / neutral</button>
+  <button data-act="setOv" data-v="">↺ Automático (según criterio)</button>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ---------- utilidades ---------- */
+const $ = s => document.querySelector(s);
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
+};
+const clone = o => JSON.parse(JSON.stringify(o));
+const now = () => new Date().toISOString();
+const uid = p => p + '_' + Math.random().toString(36).slice(2, 8);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const v = id => { const e = document.getElementById(id); return e ? e.value.trim() : '' };
+const hhmm = iso => iso ? new Date(iso).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : '—';
+const REAL = !!(window.google && window.google.script && window.google.script.run);
+
+/* ---------- datos de ejemplo (simulan la Google Sheet) ---------- */
+function seed(){
+  const R = {}, t = now(); const A = (id, o) => { R[id] = {...o, u:t} };
+  A('g_nb', {t:'group', name:'Notebooks', desc:'Equipos para trabajo y estudio. Datos de ejemplo para probar el prototipo.'});
+  A('c_rend', {t:'crit', g:'g_nb', p:'', name:'Rendimiento', ord:'1', w:'3'});
+  A('c_cpu', {t:'crit', g:'g_nb', p:'c_rend', name:'Puntaje de CPU', kind:'num', dir:'max', unit:'pts', ord:'1', w:'2'});
+  A('c_ram', {t:'crit', g:'g_nb', p:'c_rend', name:'Memoria RAM', kind:'num', dir:'max', unit:'GB', ord:'2', w:'1'});
+  A('c_port', {t:'crit', g:'g_nb', p:'', name:'Portabilidad', ord:'2', w:'2'});
+  A('c_peso', {t:'crit', g:'g_nb', p:'c_port', name:'Peso', kind:'num', dir:'min', unit:'kg', ord:'1', w:'1'});
+  A('c_bat', {t:'crit', g:'g_nb', p:'c_port', name:'Autonomía', kind:'num', dir:'max', unit:'h', ord:'2', w:'1'});
+  A('c_pant', {t:'crit', g:'g_nb', p:'', name:'Pantalla', kind:'qual', scale:'Regular, Buena, Muy buena, Excelente', ord:'3', w:'1'});
+  A('c_prec', {t:'crit', g:'g_nb', p:'', name:'Precio', kind:'num', dir:'min', unit:'ARS', ord:'4', w:'3'});
+  [['i_a','Notebook Alfa 14',14200,16,1.35,11,'Muy buena',1450000],
+   ['i_b','Notebook Beta 15',17800,32,1.9,7,'Buena',1720000],
+   ['i_c','Notebook Gamma 13',11900,16,1.1,14,'Excelente',1590000],
+   ['i_d','Notebook Delta 15',12500,8,1.75,8,'Regular',980000]]
+  .forEach(([id,name,cpu,ram,peso,bat,pant,prec]) => A(id, {t:'item', g:'g_nb', name,
+    'v.c_cpu':''+cpu, 'v.c_ram':''+ram, 'v.c_peso':''+peso, 'v.c_bat':''+bat, 'v.c_pant':pant, 'v.c_prec':''+prec}));
+  A('n_of', {t:'inst', g:'g_nb', name:'Para la oficina', items:'i_a,i_b,i_d'});
+  A('n_vi', {t:'inst', g:'g_nb', name:'Viaje liviano', items:'i_a,i_c', 'o.i_a.c_pant':'eq', concl:'Para viajar priorizo peso y autonomía; la diferencia de pantalla no me importa.'});
+
+  A('g_isp', {t:'group', name:'Proveedores de internet', desc:'Servicios de conexión para el hogar. Datos de ejemplo.'});
+  A('c_vel', {t:'crit', g:'g_isp', p:'', name:'Velocidad', kind:'num', dir:'max', unit:'Mbps', ord:'1', w:'2'});
+  A('c_cost', {t:'crit', g:'g_isp', p:'', name:'Abono mensual', kind:'num', dir:'min', unit:'ARS', ord:'2', w:'3'});
+  A('c_serv', {t:'crit', g:'g_isp', p:'', name:'Servicio', ord:'3', w:'2'});
+  A('c_est', {t:'crit', g:'g_isp', p:'c_serv', name:'Estabilidad', kind:'qual', scale:'Baja, Media, Alta', ord:'1', w:'2'});
+  A('c_ate', {t:'crit', g:'g_isp', p:'c_serv', name:'Atención al cliente', kind:'qual', scale:'Mala, Regular, Buena', ord:'2', w:'1'});
+  [['i_p1','Fibra Norte',600,32000,'Alta','Regular'],['i_p2','Cable Sur',300,24000,'Media','Buena'],['i_p3','Fibra Centro',1000,41000,'Alta','Buena']]
+  .forEach(([id,name,vel,cost,est,ate]) => A(id, {t:'item', g:'g_isp', name, 'v.c_vel':''+vel, 'v.c_cost':''+cost, 'v.c_est':est, 'v.c_ate':ate}));
+  A('n_casa', {t:'inst', g:'g_isp', name:'Casa familiar', items:'i_p1,i_p2,i_p3'});
+  A('n_tele', {t:'inst', g:'g_isp', name:'Teletrabajo', items:'i_p1,i_p3'});
+  return R;
+}
+
+/* ---------- estado ---------- */
+let SIM = LS.get('ci_sim', null);
+if (!SIM) SIM = {records: seed()};
+const S = {
+  app: LS.get('ci_app', null), base: LS.get('ci_base', null),
+  mode: LS.get('ci_mode', 'app'), online: LS.get('ci_online', true), reach: true,
+  ui: LS.get('ci_ui', {view:'group', g:'', tab:'cmp', inst:{}, sheetTab:''}),
+  conflicts: [], choice: {}, log: LS.get('ci_log', []), last: LS.get('ci_last', ''),
+  syncing: false, drawer: false
+};
+if (!S.app){ S.app = clone(SIM.records); S.base = clone(SIM.records); }
+function save(){
+  LS.set('ci_app', S.app); LS.set('ci_base', S.base); LS.set('ci_mode', S.mode); LS.set('ci_online', S.online);
+  LS.set('ci_ui', S.ui); LS.set('ci_log', S.log); LS.set('ci_last', S.last); LS.set('ci_sim', SIM);
+}
+function log(m){ S.log.unshift({t:now(), m}); S.log = S.log.slice(0, 14) }
+
+/* ---------- acceso a datos ---------- */
+const recs = (t, src = S.app) => Object.entries(src).filter(([, r]) => r.t === t).map(([id, r]) => ({...r, id}));
+const groups = (src = S.app) => recs('group', src).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+const crits = (g, src = S.app) => recs('crit', src).filter(c => c.g === g);
+const items = (g, src = S.app) => recs('item', src).filter(i => i.g === g).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+const insts = (g, src = S.app) => recs('inst', src).filter(i => i.g === g).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+const instIds = n => (n.items || '').split(',').map(x => x.trim()).filter(x => x && S.app[x]);
+const scaleOf = c => (c.scale || '').split(',').map(x => x.trim()).filter(Boolean);
+
+function tree(g, src = S.app){
+  const cs = crits(g, src);
+  const kids = p => cs.filter(c => (c.p || '') === p).sort((a, b) => (+a.ord || 0) - (+b.ord || 0));
+  const walk = (p, d) => kids(p).flatMap(c => {
+    const k = kids(c.id).map(x => x.id);
+    return [{...c, depth:d, leaf:!k.length, kids:k}, ...walk(c.id, d + 1)];
+  });
+  return walk('', 0);
+}
+function descendants(id, g){ const cs = crits(g); const out = []; const go = p => cs.filter(c => c.p === p).forEach(c => { out.push(c.id); go(c.id) }); go(id); return out }
+
+function fmt(c, raw){
+  if (raw === '' || raw == null) return '—';
+  if (c.kind === 'qual') return raw;
+  const n = parseFloat(String(raw).replace(',', '.'));
+  if (isNaN(n)) return raw;
+  const s = n.toLocaleString('es-AR', {maximumFractionDigits:2});
+  if (c.unit === 'ARS') return '$ ' + s;
+  return c.unit ? s + ' ' + c.unit : s;
+}
+function critHint(c){
+  if (c.kind === 'qual') return 'cualitativo · ' + scaleOf(c).length + ' niveles';
+  return (c.dir === 'min' ? 'menos es mejor' : 'más es mejor') + (c.unit ? ' · ' + c.unit : '');
+}
+
+/* ---------- motor de evaluación ---------- */
+function evaluate(g, its, inst){
+  const list = tree(g); const W = Object.fromEntries(list.map(c => [c.id, +c.w || 1]));
+  const res = {};
+  list.filter(c => c.leaf).forEach(c => {
+    const sc = {};
+    its.forEach(it => {
+      const raw = it['v.' + c.id] ?? ''; let s = null;
+      if (c.kind === 'qual'){ const o = scaleOf(c); const i = o.indexOf(raw); if (i >= 0) s = o.length > 1 ? i / (o.length - 1) : 1 }
+      else { const n = parseFloat(String(raw).replace(',', '.')); if (!isNaN(n)) s = n }
+      sc[it.id] = s;
+    });
+    if (c.kind !== 'qual'){
+      const ns = Object.values(sc).filter(x => x != null);
+      if (ns.length){ const mn = Math.min(...ns), mx = Math.max(...ns);
+        for (const id in sc) if (sc[id] != null){ let s = mx === mn ? 1 : (sc[id] - mn) / (mx - mn); if (c.dir === 'min' && mx !== mn) s = 1 - s; sc[id] = s } }
+    }
+    const vals = Object.values(sc).filter(x => x != null);
+    const allEq = vals.length > 1 && vals.every(x => x === vals[0]);
+    const hi = vals.length ? Math.max(...vals) : 0, lo = vals.length ? Math.min(...vals) : 0;
+    res[c.id] = {};
+    its.forEach(it => {
+      let s = sc[it.id], mark;
+      if (s == null) mark = 'na'; else if (allEq || vals.length < 2) mark = 'eq'; else if (s === hi) mark = 'adv'; else if (s === lo) mark = 'dis'; else mark = 'mid';
+      const ov = inst && inst['o.' + it.id + '.' + c.id]; let manual = false;
+      if (ov){ manual = true; mark = ov; s = ov === 'adv' ? 1 : ov === 'dis' ? 0 : 0.5 }
+      res[c.id][it.id] = {score:s, mark, manual, raw:it['v.' + c.id] ?? ''};
+    });
+  });
+  const avg = (ids, itId) => { let sw = 0, ws = 0; ids.forEach(k => { const s = res[k]?.[itId]?.score; if (s != null){ sw += s * W[k]; ws += W[k] } }); return ws ? sw / ws : null };
+  [...list].reverse().forEach(c => { if (c.leaf) return; res[c.id] = {}; its.forEach(it => res[c.id][it.id] = {score:avg(c.kids, it.id)}) });
+  const roots = list.filter(c => c.depth === 0).map(c => c.id);
+  const total = {}; its.forEach(it => total[it.id] = avg(roots, it.id));
+  return {list, res, total};
+}
+
+/* ---------- escritura local ---------- */
+const canEdit = () => S.mode === 'app';
+function setRec(id, rec){ const r = {...rec, u:now()}; delete r.id; S.app[id] = r }
+function rmRec(id){ delete S.app[id] }
+function commit(){ save(); render(); scheduleSync() }
+function put(id, rec){ if (!canEdit()) return toast('Modo «Cargar en la Sheet»: la app es de solo lectura.'); setRec(id, rec); commit() }
+
+/* ---------- adaptadores a la fuente de datos ---------- */
+const Sim = {
+  async pull(){ await wait(220); if (!S.online) throw new Error('offline'); return clone(SIM.records) },
+  async push(up, dels){ await wait(220); if (!S.online) throw new Error('offline');
+    Object.entries(up).forEach(([k, r]) => SIM.records[k] = clone(r)); dels.forEach(d => delete SIM.records[d.id]); LS.set('ci_sim', SIM) }
+};
+const gcall = (fn, ...a) => new Promise((ok, ko) => google.script.run.withSuccessHandler(ok).withFailureHandler(ko)[fn](...a));
+const Gas = { pull: () => gcall('getAll'), push: (up, dels) => gcall('putChanges', up, dels) };
+const adapter = REAL ? Gas : Sim;
+
+/* ---------- sincronización con fusión a 3 vías ---------- */
+function norm(r){ if (!r) return null; const o = {}; Object.keys(r).filter(k => k !== 'u').sort().forEach(k => { if (r[k] !== '' && r[k] != null) o[k] = String(r[k]) }); return o }
+const same = (a, b) => JSON.stringify(norm(a)) === JSON.stringify(norm(b));
+const fv = (r, f) => r && r[f] != null ? String(r[f]) : '';
+function merge3(a, b, r){
+  const out = {}, conf = [];
+  const fields = [...new Set([a, b, r].flatMap(x => x ? Object.keys(x) : []))].filter(f => f !== 'u');
+  fields.forEach(f => {
+    const av = fv(a, f), bv = fv(b, f), rv = fv(r, f); let val;
+    if (av === rv) val = av; else if (av === bv) val = rv; else if (rv === bv) val = av; else { conf.push({f, a:av, r:rv}); val = av }
+    if (val !== '') out[f] = val;
+  });
+  return {out, conf};
+}
+function pendingKeys(){
+  const ks = new Set([...Object.keys(S.app), ...Object.keys(S.base || {})]);
+  return [...ks].filter(k => !same(S.app[k], S.base[k]));
+}
+let syncTimer = null;
+function scheduleSync(){ clearTimeout(syncTimer); if (S.online && S.mode === 'app') syncTimer = setTimeout(() => sync(true), 700); else renderStatus() }
+
+async function sync(quiet){
+  if (S.syncing) return; S.syncing = true; renderStatus();
+  try{
+    const remote = await adapter.pull(); S.reach = true;
+    const app = S.app, base = S.base || {};
+    const keys = new Set([...Object.keys(app), ...Object.keys(base), ...Object.keys(remote)]);
+    const up = {}, dels = [], nApp = {}, nBase = {}, conflicts = []; let pulled = 0, pushed = 0;
+    if (S.mode === 'sheet'){
+      keys.forEach(k => { if (!same(app[k], remote[k])) pulled++ });
+      Object.assign(nApp, clone(remote)); Object.assign(nBase, clone(remote));
+    } else for (const k of keys){
+      const a = app[k], b = base[k], r = remote[k];
+      if (!a && !r) continue;
+      if (!a){
+        if (!b){ nApp[k] = r; nBase[k] = r; pulled++ }
+        else if (same(r, b)){ dels.push({id:k, t:b.t, g:b.g}); pushed++ }
+        else { conflicts.push({k, kind:'delApp', a:null, r, b}); nBase[k] = b }
+        continue;
+      }
+      if (!r){
+        if (!b){ up[k] = a; nApp[k] = a; nBase[k] = a; pushed++ }
+        else if (same(a, b)) pulled++;
+        else { conflicts.push({k, kind:'delSheet', a, r:null, b}); nApp[k] = a; nBase[k] = b }
+        continue;
+      }
+      if (same(a, r)){ nApp[k] = r; nBase[k] = r; continue }
+      const {out, conf} = merge3(a, b, r);
+      if (conf.length){ conflicts.push({k, kind:'edit', a, r, b, out, conf}); nApp[k] = a; if (b) nBase[k] = b; continue }
+      out.u = now(); nApp[k] = out; nBase[k] = out;
+      if (!same(out, r)){ up[k] = out; pushed++ }
+      if (!same(out, a)) pulled++;
+    }
+    if (Object.keys(up).length || dels.length) await adapter.push(up, dels);
+    S.app = nApp; S.base = nBase; S.conflicts = conflicts; S.last = now();
+    if (!quiet || pulled || pushed || conflicts.length)
+      log(`Sincronizado: ${pushed} enviados a la Sheet, ${pulled} recibidos${conflicts.length ? ', ' + conflicts.length + ' en conflicto' : ''}.`);
+    if (conflicts.length && !quiet) openSync();
+  }catch(e){
+    S.reach = false;
+    if (!quiet) log('Sin conexión con la Sheet: se sigue trabajando con la copia local.');
+  }
+  S.syncing = false; fixUi(); save(); render();
+}
+
+function suggest(c){ return (c.a?.u || '') >= (c.r?.u || '') ? 'a' : 'r' }
+async function resolve(keys){
+  if (!S.online && !REAL) return toast('Reconectá la Sheet para aplicar la resolución.');
+  const up = {}, dels = [];
+  keys.forEach(k => {
+    const c = S.conflicts.find(x => x.k === k); if (!c) return;
+    const ch = S.choice[k] || {};
+    if (c.kind === 'edit'){
+      const fin = {...c.out};
+      c.conf.forEach(x => { const pick = ch[x.f] || suggest(c); const val = pick === 'a' ? x.a : x.r; if (val === '') delete fin[x.f]; else fin[x.f] = val });
+      fin.u = now(); up[k] = fin; S.app[k] = fin; S.base[k] = fin;
+    } else {
+      const pick = ch._ || suggest(c);
+      const keepApp = pick === 'a';
+      if (c.kind === 'delApp'){
+        if (keepApp){ dels.push({id:k, t:c.r.t, g:c.r.g}); delete S.app[k]; delete S.base[k] }
+        else { S.app[k] = c.r; S.base[k] = c.r }
+      } else {
+        if (keepApp){ const fin = {...c.a, u:now()}; up[k] = fin; S.app[k] = fin; S.base[k] = fin }
+        else { delete S.app[k]; delete S.base[k] }
+      }
+    }
+    S.conflicts = S.conflicts.filter(x => x.k !== k); delete S.choice[k];
+  });
+  try{ await adapter.push(up, dels); log(`Aprobaste ${keys.length} resolución(es) de conflicto; se aplicaron en la app y en la Sheet.`) }
+  catch(e){ log('No se pudo escribir en la Sheet; la resolución queda pendiente de envío.') }
+  fixUi(); save(); render();
+}
+
+/* ---------- etiquetas legibles para conflictos ---------- */
+const TYPE = {group:'Grupo', crit:'Criterio', item:'Ítem', inst:'Instancia'};
+const nameOf = id => (S.app[id] || S.base[id] || SIM.records[id] || {}).name || id;
+function recLabel(r){ if (!r) return ''; const g = r.g ? ' · ' + nameOf(r.g) : ''; return `${TYPE[r.t] || 'Registro'}: ${r.name || '(sin nombre)'}${g}` }
+function fieldLabel(f){
+  const F = {name:'Nombre', desc:'Descripción', notes:'Notas', items:'Ítems', concl:'Conclusión', p:'Criterio padre', kind:'Tipo', dir:'Sentido', unit:'Unidad', scale:'Escala', w:'Peso', ord:'Orden', g:'Grupo', t:'Tipo de registro'};
+  if (F[f]) return F[f];
+  if (f.startsWith('v.')) return nameOf(f.slice(2));
+  if (f.startsWith('o.')){ const [, it, c] = f.split('.'); return `Ajuste manual: ${nameOf(it)} / ${nameOf(c)}` }
+  return f;
+}
+function showVal(f, val){
+  if (val === '') return '<span class="muted">(vacío)</span>';
+  if (f === 'items') return esc(val.split(',').map(nameOf).join(', '));
+  if (f.startsWith('o.')) return {adv:'Ventaja', dis:'Desventaja', eq:'Similar'}[val] || esc(val);
+  return esc(val);
+}
+
+/* ---------- interfaz ---------- */
+function curInst(){
+  const g = S.ui.g; const list = insts(g); const id = S.ui.inst[g];
+  return list.find(n => n.id === id) || list[0] || null;
+}
+function fixUi(){
+  const gs = groups();
+  if (!S.app[S.ui.g] && gs.length) S.ui.g = gs[0].id;
+  if (!gs.length) S.ui.g = '';
+}
+function toast(m){ const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 3200) }
+function empty(title, text, act, label){
+  return `<div class="empty"><h3>${title}</h3><p>${text}</p>${act ? `<button class="btn primary ed" data-act="${act}">${label}</button>` : ''}</div>`;
+}
+
+function renderStatus(){
+  const pend = pendingKeys().length, conf = S.conflicts.length;
+  let cls = 'st-ok', txt = 'Sincronizado';
+  if (S.syncing){ cls = 'st-busy'; txt = 'Sincronizando…' }
+  else if (conf){ cls = 'st-conf'; txt = conf + (conf === 1 ? ' conflicto' : ' conflictos') }
+  else if (!S.online || !S.reach){ cls = 'st-off'; txt = 'Sin conexión' + (pend ? ' · ' + pend + ' pend.' : '') }
+  else if (pend){ cls = 'st-pend'; txt = pend + ' pendientes' }
+  $('#syncChip').className = 'chip-sync ' + cls; $('#syncTxt').textContent = txt;
+  $('#m_app').classList.toggle('on', S.mode === 'app'); $('#m_sheet').classList.toggle('on', S.mode === 'sheet');
+  document.body.classList.toggle('ro', S.mode === 'sheet');
+}
+
+function renderSide(){
+  const gs = groups();
+  $('#side').innerHTML = `
+    <div class="side-h"><span class="eyebrow">Grupos</span><button class="btn sm ghost ed" data-act="newGroup">+ Grupo</button></div>
+    <nav class="glist">${gs.map(g => `<button class="gitem ${S.ui.view === 'group' && S.ui.g === g.id ? 'on' : ''}" data-act="pickGroup" data-id="${g.id}">
+      <span class="gname">${esc(g.name)}</span><span class="gmeta">${items(g.id).length} ítems · ${insts(g.id).length} instancias</span></button>`).join('')}</nav>
+    ${REAL ? '' : `<div class="side-h"><span class="eyebrow">Fuente de datos</span></div>
+    <button class="gitem sheetbtn ${S.ui.view === 'sheet' ? 'on' : ''}" data-act="openSheet"><span class="gname">Google Sheet</span><span class="gmeta">Simulación editable</span></button>`}`;
+}
+
+function render(){
+  renderStatus(); renderSide();
+  const m = $('#main');
+  if (S.ui.view === 'sheet' && !REAL){ m.innerHTML = viewSheet(); }
+  else if (!S.ui.g || !S.app[S.ui.g]){ m.innerHTML = empty('No hay grupos todavía', 'Un grupo reúne ítems de la misma naturaleza (por ejemplo, notebooks) y se guarda como una pestaña de la Google Sheet.', 'newGroup', 'Crear grupo'); }
+  else m.innerHTML = viewGroup(S.app[S.ui.g]);
+  if (S.drawer) renderDrawer();
+}
+
+function viewGroup(g){
+  const tabs = [['cmp', 'Comparar'], ['items', 'Ítems'], ['crit', 'Criterios']];
+  return `${S.mode === 'sheet' ? `<div class="banner"><strong>Modo «Cargar en la Sheet».</strong>&nbsp;La app solo muestra los datos; cargá y editá en la Google Sheet. La vista se actualiza cada 15 segundos o con «Sincronizar ahora».</div>` : ''}
+  <header class="gh"><div class="gh-t"><span class="eyebrow">Grupo · pestaña «${esc(g.name)}»</span><h1>${esc(g.name)}</h1>${g.desc ? `<p class="lead">${esc(g.desc)}</p>` : ''}</div>
+    <div class="gh-a ed"><button class="btn sm" data-act="editGroup">Editar grupo</button><button class="btn sm ghost" data-act="delGroup">Borrar</button></div></header>
+  <div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${S.ui.tab === k}" class="tab ${S.ui.tab === k ? 'on' : ''}" data-act="tab" data-k="${k}">${l}</button>`).join('')}</div>
+  ${S.ui.tab === 'items' ? viewItems(g) : S.ui.tab === 'crit' ? viewCrit(g) : viewCmp(g)}`;
+}
+
+const MK = {adv:'▲ Ventaja', dis:'▼ Desventaja', eq:'= Similar'};
+function viewCmp(g){
+  const ins = insts(g.id), cur = curInst();
+  let h = `<div class="instbar"><div class="instlist">${ins.map(n => `<button class="ichip ${cur && n.id === cur.id ? 'on' : ''}" data-act="pickInst" data-id="${n.id}">${esc(n.name)}<span>${instIds(n).length}</span></button>`).join('')}</div>
+    <button class="btn sm ed" data-act="newInst">+ Instancia</button></div>`;
+  if (!cur) return h + empty('Todavía no hay instancias en este grupo', 'Una instancia elige qué ítems del grupo comparar. Un mismo ítem puede estar en varias instancias.', 'newInst', 'Crear instancia');
+  const its = instIds(cur).map(id => ({...S.app[id], id}));
+  const ev = evaluate(g.id, its, cur); const leaves = ev.list.filter(c => c.leaf);
+  h += `<div class="insthead"><div><h2>${esc(cur.name)}</h2><p class="muted">${its.length} ítems · ${leaves.length} criterios${canEdit() ? ' · tocá una celda para forzar ventaja o desventaja' : ''}</p></div>
+    <div class="row ed"><button class="btn sm" data-act="editInst">Editar instancia</button><button class="btn sm ghost" data-act="delInst">Borrar</button></div></div>`;
+  if (!its.length) return h + empty('La instancia no tiene ítems', 'Editá la instancia para elegir qué ítems comparar.', 'editInst', 'Elegir ítems');
+  if (!ev.list.length) return h + empty('El grupo no tiene criterios', 'Los criterios definen cómo se evalúan los ítems y de ellos salen las ventajas y desventajas.', 'goCrit', 'Definir criterios');
+  const pct = x => x == null ? null : Math.round(x * 100);
+  const ranked = [...its].sort((a, b) => (ev.total[b.id] ?? -1) - (ev.total[a.id] ?? -1));
+  const rank = id => ranked.findIndex(x => x.id === id) + 1;
+  const head = `<tr><th class="sticky"><span class="eyebrow">Criterio</span></th>${its.map(it => { const p = pct(ev.total[it.id]); return `<th>
+      <div class="ith"><span class="rank ${rank(it.id) === 1 ? 'r1' : ''}">${rank(it.id)}º</span>${esc(it.name)}</div>
+      <div class="tot"><span class="val">${p ?? '—'}</span><span class="muted">/100</span></div><div class="bar"><i style="width:${p ?? 0}%"></i></div></th>` }).join('')}</tr>`;
+  const rows = ev.list.map(c => {
+    const pad = `style="padding-left:${14 + c.depth * 18}px"`;
+    if (!c.leaf) return `<tr class="par"><th class="sticky" ${pad}><span class="cn">${esc(c.name)}</span><span class="cw">agrupa ${c.kids.length} · peso ${c.w || 1}</span></th>${its.map(it => { const p = pct(ev.res[c.id][it.id].score);
+      return `<td>${p == null ? '<span class="muted">—</span>' : `<div class="mini"><div class="bar"><i style="width:${p}%"></i></div><span class="val">${p}</span></div>`}</td>` }).join('')}</tr>`;
+    return `<tr><th class="sticky" ${pad}><span class="cn">${esc(c.name)}</span><span class="cw">${critHint(c)} · peso ${c.w || 1}</span></th>${its.map(it => { const r = ev.res[c.id][it.id];
+      return `<td class="cell m-${r.mark}" data-act="cell" data-it="${it.id}" data-c="${c.id}"><span class="val">${esc(fmt(c, r.raw))}</span>${MK[r.mark] ? `<span class="mk">${MK[r.mark]}${r.manual ? ' ✎' : ''}</span>` : ''}</td>` }).join('')}</tr>`;
+  }).join('');
+  h += `<div class="scroll"><table class="cmp"><thead>${head}</thead><tbody>${rows}</tbody></table></div>`;
+
+  const marks = (it, m) => leaves.filter(c => ev.res[c.id][it.id].mark === m).map(c => c.name);
+  const sims = leaves.filter(c => its.length > 1 && its.every(it => ev.res[c.id][it.id].mark === 'eq'));
+  const diffs = leaves.map(c => { const s = its.map(it => ev.res[c.id][it.id].score).filter(x => x != null); return {c, spread: s.length > 1 ? Math.max(...s) - Math.min(...s) : 0} })
+    .filter(d => d.spread > 0).sort((a, b) => b.spread - a.spread).slice(0, 4);
+  const best = c => its.filter(it => ev.res[c.id][it.id].mark === 'adv').map(it => it.name).join(', ') || '—';
+  h += `<div class="sum">
+    ${its.map(it => { const a = marks(it, 'adv'), d = marks(it, 'dis'); return `<div class="card"><h3>${esc(it.name)}</h3>
+      <span class="pos">Ventajas</span>${a.length ? `<ul>${a.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="muted">Ninguna destacada</p>'}
+      <span class="neg">Desventajas</span>${d.length ? `<ul>${d.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="muted">Ninguna destacada</p>'}</div>` }).join('')}
+    <div class="card"><h3>Diferencias clave</h3>${diffs.length ? `<ul>${diffs.map(d => `<li>${esc(d.c.name)}: mejor ${esc(best(d.c))}</li>`).join('')}</ul>` : '<p class="muted">Sin diferencias marcadas.</p>'}
+      <h3>Similitudes</h3>${sims.length ? `<ul>${sims.map(c => `<li>${esc(c.name)}</li>`).join('')}</ul>` : '<p class="muted">No hay criterios donde coincidan todos.</p>'}</div>
+    <div class="card concl"><h3>Conclusión sugerida</h3><p>${esc(autoConclusion(its, ev, leaves))}</p>
+      <label class="fld" for="f_concl"><span>Tu conclusión</span>
+      <textarea id="f_concl" rows="3" ${canEdit() ? '' : 'readonly'} placeholder="Escribí tu decisión o matices que el puntaje no captura">${esc(cur.concl || '')}</textarea></label></div>
+  </div>`;
+  return h;
+}
+function autoConclusion(its, ev, leaves){
+  const r = its.filter(i => ev.total[i.id] != null).sort((a, b) => ev.total[b.id] - ev.total[a.id]);
+  if (r.length < 2) return 'Agregá al menos dos ítems con valores cargados para obtener una conclusión.';
+  const p = x => Math.round(ev.total[x.id] * 100); const [w, s] = r;
+  let t = `${w.name} obtiene el mejor puntaje global (${p(w)}/100)`;
+  t += p(w) - p(s) <= 5 ? `, prácticamente empatado con ${s.name} (${p(s)}); la elección depende de qué criterio pese más para vos.` : `, por delante de ${s.name} (${p(s)}).`;
+  const wa = leaves.filter(c => ev.res[c.id][w.id].mark === 'adv').map(c => c.name);
+  const wd = leaves.filter(c => ev.res[c.id][w.id].mark === 'dis').map(c => c.name);
+  if (wa.length) t += ` Se destaca en ${wa.join(', ')}.`;
+  if (wd.length) t += ` Su punto débil: ${wd.join(', ')}.`;
+  return t;
+}
+
+function viewItems(g){
+  const its = items(g.id), leaves = tree(g.id).filter(c => c.leaf), ins = insts(g.id);
+  let h = `<div class="instbar"><p class="muted">${its.length} ítems en el grupo. Cada ítem es una fila de la pestaña «${esc(g.name)}».</p><button class="btn sm primary ed" data-act="newItem">+ Ítem</button></div>`;
+  if (!its.length) return h + empty('Sin ítems', 'Cargá el primer ítem desde acá o agregá una fila en la Sheet.', 'newItem', 'Agregar ítem');
+  h += `<div class="scroll"><table class="tbl"><thead><tr><th>Ítem</th>${leaves.map(c => `<th>${esc(c.name)}</th>`).join('')}<th>Instancias</th><th></th></tr></thead><tbody>
+    ${its.map(it => `<tr><td><strong>${esc(it.name)}</strong></td>${leaves.map(c => `<td class="val">${esc(fmt(c, it['v.' + c.id]))}</td>`).join('')}
+      <td>${ins.filter(n => instIds(n).includes(it.id)).length}</td>
+      <td><div class="acts ed"><button class="btn sm" data-act="editItem" data-id="${it.id}">Editar</button><button class="btn sm ghost" data-act="delItem" data-id="${it.id}">Borrar</button></div></td></tr>`).join('')}
+  </tbody></table></div>`;
+  return h;
+}
+
+function viewCrit(g){
+  const list = tree(g.id);
+  let h = `<div class="instbar"><p class="muted" style="max-width:70ch">Los criterios se evalúan en orden y pueden anidarse. Un criterio con subcriterios se calcula como promedio ponderado de ellos. Los cuantitativos comparan números; los cualitativos usan una escala ordenada de peor a mejor.</p>
+    <button class="btn sm primary ed" data-act="newCrit" data-parent="">+ Criterio</button></div>`;
+  if (!list.length) return h + empty('Sin criterios', 'Definí al menos un criterio para que la app pueda concluir ventajas y desventajas.', 'newCrit', 'Agregar criterio');
+  h += `<div class="scroll">${list.map(c => `<div class="crow ${c.depth === 0 ? 'top-level' : ''}" style="padding-left:${14 + c.depth * 22}px">
+    <div class="cname"><strong>${esc(c.name)}</strong><span class="cw">${c.leaf ? esc(critHint(c)) + (c.kind === 'qual' ? ': ' + esc(scaleOf(c).join(' → ')) : '') : 'Agrupa ' + c.kids.length + ' subcriterios'}</span></div>
+    <span class="badge ${c.leaf ? '' : 'agg'}">${c.leaf ? (c.kind === 'qual' ? 'Cualitativo' : 'Cuantitativo') : 'Agrupador'}</span>
+    <span class="badge">peso ${c.w || 1}</span>
+    <div class="acts ed"><button class="btn sm ghost" data-act="moveCrit" data-id="${c.id}" data-d="-1" aria-label="Subir">↑</button><button class="btn sm ghost" data-act="moveCrit" data-id="${c.id}" data-d="1" aria-label="Bajar">↓</button>
+      <button class="btn sm" data-act="newCrit" data-parent="${c.id}">+ Sub</button><button class="btn sm" data-act="editCrit" data-id="${c.id}">Editar</button><button class="btn sm ghost" data-act="delCrit" data-id="${c.id}">Borrar</button></div>
+  </div>`).join('')}</div>`;
+  return h;
+}
+
+/* ---------- vista: Google Sheet simulada ---------- */
+const SYS = {
+  _Grupos: {t:'group', cols:[['name','Nombre'], ['desc','Descripción', 1]]},
+  _Criterios: {t:'crit', cols:[['g','Grupo'], ['p','Padre'], ['name','Nombre'], ['kind','Tipo'], ['dir','Sentido'], ['unit','Unidad'], ['scale','Escala', 1], ['w','Peso'], ['ord','Orden']]},
+  _Instancias: {t:'inst', cols:[['g','Grupo'], ['name','Nombre'], ['items','Ítems', 1], ['concl','Conclusión', 1]]}
+};
+function sheetTabs(){ return [...groups(SIM.records).map(g => ({key:g.id, name:g.name})), ...Object.keys(SYS).map(k => ({key:k, name:k}))] }
+function viewSheet(){
+  const tabs = sheetTabs(); if (!tabs.find(t => t.key === S.ui.sheetTab)) S.ui.sheetTab = tabs[0]?.key || '_Grupos';
+  const key = S.ui.sheetTab; let cols, rows;
+  if (SYS[key]){ cols = SYS[key].cols; rows = recs(SYS[key].t, SIM.records) }
+  else { const leaves = tree(key, SIM.records).filter(c => c.leaf);
+    cols = [['name','Nombre', 1], ...leaves.map(c => ['v.' + c.id, c.name + (c.unit ? ' (' + c.unit + ')' : '')]), ['notes','Notas', 1]];
+    rows = items(key, SIM.records) }
+  const L = i => String.fromCharCode(65 + i);
+  const all = [['id','ID'], ...cols, ['u','Actualizado']];
+  const grid = `<table class="grid"><thead><tr><th class="rh"></th>${all.map((c, i) => `<th class="ch">${L(i)}</th>`).join('')}<th class="ch"></th></tr></thead><tbody>
+    <tr class="hdr"><th class="rh">1</th>${all.map(c => `<td><div class="ro-c">${esc(c[1])}</div></td>`).join('')}<td></td></tr>
+    ${rows.map((r, i) => `<tr><th class="rh">${i + 2}</th><td><div class="ro-c">${esc(r.id)}</div></td>
+      ${cols.map(c => `<td class="${c[2] ? 'wide' : ''}"><input class="sc" data-id="${r.id}" data-f="${c[0]}" value="${esc(r[c[0]] ?? '')}" aria-label="${esc(c[1])}, fila ${i + 2}"></td>`).join('')}
+      <td><div class="ro-c">${hhmm(r.u)}</div></td><td><button class="x" data-act="sheetDel" data-id="${r.id}" aria-label="Eliminar fila">×</button></td></tr>`).join('')}
+  </tbody></table>`;
+  return `<header class="gh"><div class="gh-t"><span class="eyebrow">Fuente de datos</span><h1>Google Sheet</h1>
+      <p class="lead">Simulación de la planilla para probar la sincronización: cada grupo es una pestaña y los criterios e instancias viven en pestañas de sistema. Lo que edites acá lo verá la app en la próxima sincronización.</p></div></header>
+    <div class="gs"><div class="gs-bar"><span class="gs-title"><i></i>CompareIt · datos</span>
+      <label class="switch"><input type="checkbox" id="f_online" ${S.online ? 'checked' : ''}> Conexión con la app</label>
+      <button class="btn sm" data-act="sheetAdd">+ Fila</button><button class="btn sm primary" data-act="syncNow">Sincronizar ahora</button></div>
+      <div class="scroll" style="border:0;border-radius:0">${grid}</div>
+      <div class="gs-tabs">${tabs.map(t => `<button class="${t.key === key ? 'on' : ''}" data-act="sheetTab" data-k="${t.key}">${esc(t.name)}</button>`).join('')}</div></div>
+    <p class="hint">Probá: cortá la conexión, cambiá el mismo dato acá y en la app, y volvé a conectar. O usá «Crear conflicto de ejemplo» en el panel de sincronización.</p>`;
+}
+
+/* ---------- panel de sincronización ---------- */
+function openSync(){ S.drawer = true; $('#drawer').hidden = false; renderDrawer() }
+function renderDrawer(){
+  const pk = pendingKeys();
+  const kindOf = k => !S.base[k] ? 'nuevo' : !S.app[k] ? 'borrado' : 'editado';
+  const confHtml = S.conflicts.map(c => {
+    const sug = suggest(c), ch = S.choice[c.k] || {};
+    const title = recLabel(c.a || c.r || c.b);
+    if (c.kind !== 'edit'){
+      const pick = ch._ || sug;
+      const aTxt = c.kind === 'delApp' ? 'Borrado en la app' : 'Editado en la app';
+      const rTxt = c.kind === 'delApp' ? 'Editado en la Sheet' : 'Borrado en la Sheet';
+      return `<div class="conf"><h3>${esc(title)}</h3><p class="hint">Se borró de un lado y se modificó del otro.</p>
+        <label class="opt"><input type="radio" name="r_${c.k}" data-k="${c.k}" data-f="_" value="a" ${pick === 'a' ? 'checked' : ''}><span>${aTxt}<small>${hhmm(c.a?.u)}${sug === 'a' ? ' · más reciente' : ''}</small></span></label>
+        <label class="opt"><input type="radio" name="r_${c.k}" data-k="${c.k}" data-f="_" value="r" ${pick === 'r' ? 'checked' : ''}><span>${rTxt}<small>${hhmm(c.r?.u)}${sug === 'r' ? ' · más reciente' : ''}</small></span></label>
+        <div class="row"><button class="btn sm primary" data-act="resolveOne" data-k="${c.k}">Aprobar y aplicar</button></div></div>`;
+    }
+    return `<div class="conf"><h3>${esc(title)}</h3><p class="hint">El mismo dato cambió en la app y en la Sheet. Elegí qué valor queda.</p>
+      <table><thead><tr><th>Dato</th><th>App</th><th>Sheet</th></tr></thead><tbody>
+      ${c.conf.map(x => { const pick = ch[x.f] || sug; const nm = `r_${c.k}_${x.f}`.replace(/\./g, '_'); return `<tr><td>${esc(fieldLabel(x.f))}</td>
+        <td><label class="opt"><input type="radio" name="${nm}" data-k="${c.k}" data-f="${x.f}" value="a" ${pick === 'a' ? 'checked' : ''}><span>${showVal(x.f, x.a)}<small>${hhmm(c.a.u)}${sug === 'a' ? ' · más reciente' : ''}</small></span></label></td>
+        <td><label class="opt"><input type="radio" name="${nm}" data-k="${c.k}" data-f="${x.f}" value="r" ${pick === 'r' ? 'checked' : ''}><span>${showVal(x.f, x.r)}<small>${hhmm(c.r.u)}${sug === 'r' ? ' · más reciente' : ''}</small></span></label></td></tr>` }).join('')}
+      </tbody></table>
+      ${Object.keys(c.out).length && c.conf.length < Object.keys(c.out).length ? '<p class="hint">Los demás cambios de este registro se combinan solos.</p>' : ''}
+      <div class="row"><button class="btn sm primary" data-act="resolveOne" data-k="${c.k}">Aprobar y aplicar</button></div></div>`;
+  }).join('');
+  $('#drBody').innerHTML = `
+    <section class="dr-sec"><span class="eyebrow">Estado</span>
+      <p>${S.syncing ? 'Sincronizando…' : !S.online || !S.reach ? 'Sin conexión: trabajás sobre la copia local y los cambios quedan en cola.' : 'Conectado con la Google Sheet.'}</p>
+      <p class="muted">Última sincronización: ${hhmm(S.last)} · modo ${S.mode === 'app' ? '«Editar en la app» (bidireccional)' : '«Cargar en la Sheet» (la app solo lee)'}</p>
+      <div class="row"><button class="btn sm primary" data-act="syncNow">Sincronizar ahora</button>
+      ${REAL ? '' : `<label class="switch"><input type="checkbox" id="f_online2" ${S.online ? 'checked' : ''}> Conexión con la Sheet (simulada)</label>`}</div></section>
+    <section class="dr-sec"><span class="eyebrow">Conflictos para tu aprobación · ${S.conflicts.length}</span>
+      ${S.conflicts.length ? `${S.conflicts.length > 1 ? '<div class="row"><button class="btn sm" data-act="resolveAll">Aprobar todo con lo elegido</button></div>' : ''}${confHtml}` : '<p class="muted">No hay conflictos.</p>'}</section>
+    <section class="dr-sec"><span class="eyebrow">Cambios locales sin enviar · ${pk.length}</span>
+      ${pk.length ? `<div class="plist">${pk.map(k => `<div><span>${esc(recLabel(S.app[k] || S.base[k]))}</span><span class="muted">${kindOf(k)}</span></div>`).join('')}</div>` : '<p class="muted">Todo enviado.</p>'}</section>
+    <section class="dr-sec"><span class="eyebrow">Historial</span>
+      <div class="log">${S.log.length ? S.log.map(l => `<div><span>${hhmm(l.t)}</span>${esc(l.m)}</div>`).join('') : '<p class="muted">Sin movimientos todavía.</p>'}</div></section>
+    ${REAL ? '' : `<section class="dr-sec"><span class="eyebrow">Herramientas del prototipo</span>
+      <div class="row"><button class="btn sm" data-act="demoConflict">Crear conflicto de ejemplo</button><button class="btn sm ghost" data-act="resetDemo">Restablecer datos de ejemplo</button></div></section>`}`;
+}
+
+/* ---------- formularios ---------- */
+let onSave = null;
+function modal(title, body, fn, label = 'Guardar', danger = false){
+  $('#mTitle').textContent = title; $('#mBody').innerHTML = body;
+  const b = $('#mSave'); b.textContent = label; b.className = 'btn ' + (danger ? 'danger' : 'primary'); b.hidden = !fn;
+  onSave = fn; $('#modal').hidden = false;
+  setTimeout(() => $('#mBody').querySelector('input:not([type=checkbox]),select,textarea')?.focus(), 30);
+}
+function closeModal(){ $('#modal').hidden = true; onSave = null }
+function confirmDel(text, fn){ modal('Confirmar borrado', `<p>${text}</p><p class="hint">El borrado también se aplica en la Google Sheet al sincronizar.</p>`, fn, 'Borrar', true) }
+
+function groupForm(id){
+  const g = id ? S.app[id] : {};
+  modal(id ? 'Editar grupo' : 'Nuevo grupo', `
+    <label class="fld" for="f_name"><span>Nombre (será el nombre de la pestaña)</span><input id="f_name" value="${esc(g.name)}" placeholder="Ej.: Notebooks"></label>
+    <label class="fld" for="f_desc"><span>Naturaleza / descripción</span><textarea id="f_desc" rows="3">${esc(g.desc)}</textarea></label>`, () => {
+    const name = v('f_name'); if (!name){ toast('Poné un nombre al grupo.'); return false }
+    if (groups().some(x => x.name.toLowerCase() === name.toLowerCase() && x.id !== id)){ toast('Ya hay un grupo con ese nombre: serían la misma pestaña.'); return false }
+    const nid = id || uid('g'); put(nid, {...g, t:'group', name, desc:v('f_desc')}); S.ui.g = nid; S.ui.view = 'group'; render();
+  });
+}
+function itemForm(id){
+  const g = S.ui.g, it = id ? S.app[id] : {}, leaves = tree(g).filter(c => c.leaf), ins = insts(g);
+  const field = c => { const cur = it['v.' + c.id] ?? '';
+    if (c.kind === 'qual') return `<label class="fld" for="f_v_${c.id}"><span>${esc(c.name)}</span><select id="f_v_${c.id}"><option value="">—</option>${scaleOf(c).map(o => `<option ${o === cur ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></label>`;
+    return `<label class="fld" for="f_v_${c.id}"><span>${esc(c.name)}${c.unit ? ' (' + esc(c.unit) + ')' : ''}</span><input id="f_v_${c.id}" inputmode="decimal" value="${esc(cur)}"></label>` };
+  modal(id ? 'Editar ítem' : 'Nuevo ítem', `
+    <label class="fld" for="f_name"><span>Nombre</span><input id="f_name" value="${esc(it.name)}"></label>
+    ${leaves.length ? `<div class="fgrid">${leaves.map(field).join('')}</div>` : '<p class="hint">El grupo no tiene criterios: definilos para cargar valores.</p>'}
+    <label class="fld" for="f_notes"><span>Notas</span><textarea id="f_notes" rows="2">${esc(it.notes)}</textarea></label>
+    ${ins.length ? `<div class="fld"><span>Incluir en instancias</span><div class="checks">${ins.map(n => `<label><input type="checkbox" id="f_in_${n.id}" ${id && instIds(n).includes(id) ? 'checked' : ''}> ${esc(n.name)}</label>`).join('')}</div></div>` : ''}`, () => {
+    const name = v('f_name'); if (!name){ toast('Poné un nombre al ítem.'); return false }
+    const nid = id || uid('i'); const rec = {...it, t:'item', g, name, notes:v('f_notes')};
+    leaves.forEach(c => { const x = v('f_v_' + c.id); if (x) rec['v.' + c.id] = x; else delete rec['v.' + c.id] });
+    setRec(nid, rec);
+    ins.forEach(n => { const on = document.getElementById('f_in_' + n.id).checked; const list = instIds(n); const has = list.includes(nid);
+      if (on !== has) setRec(n.id, {...S.app[n.id], items:(on ? [...list, nid] : list.filter(x => x !== nid)).join(',')}) });
+    commit();
+  });
+}
+function instForm(id){
+  const g = S.ui.g, n = id ? S.app[id] : {}, sel = id ? instIds({...n}) : [];
+  modal(id ? 'Editar instancia' : 'Nueva instancia', `
+    <label class="fld" for="f_name"><span>Nombre</span><input id="f_name" value="${esc(n.name)}" placeholder="Ej.: Para la oficina"></label>
+    <div class="fld"><span>Ítems a comparar</span><div class="checks">${items(g).map(it => `<label><input type="checkbox" id="f_it_${it.id}" ${sel.includes(it.id) ? 'checked' : ''}> ${esc(it.name)}</label>`).join('') || '<p class="hint">El grupo todavía no tiene ítems.</p>'}</div></div>`, () => {
+    const name = v('f_name'); if (!name){ toast('Poné un nombre a la instancia.'); return false }
+    const chosen = items(g).filter(it => document.getElementById('f_it_' + it.id).checked).map(it => it.id);
+    const nid = id || uid('n'); put(nid, {...n, t:'inst', g, name, items:chosen.join(',')}); S.ui.inst[g] = nid; save(); render();
+  });
+}
+function critForm(id, parent){
+  const g = S.ui.g, c = id ? S.app[id] : {kind:'num', dir:'max', w:'1', p:parent || ''};
+  const banned = id ? [id, ...descendants(id, g)] : [];
+  const opts = tree(g).filter(x => !banned.includes(x.id));
+  modal(id ? 'Editar criterio' : 'Nuevo criterio', `
+    <label class="fld" for="f_name"><span>Nombre</span><input id="f_name" value="${esc(c.name)}"></label>
+    <div class="fgrid">
+      <label class="fld" for="f_parent"><span>Depende de</span><select id="f_parent"><option value="">(criterio principal)</option>${opts.map(o => `<option value="${o.id}" ${o.id === c.p ? 'selected' : ''}>${'· '.repeat(o.depth)}${esc(o.name)}</option>`).join('')}</select></label>
+      <label class="fld" for="f_w"><span>Peso</span><input id="f_w" inputmode="decimal" value="${esc(c.w || '1')}"></label>
+      <label class="fld" for="f_kind"><span>Tipo</span><select id="f_kind"><option value="num" ${c.kind !== 'qual' ? 'selected' : ''}>Cuantitativo</option><option value="qual" ${c.kind === 'qual' ? 'selected' : ''}>Cualitativo (escala)</option></select></label>
+      <label class="fld onlynum" for="f_dir" ${c.kind === 'qual' ? 'hidden' : ''}><span>Sentido</span><select id="f_dir"><option value="max" ${c.dir !== 'min' ? 'selected' : ''}>Más es mejor</option><option value="min" ${c.dir === 'min' ? 'selected' : ''}>Menos es mejor</option></select></label>
+      <label class="fld onlynum" for="f_unit" ${c.kind === 'qual' ? 'hidden' : ''}><span>Unidad</span><input id="f_unit" value="${esc(c.unit)}" placeholder="kg, h, ARS…"></label>
+    </div>
+    <label class="fld onlyqual" for="f_scale" ${c.kind === 'qual' ? '' : 'hidden'}><span>Escala, de peor a mejor (separada por comas)</span><input id="f_scale" value="${esc(c.scale)}" placeholder="Mala, Regular, Buena, Excelente"></label>
+    <p class="hint">Si este criterio tiene subcriterios, su tipo se ignora y se calcula como promedio ponderado de ellos.</p>`, () => {
+    const name = v('f_name'); if (!name){ toast('Poné un nombre al criterio.'); return false }
+    const kind = v('f_kind'); if (kind === 'qual' && scaleOf({scale:v('f_scale')}).length < 2){ toast('La escala necesita al menos dos niveles.'); return false }
+    const p = v('f_parent'); let ord = c.ord;
+    if (!id || p !== c.p) ord = String(Math.max(0, ...crits(g).filter(x => (x.p || '') === p && x.id !== id).map(x => +x.ord || 0)) + 1);
+    const rec = {...c, t:'crit', g, p, name, kind, w:v('f_w') || '1', ord};
+    if (kind === 'qual'){ rec.scale = v('f_scale'); delete rec.dir; delete rec.unit } else { rec.dir = v('f_dir'); rec.unit = v('f_unit'); delete rec.scale }
+    put(id || uid('c'), rec);
+  });
+}
+
+/* ---------- acciones ---------- */
+const ACT = {
+  closeModal, modalSave(){ if (onSave && onSave() !== false) closeModal() },
+  mode(el){
+    const m = el.dataset.m; if (m === S.mode) return;
+    if (m === 'sheet' && (pendingKeys().length || S.conflicts.length))
+      return modal('Hay cambios sin sincronizar', `<p>Para pasar a «Cargar en la Sheet» primero tienen que subirse ${pendingKeys().length} cambios locales${S.conflicts.length ? ' y resolverse ' + S.conflicts.length + ' conflictos' : ''}. Si no, la Sheet los pisaría.</p>`, () => { closeModal(); sync(false); return false }, 'Sincronizar ahora');
+    S.mode = m; log(m === 'sheet' ? 'Modo «Cargar en la Sheet» activado: la app pasa a solo lectura.' : 'Modo «Editar en la app» activado: sincronización bidireccional.');
+    save(); render(); sync(true);
+  },
+  openSync, closeSync(){ S.drawer = false; $('#drawer').hidden = true },
+  syncNow(){ sync(false) },
+  pickGroup(el){ S.ui.view = 'group'; S.ui.g = el.dataset.id; save(); render() },
+  openSheet(){ S.ui.view = 'sheet'; save(); render() },
+  tab(el){ S.ui.tab = el.dataset.k; save(); render() },
+  goCrit(){ S.ui.tab = 'crit'; render() },
+  newGroup(){ groupForm() }, editGroup(){ groupForm(S.ui.g) },
+  delGroup(){ const g = S.ui.g; confirmDel(`Se borrará el grupo «${esc(S.app[g].name)}» con sus ítems, criterios e instancias.`, () => {
+    if (!canEdit()) return; Object.keys(S.app).filter(k => k === g || S.app[k].g === g).forEach(rmRec); S.ui.g = ''; fixUi(); commit() }) },
+  pickInst(el){ S.ui.inst[S.ui.g] = el.dataset.id; save(); render() },
+  newInst(){ instForm() }, editInst(){ instForm(curInst()?.id) },
+  delInst(){ const n = curInst(); confirmDel(`Se borrará la instancia «${esc(n.name)}». Los ítems no se borran.`, () => { if (!canEdit()) return; rmRec(n.id); commit() }) },
+  newItem(){ itemForm() }, editItem(el){ itemForm(el.dataset.id) },
+  delItem(el){ const id = el.dataset.id; confirmDel(`Se borrará el ítem «${esc(S.app[id].name)}» y se quitará de sus instancias.`, () => {
+    if (!canEdit()) return; rmRec(id); insts(S.ui.g).forEach(n => { const l = instIds(n); {
+      const rec = {...S.app[n.id], items:l.filter(x => x !== id).join(',')}; Object.keys(rec).filter(f => f.startsWith('o.' + id + '.')).forEach(f => delete rec[f]);
+      if (!same(rec, S.app[n.id])) setRec(n.id, rec) } }); commit() }) },
+  newCrit(el){ critForm(null, el.dataset.parent) }, editCrit(el){ critForm(el.dataset.id) },
+  delCrit(el){ const id = el.dataset.id, g = S.ui.g, ds = descendants(id, g);
+    confirmDel(`Se borrará el criterio «${esc(S.app[id].name)}»${ds.length ? ' y sus ' + ds.length + ' subcriterios' : ''}, junto con los valores cargados.`, () => {
+      if (!canEdit()) return; const gone = [id, ...ds]; gone.forEach(rmRec);
+      [...items(g), ...insts(g)].forEach(r => { const rec = {...S.app[r.id]}; Object.keys(rec).filter(f => gone.some(c => f === 'v.' + c || f.endsWith('.' + c))).forEach(f => delete rec[f]); if (!same(rec, S.app[r.id])) setRec(r.id, rec) });
+      commit() }) },
+  moveCrit(el){
+    if (!canEdit()) return; const c = S.app[el.dataset.id]; const sib = crits(S.ui.g).filter(x => (x.p || '') === (c.p || '')).sort((a, b) => (+a.ord || 0) - (+b.ord || 0));
+    const i = sib.findIndex(x => x.id === el.dataset.id), j = i + (+el.dataset.d); if (j < 0 || j >= sib.length) return;
+    [sib[i], sib[j]] = [sib[j], sib[i]]; sib.forEach((x, k) => { if (String(k + 1) !== x.ord) setRec(x.id, {...S.app[x.id], ord:String(k + 1)}) }); commit();
+  },
+  cell(el, e){
+    if (!canEdit()) return; const m = $('#menu'); m.dataset.it = el.dataset.it; m.dataset.c = el.dataset.c;
+    const r = el.getBoundingClientRect(); m.hidden = false;
+    m.style.left = Math.max(8, Math.min(r.left, innerWidth - m.offsetWidth - 8)) + 'px';
+    m.style.top = (r.bottom + m.offsetHeight + 8 > innerHeight ? Math.max(8, r.top - m.offsetHeight - 4) : r.bottom + 4) + 'px';
+  },
+  setOv(el){
+    const m = $('#menu'), n = curInst(); m.hidden = true; if (!n) return;
+    const f = 'o.' + m.dataset.it + '.' + m.dataset.c; const rec = {...S.app[n.id]};
+    if (el.dataset.v) rec[f] = el.dataset.v; else delete rec[f]; put(n.id, rec);
+  },
+  resolveOne(el){ resolve([el.dataset.k]) }, resolveAll(){ resolve(S.conflicts.map(c => c.k)) },
+  demoConflict(){
+    const g = S.ui.g && S.app[S.ui.g] ? S.ui.g : groups()[0]?.id; const it = items(g)[0]; const c = tree(g).find(x => x.leaf && x.kind !== 'qual');
+    if (!it || !c || !SIM.records[it.id]) return toast('Hace falta un ítem con un criterio numérico sincronizado.');
+    const base = parseFloat(it['v.' + c.id] || '100') || 100;
+    if (S.mode !== 'app'){ S.mode = 'app' }
+    setRec(it.id, {...S.app[it.id], ['v.' + c.id]:String(Math.round(base * 1.1))});
+    SIM.records[it.id] = {...SIM.records[it.id], ['v.' + c.id]:String(Math.round(base * 0.9)), u:new Date(Date.now() + 1000).toISOString()};
+    log(`Ejemplo: «${it.name} / ${c.name}» se cambió a la vez en la app y en la Sheet.`);
+    S.online = true; S.ui.view = 'group'; S.ui.g = g; S.ui.tab = 'cmp'; save(); sync(false);
+  },
+  resetDemo(){ modal('Restablecer datos de ejemplo', '<p>Se reemplazan la Sheet simulada y la copia local por los datos de ejemplo. Se pierde lo cargado en el prototipo.</p>', () => {
+    SIM = {records:seed()}; S.app = clone(SIM.records); S.base = clone(SIM.records); S.conflicts = []; S.choice = {}; S.log = []; S.online = true; S.mode = 'app';
+    log('Datos de ejemplo restablecidos.'); fixUi(); save(); render() }, 'Restablecer', true) },
+  sheetTab(el){ S.ui.sheetTab = el.dataset.k; save(); render() },
+  sheetAdd(){
+    const key = S.ui.sheetTab, id = uid(SYS[key] ? {group:'g', crit:'c', inst:'n'}[SYS[key].t] : 'i');
+    const rec = SYS[key] ? {t:SYS[key].t, name:'Nuevo'} : {t:'item', g:key, name:'Nuevo ítem'};
+    if (rec.t === 'crit' || rec.t === 'inst') rec.g = groups(SIM.records)[0]?.id || '';
+    if (rec.t === 'crit'){ rec.kind = 'num'; rec.dir = 'max'; rec.w = '1'; rec.ord = '99'; rec.p = '' }
+    SIM.records[id] = {...rec, u:now()}; LS.set('ci_sim', SIM); render(); toast('Fila agregada en la Sheet.');
+  },
+  sheetDel(el){ delete SIM.records[el.dataset.id]; LS.set('ci_sim', SIM); render(); toast('Fila eliminada en la Sheet.') }
+};
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); const menu = $('#menu');
+  if (!menu.hidden && !e.target.closest('#menu') && el?.dataset.act !== 'cell') menu.hidden = true;
+  if (e.target === $('#modal')) return closeModal();
+  if (el && ACT[el.dataset.act]) ACT[el.dataset.act](el, e);
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.id === 'f_kind'){ const q = t.value === 'qual'; document.querySelectorAll('.onlynum').forEach(x => x.hidden = q); document.querySelectorAll('.onlyqual').forEach(x => x.hidden = !q) }
+  else if (t.id === 'f_concl'){ const n = curInst(); if (n) put(n.id, {...S.app[n.id], concl:t.value.trim()}) }
+  else if (t.id === 'f_online' || t.id === 'f_online2'){ S.online = t.checked; log(t.checked ? 'Conexión restablecida.' : 'Conexión cortada (simulación): los cambios quedan en la copia local.'); save(); if (t.checked) sync(false); else render() }
+  else if (t.classList.contains('sc')){ const r = SIM.records[t.dataset.id]; if (!r) return; const val = t.value.trim();
+    if (val) r[t.dataset.f] = val; else delete r[t.dataset.f]; r.u = now(); LS.set('ci_sim', SIM); toast('Guardado en la Sheet. La app lo toma en la próxima sincronización.'); }
+  else if (t.type === 'radio' && t.dataset.k){ (S.choice[t.dataset.k] ||= {})[t.dataset.f] = t.value }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape'){ if (!$('#modal').hidden) closeModal(); else if (!$('#menu').hidden) $('#menu').hidden = true; else if (S.drawer) ACT.closeSync() } });
+
+setInterval(() => { if (S.online && !S.syncing && !document.hidden) sync(true) }, 15000);
+fixUi(); render(); sync(true);
+</script>
+
+</body></html>
