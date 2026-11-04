@@ -280,7 +280,6 @@ a.gitem{text-decoration:none;color:inherit}
   .grid .wide input{min-width:170px}
 }
 @media (max-width:480px){
-  .st-ok #syncTxt{display:none}
   .st-ok .dot{width:11px;height:11px}
   .side .side-h:first-child .btn{padding:6px 10px}
 }
@@ -323,7 +322,24 @@ a.gitem{text-decoration:none;color:inherit}
 .clist > .crow:last-child{border-radius:0 0 var(--r) var(--r)}
 .brand{min-width:0}
 .srcbadge{flex:none}
-@media (max-width:480px){ .bname{display:none} }
+#syncShort,.hrow2{display:none}
+@media (max-width:480px){
+  .top-in{flex-wrap:wrap;row-gap:2px}
+  .brand{font-size:1.05rem}
+  .bname{display:inline}
+  .brand .bmeta{display:none}
+  .top-in .hrow2{display:flex;align-items:center;gap:8px;flex-basis:100%;padding-left:30px;min-width:0}
+  .hrow2 .aver{white-space:normal;max-width:none;line-height:1.25}
+  #syncTxt{display:none}
+  #syncShort{display:inline;font-variant-numeric:tabular-nums}
+  #syncShort:empty{display:none}
+  .chip-sync{padding:8px 10px;gap:6px}
+}
+@media (max-width:380px){
+  .brand{font-size:.98rem}
+  .seg button{padding:6px 8px}
+  .srcbadge{font-size:.56rem;padding:1px 5px}
+}
 .sc-on{width:18px;height:18px;flex:none;accent-color:var(--accent);cursor:pointer}
 .sc-row.off{background:var(--sunk);border-style:dashed}
 .sc-row.off .sc-in{color:var(--muted);text-decoration:line-through;background:transparent}
@@ -431,7 +447,8 @@ a.btn{text-decoration:none;color:var(--ink)}
     <button data-act="mode" data-m="app" id="m_app"><span class="long">Editar en la app</span><span class="short">App</span></button>
     <button data-act="mode" data-m="sheet" id="m_sheet"><span class="long">Cargar en la Sheet</span><span class="short">Sheet</span></button>
   </div>
-  <button class="chip-sync" id="syncChip" data-act="openSync"><span class="dot"></span><span id="syncTxt">Sincronizado</span></button>
+  <button class="chip-sync" id="syncChip" data-act="openSync"><span class="dot"></span><span id="syncTxt">Sincronizado</span><span id="syncShort"></span></button>
+  <div class="hrow2"><span class="srcbadge" id="srcBadge2"></span><span class="aver" id="appVer2"></span></div>
 </div></header>
 
 <div class="shell">
@@ -510,7 +527,7 @@ a.btn{text-decoration:none;color:var(--ink)}
 const SCHEMA = JSON.parse(document.getElementById('ci-schema').textContent);
 /** Fecha y hora de esta versión de la app (se completa sola al generar los archivos). */
 const APP_NAME = 'COMPAREIt(em)';
-const APP_BUILD = '04/11/2026 13:21';
+const APP_BUILD = '04/11/2026 13:39';
 const $ = s => document.querySelector(s);
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
@@ -916,11 +933,12 @@ function renderStatus(){
   else if (conf){ cls = 'st-conf'; txt = conf + (conf === 1 ? ' conflicto' : ' conflictos') }
   else if (!S.online || !S.reach){ cls = REAL ? 'st-conf' : 'st-off'; txt = (REAL ? 'Error de conexión' : 'Sin conexión') + (pend ? ' · ' + pend + ' pend.' : '') }
   else if (pend){ cls = 'st-pend'; txt = pend + ' pendientes' }
-  $('#syncChip').className = 'chip-sync ' + cls; $('#syncTxt').textContent = txt; $('#syncChip').setAttribute('aria-label', 'Sincronización: ' + txt);
+  $('#syncChip').className = 'chip-sync ' + cls; $('#syncTxt').textContent = txt;
+  $('#syncShort').textContent = S.syncing ? '' : conf ? String(conf) : (!S.online || !S.reach) ? '!' : pend ? String(pend) : ''; $('#syncChip').setAttribute('aria-label', 'Sincronización: ' + txt);
   $('#m_app').classList.toggle('on', S.mode === 'app'); $('#m_sheet').classList.toggle('on', S.mode === 'sheet');
   document.body.classList.toggle('ro', S.mode === 'sheet');
-  $('#srcBadge').textContent = REAL ? 'Sheet real' : 'Simulación';
-  $('#appVer').textContent = APP_BUILD ? 'Versión ' + APP_NAME + ' ' + APP_BUILD : ''; $('#appVer').title = 'Fecha y hora de la última versión de la app';
+  $('#srcBadge').textContent = $('#srcBadge2').textContent = REAL ? 'Sheet real' : 'Simulación';
+  $('#appVer').textContent = $('#appVer2').textContent = APP_BUILD ? 'Versión ' + APP_NAME + ' ' + APP_BUILD : ''; $('#appVer').title = 'Fecha y hora de la última versión de la app';
 }
 
 function renderSide(){
