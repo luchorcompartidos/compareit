@@ -292,7 +292,7 @@ a.gitem{text-decoration:none;color:inherit}
 .sc-h{border:0;background:transparent;cursor:grab;font-size:1.1rem;color:var(--muted);padding:6px 4px;touch-action:none;min-width:32px;min-height:36px}
 .sc-row.dragging .sc-h{cursor:grabbing}
 .sc-n{font-family:var(--f-mono);font-size:.8rem;font-weight:500;min-width:24px;height:24px;border-radius:6px;background:var(--sunk);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
-.sc-row:first-child .sc-n{background:var(--accent);color:var(--accent-ink)}
+.sc-row:not(.off) .sc-n{background:var(--accent);color:var(--accent-ink)}
 .sc-in{flex:1;min-width:0;border:1px solid transparent;padding:6px 8px}
 .sc-in:hover{border-color:var(--line)}
 .sc-u{font-size:.72rem;color:var(--muted);white-space:nowrap}
@@ -324,6 +324,11 @@ a.gitem{text-decoration:none;color:inherit}
 .brand{min-width:0}
 .srcbadge{flex:none}
 @media (max-width:480px){ .bname{display:none} }
+.sc-on{width:18px;height:18px;flex:none;accent-color:var(--accent);cursor:pointer}
+.sc-row.off{background:var(--sunk);border-style:dashed}
+.sc-row.off .sc-in{color:var(--muted);text-decoration:line-through;background:transparent}
+.sc-row.off .sc-n{background:transparent;color:var(--muted)}
+.sc-list .sc-row:not(.off) ~ .sc-row:not(.off) .sc-n{background:var(--sunk);color:var(--ink)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.88rem;z-index:70;max-width:calc(100% - 32px)}
 
 @media (max-width:860px){
@@ -390,6 +395,7 @@ a.gitem{text-decoration:none;color:inherit}
   {"f":"dir","h":"Sentido","type":"enum","opts":[["max","Más es mejor"],["min","Menos es mejor"]]},
   {"f":"unit","h":"Unidad","type":"text"},
   {"f":"scale","h":"Escala","type":"scale","wide":1},
+  {"f":"off","h":"Niveles desestimados","type":"text","hidden":1},
   {"f":"_uses","h":"Usado en","type":"uses","virtual":1,"wide":1}]},
  "crit": {"tab":"_Usos","label":"Usos","single":"Uso de criterio","newName":"","prefix":"c","cols":[
   {"f":"g","h":"Grupo","type":"ref","ref":"group","req":1},
@@ -513,7 +519,7 @@ function log(m){ S.log.unshift({t:now(), m}); S.log = S.log.slice(0, 14) }
 /* ---------- acceso a datos ---------- */
 const recs = (t, src = S.app) => Object.entries(src).filter(([, r]) => r.t === t).map(([id, r]) => ({...r, id}));
 const groups = (src = S.app) => recs('group', src).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es'));
-const ROOTF = ['name', 'desc', 'kind', 'dir', 'unit', 'scale'];
+const ROOTF = ['name', 'desc', 'kind', 'dir', 'unit', 'scale', 'off'];
 /** Uso de criterio con los atributos de su criterio raíz. */
 function withRoot(u, src){ const r = src[u.root] || {}, o = {...u}; ROOTF.forEach(f => { if (r[f] != null && r[f] !== '') o[f] = r[f]; else delete o[f] }); if (!o.name) o.name = '(criterio sin definir)'; return o }
 const crits = (g, src = S.app) => recs('crit', src).filter(c => c.g === g).map(c => withRoot(c, src));
@@ -524,7 +530,13 @@ const items = (g, src = S.app) => recs('item', src).filter(i => i.g === g).sort(
 const insts = (g, src = S.app) => recs('inst', src).filter(i => i.g === g).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es'));
 const instIds = n => (n.items || '').split(',').map(x => x.trim()).filter(x => x && S.app[x]);
 /** Niveles de mejor a peor, tal como se guardan. */
-const levelsOf = c => (c.scale || '').split(',').map(x => x.trim()).filter(Boolean);
+const splitList = t => (t || '').split(',').map(x => x.trim()).filter(Boolean);
+/** Todos los niveles, incluidos los desestimados. */
+const allLevelsOf = c => splitList(c.scale);
+/** Niveles desestimados: se conservan pero no cuentan en la evaluación. */
+const offOf = c => { const o = new Set(splitList(c.off)); return allLevelsOf(c).filter(l => o.has(l)) };
+/** Niveles incluidos, de mejor a peor: los que se usan para evaluar. */
+const levelsOf = c => { const o = new Set(splitList(c.off)); return allLevelsOf(c).filter(l => !o.has(l)) };
 /** De peor a mejor: la usa el cálculo de puntajes. */
 const scaleOf = c => levelsOf(c).reverse();
 const numbered = c => levelsOf(c).map((x, i) => (i + 1) + '. ' + x);
@@ -542,7 +554,7 @@ function descendants(id, g, src = S.app){ const cs = crits(g, src); const out = 
 
 function fmt(c, raw){
   if (raw === '' || raw == null) return '—';
-  if (c.kind === 'qual') return raw;
+  if (c.kind === 'qual') return offOf(c).includes(raw) ? raw + ' (desestimado)' : raw;
   const n = parseFloat(String(raw).replace(',', '.'));
   if (isNaN(n)) return raw;
   const s = n.toLocaleString('es-AR', {maximumFractionDigits:2});
@@ -908,10 +920,10 @@ function planTabs(D){
 }
 function planCols(t, key, D){
   const s = SCHEMA[t]; if (!s) return [];
-  if (!s.perGroup) return s.cols;
+  if (!s.perGroup) return s.cols.filter(c => !c.hidden);
   const leaves = tree(key, D).filter(c => c.leaf);
   return [s.cols[0], ...leaves.map(c => c.kind === 'qual'
-    ? {f:'v.' + c.id, h:c.name, type:'enum', opts:levelsOf(c).map((o, i) => [o, (i + 1) + '. ' + o])}
+    ? {f:'v.' + c.id, h:c.name, type:'enum', opts:[...levelsOf(c).map((o, i) => [o, (i + 1) + '. ' + o]), ...offOf(c).map(o => [o, o + ' (desestimado)'])]}
     : {f:'v.' + c.id, h:c.name + (c.unit ? ' (' + c.unit + ')' : ''), type:'num'}), ...s.cols.slice(1)];
 }
 function planRows(t, key, D){
@@ -1104,7 +1116,7 @@ function viewCrit(g){
     const others = groupsOfRoot(c.root).filter(x => x !== g.id);
     const kindLbl = c.kind === 'agg' || !c.leaf ? 'Agrupador' : c.kind === 'qual' ? 'Cualitativo' : 'Cuantitativo';
     return `<div class="crow ${c.depth === 0 ? 'top-level' : ''}" style="padding-left:${14 + c.depth * 22}px">
-    <div class="cname"><strong>${esc(c.name)}</strong><span class="cw">${c.leaf ? esc(critHint(c)) + (c.kind === 'qual' ? ': ' + esc(numbered(c).join(' · ')) : '') : 'Agrupa ' + c.kids.length + ' subcriterios'}${c.desc ? ' · ' + esc(c.desc) : ''}</span></div>
+    <div class="cname"><strong>${esc(c.name)}</strong><span class="cw">${c.leaf ? esc(critHint(c)) + (c.kind === 'qual' ? ': ' + esc(numbered(c).join(' · ')) + (offOf(c).length ? ' · desestimados: ' + esc(offOf(c).join(', ')) : '') : '') : 'Agrupa ' + c.kids.length + ' subcriterios'}${c.desc ? ' · ' + esc(c.desc) : ''}</span></div>
     <span class="badge ${c.leaf ? '' : 'agg'}">${kindLbl}</span>
     ${others.length ? `<span class="badge shared" title="También en: ${esc(others.map(nameOf).join(', '))}">Compartido · ${others.length + 1} grupos</span>` : ''}
     <span class="badge">peso ${c.w || 1}</span>
@@ -1124,7 +1136,7 @@ function uniqueRootName(n, D = S.app, except){ let x = n, i = 2; while (roots(D)
 function rootTaken(n, D = S.app, except){ return roots(D).some(r => r.id !== except && (r.name || '').toLowerCase() === n.toLowerCase()) }
 function rootCopy(r){ const o = {t:'root'}; ROOTF.forEach(f => { if (r[f]) o[f] = r[f] }); return o }
 function scUsedRoot(D, rid){ const u = {}; usesOf(rid, D).forEach(x => items(x.g, D).forEach(it => { const v = it['v.' + x.id]; if (v) u[v] = (u[v] || 0) + 1 })); return u }
-function scaleCopyList(D, except){ return roots(D).filter(r => r.id !== except && r.kind === 'qual' && levelsOf(r).length > 1).map(r => [r.id, r.name, r.scale]) }
+function scaleCopyList(D, except){ return roots(D).filter(r => r.id !== except && r.kind === 'qual' && levelsOf(r).length > 1).map(r => [r.id, r.name, r.scale, r.off || '']) }
 function kindOpts(k){ return [['num', 'Cuantitativo'], ['qual', 'Cualitativo (escala)'], ['agg', 'Agrupador']].map(([v, l]) => `<option value="${v}" ${k === v ? 'selected' : ''}>${l}</option>`).join('') }
 function toggleKind(k){ document.querySelectorAll('.onlynum').forEach(x => x.hidden = k !== 'num'); document.querySelectorAll('.onlyqual').forEach(x => x.hidden = k !== 'qual') }
 
@@ -1147,13 +1159,13 @@ function critForm(id, parent){
       <label class="fld onlynum" for="f_dir" ${k !== 'num' ? 'hidden' : ''}><span>Sentido</span><select id="f_dir"><option value="max" ${root.dir !== 'min' ? 'selected' : ''}>Más es mejor</option><option value="min" ${root.dir === 'min' ? 'selected' : ''}>Menos es mejor</option></select></label>
       <label class="fld onlynum" for="f_unit" ${k !== 'num' ? 'hidden' : ''}><span>Unidad</span><input id="f_unit" value="${esc(root.unit)}" placeholder="kg, h, ARS…"></label>
     </div>
-    <div class="onlyqual" ${k !== 'qual' ? 'hidden' : ''}>${scaleEditorHtml(levelsOf(root), id ? scUsedRoot(S.app, use.root) : {}, scaleCopyList(S.app, use.root))}</div>
+    <div class="onlyqual" ${k !== 'qual' ? 'hidden' : ''}>${scaleEditorHtml(root, id ? scUsedRoot(S.app, use.root) : {}, scaleCopyList(S.app, use.root))}</div>
     <p class="hint">Un agrupador no tiene valores propios: se calcula como promedio ponderado de sus subcriterios.</p>`, () => {
     let name = v('f_name'); if (!name){ toast('Poné un nombre al criterio.'); return false }
     const kind = v('f_kind'); let res = null;
     if (kind === 'qual'){ res = scResult(); if (typeof res === 'string'){ toast(res); return false } }
     const rootNew = {t:'root', name, kind}; const desc = v('f_desc'); if (desc) rootNew.desc = desc;
-    if (kind === 'qual') rootNew.scale = res.labels.join(', ');
+    if (kind === 'qual'){ rootNew.scale = res.labels.join(', '); if (res.off.length) rootNew.off = res.off.join(', ') }
     if (kind === 'num'){ rootNew.dir = v('f_dir'); const un = v('f_unit'); if (un) rootNew.unit = un }
     const changed = !id || !same(rootCopy(root), rootNew);
     let scope = 'all';
@@ -1325,7 +1337,7 @@ function groupForm(id){
 function itemForm(id){
   const g = S.ui.g, it = id ? S.app[id] : {}, leaves = tree(g).filter(c => c.leaf), ins = insts(g);
   const field = c => { const cur = it['v.' + c.id] ?? '';
-    if (c.kind === 'qual') return `<label class="fld" for="f_v_${c.id}"><span>${esc(c.name)}</span><select id="f_v_${c.id}"><option value="">—</option>${levelsOf(c).map((o, i) => `<option value="${esc(o)}" ${o === cur ? 'selected' : ''}>${i + 1}. ${esc(o)}</option>`).join('')}</select></label>`;
+    if (c.kind === 'qual') return `<label class="fld" for="f_v_${c.id}"><span>${esc(c.name)}</span><select id="f_v_${c.id}"><option value="">—</option>${levelsOf(c).map((o, i) => `<option value="${esc(o)}" ${o === cur ? 'selected' : ''}>${i + 1}. ${esc(o)}</option>`).join('')}${offOf(c).filter(o => o === cur).map(o => `<option value="${esc(o)}" selected>${esc(o)} (desestimado)</option>`).join('')}</select></label>`;
     return `<label class="fld" for="f_v_${c.id}"><span>${esc(c.name)}${c.unit ? ' (' + esc(c.unit) + ')' : ''}</span><input id="f_v_${c.id}" inputmode="decimal" value="${esc(cur)}"></label>` };
   modal(id ? 'Editar ítem' : 'Nuevo ítem', `
     <label class="fld" for="f_name"><span>Nombre</span><input id="f_name" value="${esc(it.name)}"></label>
@@ -1363,8 +1375,9 @@ function scUsed(D, cid, g){
   const u = {}; if (!cid) return u;
   items(g, D).forEach(it => { const v = it['v.' + cid]; if (v) u[v] = (u[v] || 0) + 1 }); return u;
 }
-function scaleEditorHtml(levels, used, copy){
-  SE = {rows:levels.map(l => ({orig:l, label:l})), used:used || {}, removed:{}, copy:copy || []};
+function scaleEditorHtml(c, used, copy){
+  const off = new Set(offOf(c || {}));
+  SE = {rows:allLevelsOf(c || {}).map(l => ({orig:l, label:l, off:off.has(l)})), used:used || {}, removed:{}, copy:copy || []};
   return `<div class="sced" id="sced"></div>`;
 }
 function scRender(focus){
@@ -1372,15 +1385,16 @@ function scRender(focus){
   const levelsNow = SE.rows.map(r => r.label.trim()).filter(Boolean);
   const rem = Object.keys(SE.removed);
   box.innerHTML = `
-    <div class="sc-head"><span>Niveles, de mejor a peor</span><span class="hint">Arrastrá desde ⠿ o usá las flechas (Alt+↑/↓)</span></div>
-    <ol class="sc-list" id="sc_list">${SE.rows.map((r, i) => `<li class="sc-row" data-i="${i}">
+    <div class="sc-head"><span>Niveles, de mejor a peor</span><span class="hint">Arrastrá desde ⠿ o usá las flechas (Alt+↑/↓). Desmarcá un nivel para desestimarlo sin borrarlo.</span></div>
+    <ol class="sc-list" id="sc_list">${(() => { let n = 0; return SE.rows.map((r, i) => `<li class="sc-row ${r.off ? 'off' : ''}" data-i="${i}">
       <button type="button" class="sc-h" data-sc="handle" aria-label="Arrastrar ${esc(r.label)}">⠿</button>
-      <span class="sc-n">${i + 1}</span>
+      <input type="checkbox" class="sc-on" id="sc_on_${i}" data-i="${i}" ${r.off ? '' : 'checked'} title="${r.off ? 'Desestimado: no cuenta en la evaluación' : 'Incluido en la escala'}" aria-label="Incluir ${esc(r.label)} en la escala">
+      <span class="sc-n">${r.off ? '–' : ++n}</span>
       <input class="sc-in" id="sc_in_${i}" data-i="${i}" value="${esc(r.label)}" aria-label="Nivel ${i + 1}">
       ${r.orig && SE.used[r.orig] ? `<span class="sc-u" title="Ítems con este valor">${SE.used[r.orig]} ítem${SE.used[r.orig] > 1 ? 's' : ''}</span>` : ''}
       <button type="button" class="sc-b" data-sc="up" data-i="${i}" aria-label="Subir" ${i === 0 ? 'disabled' : ''}>↑</button>
       <button type="button" class="sc-b" data-sc="down" data-i="${i}" aria-label="Bajar" ${i === SE.rows.length - 1 ? 'disabled' : ''}>↓</button>
-      <button type="button" class="sc-b" data-sc="del" data-i="${i}" aria-label="Quitar ${esc(r.label)}">✕</button></li>`).join('')}</ol>
+      <button type="button" class="sc-b" data-sc="del" data-i="${i}" aria-label="Quitar ${esc(r.label)}">✕</button></li>`).join('') })()}</ol>
     <div class="sc-add"><input id="sc_new" placeholder="Agregar nivel…" title="Podés pegar varios separados por comas o líneas"><button type="button" class="btn sm" data-sc="add">Agregar</button></div>
     <div class="row"><button type="button" class="btn sm ghost" data-sc="invert" ${SE.rows.length < 2 ? 'disabled' : ''}>Invertir orden</button>
       <label class="sc-pre" for="sc_preset"><select id="sc_preset"><option value="">Usar una escala frecuente…</option>${SCALE_PRESETS.map(p => `<option value="${esc(p[0])}">${esc(p[1])}</option>`).join('')}</select></label>
@@ -1397,19 +1411,20 @@ function scAddText(txt){
   txt.split(/[,\n;]+/).map(x => x.trim()).filter(Boolean).forEach(l => {
     if (SE.rows.some(r => r.label.trim().toLowerCase() === l.toLowerCase())) return;
     const back = Object.keys(SE.removed).find(o => o.toLowerCase() === l.toLowerCase());
-    if (back){ delete SE.removed[back]; SE.rows.push({orig:back, label:back}) } else SE.rows.push({orig:'', label:l});
+    if (back){ delete SE.removed[back]; SE.rows.push({orig:back, label:back, off:false}) } else SE.rows.push({orig:'', label:l, off:false});
   });
 }
 /** Devuelve {labels, renames, removed} o un texto de error. */
 function scResult(){
   const labels = SE.rows.map(r => r.label.trim()).filter(Boolean);
-  if (labels.length < 2) return 'La escala necesita al menos dos niveles.';
+  const off = SE.rows.filter(r => r.off && r.label.trim()).map(r => r.label.trim());
+  if (labels.length - off.length < 2) return 'La escala necesita al menos dos niveles incluidos.';
   if (labels.some(l => l.includes(','))) return 'Un nivel no puede contener comas: se usan para separar niveles en la planilla.';
   if (new Set(labels.map(l => l.toLowerCase())).size !== labels.length) return 'Hay niveles repetidos.';
   const renames = {}; SE.rows.forEach(r => { if (r.orig && r.label.trim() && r.label.trim() !== r.orig) renames[r.orig] = r.label.trim() });
   SE.rows.forEach(r => { if (r.orig && !r.label.trim() && SE.used[r.orig]) SE.removed[r.orig] = SE.removed[r.orig] || '' });
   const removed = {...SE.removed}; Object.keys(removed).forEach(o => { if (removed[o] && !labels.includes(removed[o])) removed[o] = '' });
-  return {labels, renames, removed};
+  return {labels, off, renames, removed};
 }
 /** Aplica renombres y bajas de niveles a los valores ya cargados en los ítems del grupo. */
 function scApplyToItems(st, D, cid, g, res){
@@ -1433,10 +1448,11 @@ document.addEventListener('click', e => {
   else if (a === 'add'){ const inp = document.getElementById('sc_new'); scAddText(inp.value); scRender('sc_new') }
 });
 document.addEventListener('input', e => { const t = e.target; if (t.classList && t.classList.contains('sc-in') && SE){ SE.rows[+t.dataset.i].label = t.value }
+  if (t.classList && t.classList.contains('sc-on') && SE){ SE.rows[+t.dataset.i].off = !t.checked; scRender('sc_on_' + t.dataset.i) }
   if (t.id === 'f_cat_q'){ const q = t.value.trim().toLowerCase(); document.querySelectorAll('.catrow').forEach(r => r.hidden = !!q && !r.dataset.n.includes(q)) } });
 document.addEventListener('change', e => {
   const t = e.target; if (!SE) return;
-  if (t.id === 'sc_copy' && t.value){ const c = SE.copy.find(x => x[0] === t.value); if (c){ SE.rows.forEach(r => { if (r.orig && SE.used[r.orig]) SE.removed[r.orig] = '' }); SE.rows = []; scAddText(c[2]); scRender() } }
+  if (t.id === 'sc_copy' && t.value){ const c = SE.copy.find(x => x[0] === t.value); if (c){ SE.rows.forEach(r => { if (r.orig && SE.used[r.orig]) SE.removed[r.orig] = '' }); SE.rows = []; scAddText(c[2]); const o = new Set(splitList(c[3])); SE.rows.forEach(r => r.off = o.has(r.label)); scRender() } }
   else if (t.id === 'sc_preset' && t.value){ SE.rows.forEach(r => { if (r.orig && SE.used[r.orig]) SE.removed[r.orig] = '' }); SE.rows = []; scAddText(t.value); scRender() }
   else if (t.dataset && t.dataset.rm !== undefined && t.closest('#sced')) SE.removed[t.dataset.rm] = t.value;
 });
@@ -1460,7 +1476,7 @@ document.addEventListener('pointerdown', e => {
     const rows = [...list.children].filter(r => r !== row);
     const after = rows.find(r => { const b = r.getBoundingClientRect(); return ev.clientY < b.top + b.height / 2 });
     if (after) list.insertBefore(row, after); else list.appendChild(row);
-    [...list.children].forEach((r, k) => r.querySelector('.sc-n').textContent = k + 1);
+    let n = 0; [...list.children].forEach(r => { r.querySelector('.sc-n').textContent = r.classList.contains('off') ? '–' : ++n });
   };
   const up = ev => {
     if (ev.pointerId !== pid) return;
@@ -1495,9 +1511,9 @@ const ACT = {
   pickScale(el){ const sk = el.dataset.sk, st = STORE[sk], D = st.get(), id = el.dataset.id, rec = D[id];
     if (!rec || (sk === 'app' && !canEdit())) return;
     const gs = groupsOfRoot(id, D).map(x => D[x].name);
-    modal('Escala de «' + (rec.name || '') + '»', (gs.length > 1 ? `<div class="sharewarn"><strong>Criterio compartido.</strong> El cambio se aplica en todos los grupos donde se usa: ${esc(gs.join(', '))}.</div>` : '') + scaleEditorHtml(levelsOf(rec), scUsedRoot(D, id), scaleCopyList(D, id)), () => {
+    modal('Escala de «' + (rec.name || '') + '»', (gs.length > 1 ? `<div class="sharewarn"><strong>Criterio compartido.</strong> El cambio se aplica en todos los grupos donde se usa: ${esc(gs.join(', '))}.</div>` : '') + scaleEditorHtml(rec, scUsedRoot(D, id), scaleCopyList(D, id)), () => {
       const res = scResult(); if (typeof res === 'string'){ toast(res); return false }
-      usesOf(id, D).forEach(u => scApplyToItems(st, D, u.id, u.g, res)); st.write(id, {...rec, scale:res.labels.join(', ')}); st.after(); SE = null; render() });
+      usesOf(id, D).forEach(u => scApplyToItems(st, D, u.id, u.g, res)); const r2 = {...rec, scale:res.labels.join(', ')}; if (res.off.length) r2.off = res.off.join(', '); else delete r2.off; st.write(id, r2); st.after(); SE = null; render() });
     scRender() },
   pickMulti(el){ const sk = el.dataset.sk, st = STORE[sk], D = st.get(), id = el.dataset.id, f = el.dataset.f, rec = D[id];
     if (!rec || (sk === 'app' && !canEdit())) return;
