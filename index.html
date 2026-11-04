@@ -277,7 +277,9 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const v = id => { const e = document.getElementById(id); return e ? e.value.trim() : '' };
 const hhmm = iso => iso ? new Date(iso).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : '—';
-const REAL = !!(window.google && window.google.script && window.google.script.run);
+const API = LS.get('ci_api', null);
+const MODE = (window.google && window.google.script && window.google.script.run) ? 'gas' : (API && API.url ? 'api' : 'sim');
+const REAL = MODE !== 'sim';
 
 /* ---------- datos de ejemplo (simulan la Google Sheet) ---------- */
 function seed(){
@@ -328,6 +330,7 @@ S.err = ''; S.sheet = null;
 function errText(e){
   const m = e && (e.message || (typeof e === 'string' ? e : '')) || String(e || '');
   if (!REAL && m === 'offline') return 'conexión cortada en la simulación';
+  if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'No se pudo llegar a la URL de la aplicación web. Revisá la URL (/exec), que el acceso sea «Cualquier usuario» y tu conexión a internet. Desde claude.ai esta conexión está bloqueada: usá el archivo HTML abierto en tu navegador.';
   return m || 'error sin detalle';
 }
 function save(){
@@ -421,7 +424,14 @@ const Sim = {
 };
 const gcall = (fn, ...a) => new Promise((ok, ko) => google.script.run.withSuccessHandler(ok).withFailureHandler(ko)[fn](...a));
 const Gas = { pull: () => gcall('getAll'), push: (up, dels) => gcall('putChanges', up, dels) };
-const adapter = REAL ? Gas : Sim;
+async function apiCall(cfg, action, extra){
+  const r = await fetch(cfg.url, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify({action, key:cfg.key, ...extra})});
+  if (!r.ok) throw new Error('La aplicación web respondió con error HTTP ' + r.status + '.');
+  let j; try{ j = await r.json() }catch(e){ throw new Error('La URL no devolvió datos de CompareIt. Usá la URL que termina en /exec y publicá una nueva versión con acceso «Cualquier usuario».') }
+  if (!j.ok) throw new Error(j.error); return j.data;
+}
+const Api = { pull: () => apiCall(API, 'getAll'), push: (up, dels) => apiCall(API, 'putChanges', {up, dels}) };
+const adapter = MODE === 'gas' ? Gas : MODE === 'api' ? Api : Sim;
 
 /* ---------- sincronización con fusión a 3 vías ---------- */
 function norm(r){ if (!r) return null; const o = {}; Object.keys(r).filter(k => k !== 'u').sort().forEach(k => { if (r[k] !== '' && r[k] != null) o[k] = String(r[k]) }); return o }
@@ -574,7 +584,8 @@ function renderSide(){
       <span class="gname">${esc(g.name)}</span><span class="gmeta">${items(g.id).length} ítems · ${insts(g.id).length} instancias</span></button>`).join('')}</nav>
     <div class="side-h"><span class="eyebrow">Fuente de datos</span></div>
     ${REAL ? (S.sheet ? `<a class="gitem sheetbtn" href="${esc(S.sheet.url)}" target="_blank" rel="noopener"><span class="gname">Abrir planilla ↗</span><span class="gmeta">${esc(S.sheet.name)}</span></a>` : `<div class="gitem"><span class="gname">Google Sheet</span><span class="gmeta">${S.err ? 'Error: ver panel de sincronización' : 'Conectando…'}</span></div>`)
-    : `<button class="gitem sheetbtn ${S.ui.view === 'sheet' ? 'on' : ''}" data-act="openSheet"><span class="gname">Google Sheet</span><span class="gmeta">Simulación editable</span></button>`}`;
+    : `<button class="gitem sheetbtn ${S.ui.view === 'sheet' ? 'on' : ''}" data-act="openSheet"><span class="gname">Google Sheet</span><span class="gmeta">Simulación editable</span></button>
+    <button class="gitem" data-act="openSync"><span class="gname">Conectar a mi Sheet</span><span class="gmeta">Usar la planilla real</span></button>`}`;
 }
 
 function render(){
@@ -740,7 +751,14 @@ function renderDrawer(){
   $('#drBody').innerHTML = `
     <section class="dr-sec"><span class="eyebrow">Fuente de datos</span>
       ${REAL ? `<p><strong>Google Sheet real</strong> (aplicación web de Apps Script)${S.sheet ? `: <a href="${esc(S.sheet.url)}" target="_blank" rel="noopener">${esc(S.sheet.name)} ↗</a>` : ''}.</p>`
-        : `<div class="srcwarn"><strong>Simulación: esta versión no está conectada a ninguna planilla.</strong> Los datos se guardan solo en este navegador. Para trabajar con tu Sheet, abrí la URL de la aplicación web de Apps Script (termina en <code>/exec</code>).</div>`}</section>
+        : `<div class="srcwarn"><strong>Simulación: esta versión no está conectada a ninguna planilla.</strong> Los datos se guardan solo en este navegador.</div>
+        <h3>Conectar a mi Google Sheet</h3>
+        <label class="fld" for="f_apiurl"><span>URL de la aplicación web (termina en /exec)</span><input id="f_apiurl" placeholder="https://script.google.com/macros/s/…/exec"></label>
+        <label class="fld" for="f_apikey"><span>Clave (API_KEY de Código.gs)</span><input id="f_apikey" autocomplete="off"></label>
+        <div class="checks"><label><input type="checkbox" id="f_apiup"> Subir a la Sheet los datos cargados en esta app</label></div>
+        <p class="hint">Sin marcar, la app arranca con lo que ya tenga la planilla. Funciona con el archivo HTML abierto en tu navegador; desde claude.ai la conexión está bloqueada.</p>
+        <div class="row"><button class="btn sm primary" data-act="apiConnect">Probar y conectar</button></div>`}
+      ${MODE === 'api' ? `<p class="muted">Conectada por URL. <button class="btn sm ghost" data-act="apiDisconnect">Desconectar</button></p>` : ''}</section>
     <section class="dr-sec"><span class="eyebrow">Estado</span>
       <p>${S.syncing ? 'Sincronizando…' : !S.online || !S.reach ? 'Sin conexión: trabajás sobre la copia local y los cambios quedan en cola.' : 'Conectado con la Google Sheet.'}</p>
       ${S.err ? `<div class="errbox"><strong>Error real devuelto:</strong><code>${esc(S.err)}</code></div>` : ''}
@@ -881,6 +899,21 @@ const ACT = {
     const f = 'o.' + m.dataset.it + '.' + m.dataset.c; const rec = {...S.app[n.id]};
     if (el.dataset.v) rec[f] = el.dataset.v; else delete rec[f]; put(n.id, rec);
   },
+  async apiConnect(el){
+    const cfg = {url:v('f_apiurl'), key:v('f_apikey')}; const upload = $('#f_apiup').checked;
+    if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(cfg.url)) return toast('Pegá la URL de la aplicación web: empieza con https://script.google.com/ y termina en /exec.');
+    if (!cfg.key) return toast('Pegá la clave API_KEY que figura en Código.gs.');
+    el.disabled = true; el.textContent = 'Probando…';
+    try{
+      const info = await apiCall(cfg, 'getInfo');
+      if (upload){ S.base = {} } else { S.app = {}; S.base = {} }
+      S.conflicts = []; S.online = true; S.mode = 'app'; S.last = '';
+      log('Conectada a la planilla «' + info.name + '».'); save(); LS.set('ci_api', cfg); location.reload();
+    }catch(e){ el.disabled = false; el.textContent = 'Probar y conectar'; S.err = errText(e); renderDrawer() }
+  },
+  apiDisconnect(){ modal('Desconectar la planilla', '<p>La app vuelve a la simulación con los datos de ejemplo. Tu Google Sheet no se modifica.</p>', () => {
+    try{ localStorage.removeItem('ci_api') }catch(e){}
+    S.app = clone(SIM.records); S.base = clone(SIM.records); S.conflicts = []; save(); location.reload() }, 'Desconectar') },
   resolveOne(el){ resolve([el.dataset.k]) }, resolveAll(){ resolve(S.conflicts.map(c => c.k)) },
   demoConflict(){
     const g = S.ui.g && S.app[S.ui.g] ? S.ui.g : groups()[0]?.id; const it = items(g)[0]; const c = tree(g).find(x => x.leaf && x.kind !== 'qual');
@@ -925,5 +958,5 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape'){ if (!$('#mo
 
 setInterval(() => { if (S.online && !S.syncing && !document.hidden) sync(true) }, 15000);
 fixUi(); render(); sync(true);
-if (REAL) gcall('getInfo').then(i => { S.sheet = i; render() }).catch(e => { S.err = errText(e); log('No se pudo leer la planilla: ' + S.err); render() });
+if (REAL) (MODE === 'gas' ? gcall('getInfo') : apiCall(API, 'getInfo')).then(i => { S.sheet = i; render() }).catch(e => { S.err = errText(e); log('No se pudo leer la planilla: ' + S.err); render() });
 </script>
