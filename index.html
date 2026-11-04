@@ -20,7 +20,10 @@
   --bg:#11131D; --surface:#191C2A; --sunk:#222638; --ink:#E6E8F2; --muted:#9BA1BE; --line:#2D3147;
   --accent:#8E99FF; --accent-ink:#11131D; --adv:#4CC48B; --dis:#F17C66; --eq:#9AA1BD; --warn:#E3A94B; color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+img{max-width:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--surface)}
 h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
 h1{font-size:1.9rem;font-weight:700}
