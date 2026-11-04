@@ -329,6 +329,73 @@ a.gitem{text-decoration:none;color:inherit}
 .sc-row.off .sc-in{color:var(--muted);text-decoration:line-through;background:transparent}
 .sc-row.off .sc-n{background:transparent;color:var(--muted)}
 .sc-list .sc-row:not(.off) ~ .sc-row:not(.off) .sc-n{background:var(--sunk);color:var(--ink)}
+.instnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.navb{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;min-width:40px;min-height:40px;font-size:1.3rem;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.navb:hover:not(:disabled){border-color:var(--muted)}
+.navb:disabled{opacity:.35;cursor:default}
+.instpos{font-family:var(--f-mono);font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.instlist.can-drag .ichip{touch-action:none;cursor:grab;user-select:none}
+.ichip.dragging{opacity:.75;outline:2px dashed var(--accent);outline-offset:2px;cursor:grabbing}
+.instview{display:flex;flex-direction:column;gap:18px}
+@keyframes ciSlideL{from{opacity:.25;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes ciSlideR{from{opacity:.25;transform:translateX(-28px)}to{opacity:1;transform:none}}
+.instview.slide-l{animation:ciSlideL .2s ease-out}
+.instview.slide-r{animation:ciSlideR .2s ease-out}
+@media (prefers-reduced-motion:reduce){.instview.slide-l,.instview.slide-r{animation:none}}
+@media (max-width:860px){.kbd-only{display:none}}
+.setbar{display:flex;flex-direction:column;gap:8px}
+.badge.d-dis{color:var(--dis);background:color-mix(in srgb,var(--dis) 12%,transparent)}
+.badge.d-chg{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.badge.d-pin{color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.xrow .crl{flex:1;min-width:180px;flex-direction:row!important;align-items:flex-start}
+.xrow .crl > span{display:flex;flex-direction:column}
+.xrow.xoff .crl strong{text-decoration:line-through;color:var(--muted)}
+.xacts{align-items:center;flex-wrap:wrap}
+.xw{display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted)}
+.xw input{width:64px;padding:5px 8px}
+.xalt select{width:auto;max-width:240px;padding:5px 8px;font-size:.84rem}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.iset{display:flex;align-items:center;gap:8px;font-size:.86rem;color:var(--muted);margin-top:6px}
+.iset select{width:auto;padding:5px 8px}
+@media (max-width:860px){ .xrow .crl{flex-basis:100%} .xalt select{max-width:100%} }
+.segt{display:inline-flex;background:var(--sunk);border-radius:999px;padding:3px;gap:2px;align-self:flex-start;flex-wrap:wrap}
+.segt button{border:0;background:transparent;padding:7px 14px;border-radius:999px;font-size:.86rem;font-weight:500;color:var(--muted);cursor:pointer;min-height:36px}
+.segt button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgb(0 0 0 / .15)}
+.segt.sm button{padding:5px 11px;font-size:.8rem;min-height:32px}
+.mtbl th:first-child{white-space:normal;min-width:180px}
+.aids{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}
+.aid{display:inline-flex;align-items:center;gap:6px;font-size:.84rem;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer}
+.aid input{width:auto;margin:0}
+.tcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.tcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);display:flex;flex-direction:column;min-width:0}
+.tcard header{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.tcard header .btn{margin-left:auto}
+.tbody{padding:12px 14px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65;font-size:.95rem;max-width:75ch}
+mark{background:transparent;color:inherit;border-radius:3px}
+mark.a-long{background:color-mix(in srgb,var(--warn) 16%,transparent)}
+mark.a-rep{text-decoration:underline wavy color-mix(in srgb,var(--accent) 80%,transparent);text-underline-offset:3px}
+mark.a-fill{background:color-mix(in srgb,var(--dis) 16%,transparent);box-shadow:inset 0 -2px 0 var(--dis)}
+.aid.a-long{border-color:color-mix(in srgb,var(--warn) 50%,var(--line))}
+.aid.a-rep{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.aid.a-fill{border-color:color-mix(in srgb,var(--dis) 50%,var(--line))}
+.dctl{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px}
+.dctl .fld select{width:auto;max-width:100%}
+.dsum{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.9rem;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.dsum .dl{color:var(--dis)} .dsum .di{color:var(--adv)}
+.dcols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.dpane{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.dpane h3{padding:10px 14px 0}
+del{background:color-mix(in srgb,var(--dis) 16%,transparent);color:var(--dis);text-decoration:line-through;border-radius:3px}
+ins{background:color-mix(in srgb,var(--adv) 16%,transparent);color:var(--adv);text-decoration:none;border-radius:3px}
+@media (max-width:860px){ .dcols{grid-template-columns:minmax(0,1fr)} .tcols{grid-template-columns:minmax(0,1fr)} }
+a.btn{text-decoration:none;color:var(--ink)}
+.segt.seg2{display:grid;grid-template-columns:1fr 1fr;align-self:stretch;border-radius:12px}
+.segt.seg2 button{border-radius:9px}
+.cbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.aicard{border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+.aicard .tbody{max-width:none}
+.aichk{flex-direction:row;flex-wrap:wrap;gap:6px 14px}
+#f_ai_prompt{font-family:var(--f-mono);font-size:.78rem;line-height:1.45}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.88rem;z-index:70;max-width:calc(100% - 32px)}
 
 @media (max-width:860px){
@@ -387,11 +454,13 @@ a.gitem{text-decoration:none;color:inherit}
 <script type="application/json" id="ci-schema">{
  "group": {"tab":"_Grupos","label":"Grupos","single":"Grupo","newName":"Nuevo grupo","prefix":"g","cols":[
   {"f":"name","h":"Nombre","type":"text","req":1,"wide":1},
-  {"f":"desc","h":"Descripción","type":"text","wide":1}]},
+  {"f":"desc","h":"Descripción","type":"text","wide":1},
+  {"f":"kind","h":"Tipo de grupo","type":"enum","opts":[["text","Textos"]]}]},
  "root": {"tab":"_Criterios","label":"Criterios","single":"Criterio","newName":"Nuevo criterio","prefix":"r","cols":[
   {"f":"name","h":"Nombre","type":"text","req":1,"wide":1},
   {"f":"desc","h":"Descripción","type":"text","wide":1},
-  {"f":"kind","h":"Tipo","type":"enum","opts":[["num","Cuantitativo"],["qual","Cualitativo"],["agg","Agrupador"]]},
+  {"f":"kind","h":"Tipo","type":"enum","opts":[["num","Cuantitativo"],["qual","Cualitativo"],["agg","Agrupador"],["auto","Calculado (texto)"]]},
+  {"f":"metric","h":"Métrica","type":"enum","opts":[["words","Palabras"],["chars","Caracteres con espacios"],["charsns","Caracteres sin espacios"],["sentences","Oraciones"],["paras","Párrafos"],["wps","Palabras por oración"],["inflesz","Legibilidad (INFLESZ)"],["longsent","Oraciones largas"],["repeats","Repeticiones cercanas"],["fillers","Muletillas"],["variety","Variedad de vocabulario"]]},
   {"f":"dir","h":"Sentido","type":"enum","opts":[["max","Más es mejor"],["min","Menos es mejor"]]},
   {"f":"unit","h":"Unidad","type":"text"},
   {"f":"scale","h":"Escala","type":"scale","wide":1},
@@ -403,10 +472,24 @@ a.gitem{text-decoration:none;color:inherit}
   {"f":"p","h":"Padre","type":"ref","ref":"crit","scope":"g"},
   {"f":"w","h":"Peso","type":"num"},
   {"f":"ord","h":"Orden","type":"num"}]},
+ "set": {"tab":"_Conjuntos","label":"Conjuntos","single":"Conjunto de criterios","newName":"Nuevo conjunto","prefix":"s","cols":[
+  {"f":"g","h":"Grupo","type":"ref","ref":"group","req":1},
+  {"f":"name","h":"Nombre","type":"text","req":1,"wide":1},
+  {"f":"desc","h":"Descripción","type":"text","wide":1}]},
+ "adj": {"tab":"_Ajustes","label":"Ajustes","single":"Ajuste de conjunto","newName":"","prefix":"a","cols":[
+  {"f":"g","h":"Grupo","type":"ref","ref":"group","req":1},
+  {"f":"set","h":"Conjunto","type":"ref","ref":"set","scope":"g","req":1},
+  {"f":"use","h":"Criterio","type":"ref","ref":"crit","scope":"g","req":1},
+  {"f":"on","h":"Incluido","type":"enum","opts":[["no","Excluido"],["si","Incluido (fijado)"]]},
+  {"f":"w","h":"Peso","type":"num"},
+  {"f":"alt","h":"Definición alternativa","type":"ref","ref":"root"}]},
  "inst": {"tab":"_Instancias","label":"Instancias","single":"Instancia","newName":"Nueva instancia","prefix":"n","cols":[
   {"f":"g","h":"Grupo","type":"ref","ref":"group","req":1},
   {"f":"name","h":"Nombre","type":"text","req":1,"wide":1},
   {"f":"items","h":"Ítems","type":"multi","ref":"item","scope":"g","wide":1},
+  {"f":"ord","h":"Orden","type":"num"},
+  {"f":"set","h":"Conjunto","type":"ref","ref":"set","scope":"g"},
+  {"f":"ai","h":"Evaluación IA","type":"text","wide":1},
   {"f":"concl","h":"Conclusión","type":"text","wide":1},
   {"f":"_o","h":"Ajustes","type":"overrides"}]},
  "item": {"tab":"(una pestaña por grupo)","label":"Ítems","single":"Ítem","newName":"Nuevo ítem","prefix":"i","perGroup":1,"cols":[
@@ -463,6 +546,15 @@ function seed(){
   .forEach(([id,name,vel,cost,est,ate]) => A(id, {t:'item', g:'g_isp', name, 'v.c_vel':''+vel, 'v.c_cost':''+cost, 'v.c_est':est, 'v.c_ate':ate}));
   A('n_casa', {t:'inst', g:'g_isp', name:'Casa familiar', items:'i_p1,i_p2,i_p3'});
   A('n_tele', {t:'inst', g:'g_isp', name:'Teletrabajo', items:'i_p1,i_p3'});
+
+  A('g_txt', {t:'group', kind:'text', name:'Textos: anuncio del lanzamiento', desc:'Versiones de un mismo anuncio. Datos de ejemplo para probar la comparación de textos.'});
+  [['words','Palabras','min','1'],['wps','Palabras por oración (promedio)','min','1'],['inflesz','Legibilidad (INFLESZ)','max','2'],['longsent','Oraciones largas (más de 30 palabras)','min','1'],
+   ['repeats','Repeticiones cercanas','min','1'],['fillers','Muletillas','min','1'],['variety','Variedad de vocabulario','max','1']]
+  .forEach(([mk, name, dir, w], k) => { A('r_m_' + mk, {t:'root', kind:'auto', metric:mk, name, dir}); A('c_t_' + mk, {t:'crit', g:'g_txt', root:'r_m_' + mk, w, ord:String(k + 1)}) });
+  A('i_t1', {t:'item', g:'g_txt', name:'Versión 1 (borrador)', txt:'Básicamente, queremos contarles que, a nivel de la empresa, en el día de hoy estamos lanzando una nueva aplicación que, sin lugar a dudas, va a cambiar realmente la forma en la que ustedes organizan sus tareas diarias, ya que la aplicación permite organizar las tareas diarias de manera simple y también permite compartir las tareas con otras personas del equipo de trabajo.\n\nEs importante destacar que la aplicación está disponible para descargar de forma gratuita durante el primer mes, y que después del primer mes el precio de la aplicación será de dos mil pesos por mes.'});
+  A('i_t2', {t:'item', g:'g_txt', name:'Versión 2 (revisada)', txt:'Hoy lanzamos una nueva aplicación para organizar tus tareas diarias. Es simple y te permite compartir tareas con tu equipo.\n\nEl primer mes es gratis. Después, cuesta dos mil pesos por mes.'});
+  A('i_t3', {t:'item', g:'g_txt', name:'Versión 3 (formal)', txt:'Nos complace anunciar el lanzamiento de una nueva aplicación para organizar las tareas diarias. La herramienta es sencilla de usar y permite compartir tareas con todo el equipo de trabajo.\n\nLa descarga es gratuita durante el primer mes; a partir del segundo, el abono mensual será de dos mil pesos.'});
+  A('n_t', {t:'inst', g:'g_txt', name:'Elegir versión final', items:'i_t1,i_t2,i_t3'});
   migrateRoots(R);
   return R;
 }
@@ -519,7 +611,7 @@ function log(m){ S.log.unshift({t:now(), m}); S.log = S.log.slice(0, 14) }
 /* ---------- acceso a datos ---------- */
 const recs = (t, src = S.app) => Object.entries(src).filter(([, r]) => r.t === t).map(([id, r]) => ({...r, id}));
 const groups = (src = S.app) => recs('group', src).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es'));
-const ROOTF = ['name', 'desc', 'kind', 'dir', 'unit', 'scale', 'off'];
+const ROOTF = ['name', 'desc', 'kind', 'dir', 'unit', 'scale', 'off', 'metric'];
 /** Uso de criterio con los atributos de su criterio raíz. */
 function withRoot(u, src){ const r = src[u.root] || {}, o = {...u}; ROOTF.forEach(f => { if (r[f] != null && r[f] !== '') o[f] = r[f]; else delete o[f] }); if (!o.name) o.name = '(criterio sin definir)'; return o }
 const crits = (g, src = S.app) => recs('crit', src).filter(c => c.g === g).map(c => withRoot(c, src));
@@ -527,7 +619,7 @@ const roots = (src = S.app) => recs('root', src).sort((a, b) => (a.name || '').l
 const usesOf = (rid, src = S.app) => recs('crit', src).filter(u => u.root === rid);
 const groupsOfRoot = (rid, src = S.app) => [...new Set(usesOf(rid, src).map(u => u.g))].filter(g => src[g]);
 const items = (g, src = S.app) => recs('item', src).filter(i => i.g === g).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es'));
-const insts = (g, src = S.app) => recs('inst', src).filter(i => i.g === g).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es'));
+const insts = (g, src = S.app) => recs('inst', src).filter(i => i.g === g).sort((a, b) => ((+a.ord || 1e9) - (+b.ord || 1e9)) || (a.name || '').localeCompare(b.name || '', 'es'));
 const instIds = n => (n.items || '').split(',').map(x => x.trim()).filter(x => x && S.app[x]);
 /** Niveles de mejor a peor, tal como se guardan. */
 const splitList = t => (t || '').split(',').map(x => x.trim()).filter(Boolean);
@@ -556,6 +648,7 @@ function fmt(c, raw){
   if (raw === '' || raw == null) return '—';
   if (c.kind === 'qual') return offOf(c).includes(raw) ? raw + ' (desestimado)' : raw;
   const n = parseFloat(String(raw).replace(',', '.'));
+  if (c.kind === 'auto' && !isNaN(n)) return c.metric === 'variety' ? fmtN(n) + ' %' : c.metric === 'inflesz' ? fmtN(n) + ' · ' + inflLabel(n) : fmtN(n) + ' ' + ((METRICS[c.metric] || {}).unit || '');
   if (isNaN(n)) return raw;
   const s = n.toLocaleString('es-AR', {maximumFractionDigits:2});
   if (c.unit === 'ARS') return '$ ' + s;
@@ -563,18 +656,19 @@ function fmt(c, raw){
 }
 function critHint(c){
   if (c.kind === 'qual') return 'cualitativo · ' + scaleOf(c).length + ' niveles';
+  if (c.kind === 'auto') return 'calculado del texto · ' + (c.dir === 'min' ? 'menos es mejor' : 'más es mejor');
   return (c.dir === 'min' ? 'menos es mejor' : 'más es mejor') + (c.unit ? ' · ' + c.unit : '');
 }
 
 /* ---------- motor de evaluación ---------- */
 function evaluate(g, its, inst, excl = new Set()){
-  const list = tree(g);
-  const off = new Set(); list.forEach(c => { if (excl.has(c.id) || (c.p && off.has(c.p))) off.add(c.id) }); const W = Object.fromEntries(list.map(c => [c.id, +c.w || 1]));
+  const list = treeFor(g, inst && inst.set);
+  const off = new Set(); list.forEach(c => { if (excl.has(c.id) || c.setOff || (c.p && off.has(c.p))) off.add(c.id) }); const W = Object.fromEntries(list.map(c => [c.id, +c.w || 1]));
   const res = {};
   list.filter(c => c.leaf).forEach(c => {
     const sc = {};
     its.forEach(it => {
-      const raw = it['v.' + c.id] ?? ''; let s = null;
+      const raw = c.kind === 'auto' ? autoVal(c, it) : (it['v.' + c.id] ?? ''); let s = null;
       if (c.kind === 'qual'){ const o = scaleOf(c); const i = o.indexOf(raw); if (i >= 0) s = o.length > 1 ? i / (o.length - 1) : 1 }
       else { const n = parseFloat(String(raw).replace(',', '.')); if (!isNaN(n)) s = n }
       sc[it.id] = s;
@@ -593,7 +687,7 @@ function evaluate(g, its, inst, excl = new Set()){
       if (s == null) mark = 'na'; else if (allEq || vals.length < 2) mark = 'eq'; else if (s === hi) mark = 'adv'; else if (s === lo) mark = 'dis'; else mark = 'mid';
       const ov = inst && inst['o.' + it.id + '.' + c.id]; let manual = false;
       if (ov){ manual = true; mark = ov; s = ov === 'adv' ? 1 : ov === 'dis' ? 0 : 0.5 }
-      res[c.id][it.id] = {score:s, mark, manual, raw:it['v.' + c.id] ?? ''};
+      res[c.id][it.id] = {score:s, mark, manual, raw:c.kind === 'auto' ? autoVal(c, it) : (it['v.' + c.id] ?? '')};
     });
   });
   const avg = (ids, itId) => { let sw = 0, ws = 0; ids.forEach(k => { if (off.has(k)) return; const s = res[k]?.[itId]?.score; if (s != null){ sw += s * W[k]; ws += W[k] } }); return ws ? sw / ws : null };
@@ -755,12 +849,12 @@ async function resolve(keys){
 }
 
 /* ---------- etiquetas legibles para conflictos ---------- */
-const TYPE = {group:'Grupo', root:'Criterio', crit:'Uso de criterio', item:'Ítem', inst:'Instancia'};
+const TYPE = {group:'Grupo', root:'Criterio', crit:'Uso de criterio', set:'Conjunto de criterios', adj:'Ajuste de conjunto', item:'Ítem', inst:'Instancia'};
 const anyRec = id => S.app[id] || S.base[id] || SIM.records[id] || {};
 const nameOf = id => { const r = anyRec(id); return (r.t === 'crit' ? anyRec(r.root).name : r.name) || id };
-function recLabel(r){ if (!r) return ''; const g = r.g ? ' · ' + nameOf(r.g) : ''; const n = r.t === 'crit' ? anyRec(r.root).name : r.name; return `${TYPE[r.t] || 'Registro'}: ${n || '(sin nombre)'}${g}` }
+function recLabel(r){ if (!r) return ''; const g = r.g ? ' · ' + nameOf(r.g) : ''; const n = r.t === 'crit' ? anyRec(r.root).name : r.t === 'adj' ? nameOf(r.set) + ' / ' + nameOf(r.use) : r.name; return `${TYPE[r.t] || 'Registro'}: ${n || '(sin nombre)'}${g}` }
 function fieldLabel(f){
-  const F = {name:'Nombre', desc:'Descripción', notes:'Notas', items:'Ítems', concl:'Conclusión', p:'Criterio padre', root:'Criterio', kind:'Tipo', dir:'Sentido', unit:'Unidad', scale:'Escala', w:'Peso', ord:'Orden', g:'Grupo', t:'Tipo de registro'};
+  const F = {name:'Nombre', desc:'Descripción', notes:'Notas', items:'Ítems', concl:'Conclusión', p:'Criterio padre', root:'Criterio', set:'Conjunto', use:'Criterio', on:'Incluido', alt:'Definición alternativa', kind:'Tipo', dir:'Sentido', unit:'Unidad', scale:'Escala', w:'Peso', ord:'Orden', g:'Grupo', t:'Tipo de registro'};
   if (F[f]) return F[f];
   if (f.startsWith('v.')) return nameOf(f.slice(2));
   if (f.startsWith('o.')){ const [, it, c] = f.split('.'); return `Ajuste manual: ${nameOf(it)} / ${nameOf(c)}` }
@@ -769,7 +863,7 @@ function fieldLabel(f){
 function showVal(f, val){
   if (val === '') return '<span class="muted">(vacío)</span>';
   if (f === 'items') return esc(val.split(',').map(nameOf).join(', '));
-  if (f === 'root' || f === 'p' || f === 'g') return esc(nameOf(val));
+  if (['root', 'p', 'g', 'set', 'use', 'alt'].includes(f)) return esc(nameOf(val));
   if (f.startsWith('o.')) return {adv:'Ventaja', dis:'Desventaja', eq:'Similar'}[val] || esc(val);
   return esc(val);
 }
@@ -847,16 +941,24 @@ function viewGroup(g){
 const MK = {adv:'▲<span class="mkt"> Ventaja</span>', dis:'▼<span class="mkt"> Desventaja</span>', eq:'=<span class="mkt"> Similar</span>'};
 function viewCmp(g){
   const ins = insts(g.id), cur = curInst();
-  let h = `<div class="instbar"><div class="instlist">${ins.map(n => `<button class="ichip ${cur && n.id === cur.id ? 'on' : ''}" data-act="pickInst" data-id="${n.id}">${esc(n.name)}<span>${instIds(n).length}</span></button>`).join('')}</div>
+  let h = `<div class="instbar"><div class="instlist ${canEdit() && ins.length > 1 ? 'can-drag' : ''}" id="instlist">${ins.map(n => `<button class="ichip ${cur && n.id === cur.id ? 'on' : ''}" id="ich_${n.id}" data-act="pickInst" data-id="${n.id}" ${canEdit() && ins.length > 1 ? 'title="Arrastrá para reordenar (o Alt + ← →)"' : ''}>${esc(n.name)}<span>${instIds(n).length}</span></button>`).join('')}</div>
     <button class="btn sm ed" data-act="newInst">+ Instancia</button></div>`;
   if (!cur) return h + empty('Todavía no hay instancias en este grupo', 'Una instancia elige qué ítems del grupo comparar. Un mismo ítem puede estar en varias instancias.', 'newInst', 'Crear instancia');
   const its = instIds(cur).map(id => ({...S.app[id], id}));
   const excl = new Set((S.ui.excl || {})[cur.id] || []);
   const ev = evaluate(g.id, its, cur, excl); const leaves = ev.list.filter(c => c.leaf && !ev.off.has(c.id));
-  const nOff = ev.list.filter(c => excl.has(c.id)).length;
-  h += `<div class="insthead"><div><h2>${esc(cur.name)}</h2><p class="muted">${its.length} ítems · ${leaves.length} criterios evaluados${nOff ? ` · ${nOff} desestimado${nOff > 1 ? 's' : ''} <button class="btn sm ghost" data-act="inclAll">Incluir todos</button>` : ''}</p><p class="hint">Desmarcá un criterio para dejarlo afuera de la comparación${canEdit() ? '; tocá una celda para forzar ventaja o desventaja' : ''}.</p></div>
+  const nOff = ev.list.filter(c => excl.has(c.id)).length, nSet = ev.list.filter(c => c.setOff).length;
+  const iset = cur.set && S.app[cur.set] ? cur.set : '', gsets = setsOf(g.id);
+  const setSel = `<label class="iset" for="f_iset"><span>Criterios:</span><select id="f_iset" ${canEdit() ? '' : 'disabled'}><option value="">Base</option>${gsets.map(x => `<option value="${x.id}" ${x.id === iset ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>`;
+  const ix = ins.findIndex(n => n.id === cur.id), slide = S.slide || ''; S.slide = '';
+  h += `<div class="instview ${slide}" id="instview"><div class="insthead"><div><div class="instnav">
+      <button class="navb" data-act="instStep" data-d="-1" aria-label="Instancia anterior" ${ix <= 0 ? 'disabled' : ''}>‹</button>
+      <h2>${esc(cur.name)}</h2>
+      <button class="navb" data-act="instStep" data-d="1" aria-label="Instancia siguiente" ${ix >= ins.length - 1 ? 'disabled' : ''}>›</button>
+      <span class="instpos">${ix + 1} de ${ins.length}</span></div><p class="muted">${its.length} ítems · ${leaves.length} criterios evaluados${nSet ? ` · ${nSet} excluido${nSet > 1 ? 's' : ''} por el conjunto` : ''}${nOff ? ` · ${nOff} desestimado${nOff > 1 ? 's' : ''} <button class="btn sm ghost" data-act="inclAll">Incluir todos</button>${canEdit() ? ' <button class="btn sm" data-act="saveAsSet">Guardar como conjunto</button>' : ''}` : ''}</p>${gsets.length || iset ? setSel : ''}<p class="hint">Desmarcá un criterio para dejarlo afuera de la comparación${canEdit() ? '; tocá una celda para forzar ventaja o desventaja' : ''}.<span class="kbd-only"> Con ← → del teclado pasás de una instancia a otra.</span></p></div>
     <div class="row ed"><button class="btn sm" data-act="editInst">Editar instancia</button><button class="btn sm ghost" data-act="delInst">Borrar</button></div></div>`;
   if (!its.length) return h + empty('La instancia no tiene ítems', 'Editá la instancia para elegir qué ítems comparar.', 'editInst', 'Elegir ítems');
+  if (isText(g.id)){ h += cmpModeBar(); const cv = S.ui.cview || 'score'; if (cv === 'texts') return h + viewTexts(its); if (cv === 'diff') return h + viewDiff(its) }
   if (!ev.list.length) return h + empty('El grupo no tiene criterios', 'Los criterios definen cómo se evalúan los ítems y de ellos salen las ventajas y desventajas.', 'goCrit', 'Definir criterios');
   const pct = x => x == null ? null : Math.round(x * 100);
   const ranked = [...its].sort((a, b) => (ev.total[b.id] ?? -1) - (ev.total[a.id] ?? -1));
@@ -865,9 +967,9 @@ function viewCmp(g){
       <div class="ith"><span class="rank ${rank(it.id) === 1 ? 'r1' : ''}">${rank(it.id)}º</span>${esc(it.name)}</div>
       <div class="tot"><span class="val">${p ?? '—'}</span><span class="muted">/100</span></div><div class="bar"><i style="width:${p ?? 0}%"></i></div></th>` }).join('')}</tr>`;
   const rows = ev.list.map(c => {
-    const pad = `style="padding-left:${10 + c.depth * 18}px"`, off = ev.off.has(c.id), byParent = off && !excl.has(c.id);
-    const chk = `<input type="checkbox" class="cx" id="cx_${c.id}" data-c="${c.id}" ${off ? '' : 'checked'} ${byParent ? 'disabled title="Desestimado junto con su criterio agrupador"' : ''} aria-label="Incluir ${esc(c.name)} en la comparación">`;
-    if (off) return `<tr class="${c.leaf ? '' : 'par '}off"><th class="sticky" ${pad}><label class="crl">${chk}<span><span class="cn">${esc(c.name)}</span><span class="cw">desestimado</span></span></label></th>${its.map(it => `<td>${c.leaf ? `<span class="val">${esc(fmt(c, ev.res[c.id][it.id].raw))}</span>` : ''}</td>`).join('')}</tr>`;
+    const pad = `style="padding-left:${10 + c.depth * 18}px"`, off = ev.off.has(c.id), bySet = !!c.setOff, byParent = off && !excl.has(c.id) && !bySet;
+    const chk = `<input type="checkbox" class="cx" id="cx_${c.id}" data-c="${c.id}" ${off ? '' : 'checked'} ${byParent || bySet ? `disabled title="${bySet ? 'Excluido en el conjunto de esta instancia' : 'Desestimado junto con su criterio agrupador'}"` : ''} aria-label="Incluir ${esc(c.name)} en la comparación">`;
+    if (off) return `<tr class="${c.leaf ? '' : 'par '}off"><th class="sticky" ${pad}><label class="crl">${chk}<span><span class="cn">${esc(c.name)}</span><span class="cw">${bySet ? 'excluido en el conjunto' : 'desestimado'}</span></span></label></th>${its.map(it => `<td>${c.leaf ? `<span class="val">${esc(fmt(c, ev.res[c.id][it.id].raw))}</span>` : ''}</td>`).join('')}</tr>`;
     if (!c.leaf) return `<tr class="par"><th class="sticky" ${pad}><label class="crl">${chk}<span><span class="cn">${esc(c.name)}</span><span class="cw">agrupa ${c.kids.length} · peso ${c.w || 1}</span></span></label></th>${its.map(it => { const p = pct(ev.res[c.id][it.id].score);
       return `<td>${p == null ? '<span class="muted">—</span>' : `<div class="mini"><div class="bar"><i style="width:${p}%"></i></div><span class="val">${p}</span></div>`}</td>` }).join('')}</tr>`;
     return `<tr><th class="sticky" ${pad}><label class="crl">${chk}<span><span class="cn">${esc(c.name)}</span><span class="cw">${critHint(c)} · peso ${c.w || 1}</span></span></label></th>${its.map(it => { const r = ev.res[c.id][it.id];
@@ -921,8 +1023,8 @@ function planTabs(D){
 function planCols(t, key, D){
   const s = SCHEMA[t]; if (!s) return [];
   if (!s.perGroup) return s.cols.filter(c => !c.hidden);
-  const leaves = tree(key, D).filter(c => c.leaf);
-  return [s.cols[0], ...leaves.map(c => c.kind === 'qual'
+  const leaves = tree(key, D).filter(c => c.leaf && c.kind !== 'auto');
+  return [s.cols[0], ...((D[key] || {}).kind === 'text' ? [{f:'txt', h:'Texto', type:'longtext', wide:1}] : []), ...leaves.map(c => c.kind === 'qual'
     ? {f:'v.' + c.id, h:c.name, type:'enum', opts:[...levelsOf(c).map((o, i) => [o, (i + 1) + '. ' + o]), ...offOf(c).map(o => [o, o + ' (desestimado)'])]}
     : {f:'v.' + c.id, h:c.name + (c.unit ? ' (' + c.unit + ')' : ''), type:'num'}), ...s.cols.slice(1)];
 }
@@ -952,6 +1054,11 @@ function planCell(sk, t, key, D, rec, id, col, ro){
     const opts = col.type === 'enum' ? col.opts : refOptions(col, rec || {}, D, id);
     const known = opts.some(o => o[0] === val);
     return `<td><select ${data} ${ro ? 'disabled' : ''}><option value=""></option>${opts.map(o => `<option value="${esc(o[0])}" ${o[0] === val ? 'selected' : ''}>${esc(o[1])}</option>`).join('')}${val && !known ? `<option value="${esc(val)}" selected>${esc(val)} (no existe)</option>` : ''}</select></td>`;
+  }
+  if (col.type === 'longtext'){
+    if (!rec) return '<td><div class="ro-c">—</div></td>';
+    const m = metricsOf(rec.txt), pv = (rec.txt || '').replace(/\s+/g, ' ').slice(0, 60);
+    return `<td class="wide"><button type="button" class="mcell" data-act="editText" data-id="${id}" ${sk !== 'app' ? 'disabled' : ''}>${rec.txt ? esc(pv) + (rec.txt.length > 60 ? '…' : '') + ` <span class="muted">(${m.words} pal.)</span>` : '<span class="muted">Cargar texto…</span>'}</button></td>`;
   }
   if (col.type === 'uses'){
     const gs = rec ? groupsOfRoot(id, D).map(x => D[x].name) : [];
@@ -990,7 +1097,7 @@ function viewPlan(sk){
   const isApp = sk === 'app';
   const title = isApp ? (S.sheet ? S.sheet.name : REAL ? 'Google Sheet' : 'Datos de la app') : 'Sheet simulada';
   return `<header class="gh"><div class="gh-t"><span class="eyebrow">${isApp ? 'Vista' : 'Herramienta de prueba'}</span><h1>${isApp ? 'Planilla' : 'Sheet simulada'}</h1>
-      <p class="lead">${isApp ? 'Todos los datos de la app con las mismas pestañas que tu Google Sheet: una por grupo con sus ítems, y _Grupos, _Criterios (el catálogo), _Usos (qué criterios usa cada grupo) e _Instancias. Cada cambio se guarda al salir de la celda y se sincroniza.' : 'Imita la Google Sheet para probar la sincronización sin conexión real. Lo que edites acá lo toma la app en la próxima sincronización, como si lo hubieras cambiado en la Sheet.'}</p></div></header>
+      <p class="lead">${isApp ? 'Todos los datos de la app con las mismas pestañas que tu Google Sheet: una por grupo con sus ítems, y _Grupos, _Criterios (el catálogo), _Usos (qué criterios usa cada grupo), _Conjuntos y _Ajustes (variantes de los criterios) e _Instancias. Cada cambio se guarda al salir de la celda y se sincroniza.' : 'Imita la Google Sheet para probar la sincronización sin conexión real. Lo que edites acá lo toma la app en la próxima sincronización, como si lo hubieras cambiado en la Sheet.'}</p></div></header>
     ${ro ? '<div class="banner"><strong>Modo «Cargar en la Sheet».</strong>&nbsp;La planilla es de solo lectura; editá en la Google Sheet.</div>' : ''}
     <div class="gs"><div class="gs-bar"><span class="gs-title"><i></i>${esc(title)}</span>
       ${isApp ? (S.sheet ? `<a class="btn sm" href="${esc(S.sheet.url)}" target="_blank" rel="noopener">Abrir en Google Sheets ↗</a>` : '') : `<label class="switch"><input type="checkbox" id="f_online" ${S.online ? 'checked' : ''}> Conexión con la app</label>`}
@@ -1010,6 +1117,9 @@ function planCheck(t, D, id, rec, f, val, col){
   if (t === 'crit' && f === 'p' && val && (val === id || descendants(id, rec.g, D).includes(val))) return 'Un criterio no puede depender de sí mismo ni de sus subcriterios.';
   if (t === 'crit' && f === 'p' && val && D[val] && D[val].g !== rec.g) return 'El criterio padre tiene que ser del mismo grupo.';
   if (t === 'root' && f === 'name' && rootTaken(val, D, id)) return 'Ya existe un criterio con ese nombre en el catálogo.';
+  if (t === 'set' && f === 'name' && setsOf(rec.g, D).some(x => x.id !== id && (x.name || '').toLowerCase() === val.toLowerCase())) return 'Ya hay un conjunto con ese nombre en ese grupo.';
+  if (t === 'adj' && (f === 'use' || f === 'set')){ const s2 = f === 'set' ? val : rec.set, u2 = f === 'use' ? val : rec.use;
+    if (s2 && u2 && recs('adj', D).some(a => a.id !== id && a.set === s2 && a.use === u2)) return 'Ese criterio ya tiene un ajuste en ese conjunto.' }
   if (t === 'crit' && (f === 'root' || f === 'g')){ const g2 = f === 'g' ? val : rec.g, r2 = f === 'root' ? val : rec.root;
     if (r2 && recs('crit', D).some(u => u.id !== id && u.g === g2 && u.root === r2)) return 'Ese criterio ya está en ese grupo.' }
   return null;
@@ -1041,6 +1151,7 @@ function planNew(t, key, D, f, val){
   }
   if (f !== 'name' && s.cols.some(c => c.f === 'name')){ let n = s.newName, i = 2; if (t === 'group' || t === 'root') while (recs(t, D).some(x => (x.name || '').toLowerCase() === n.toLowerCase())) n = s.newName + ' ' + (i++); rec.name = n }
   if (t === 'root'){ rec.kind = 'num'; rec.dir = 'max' }
+  if (t === 'adj'){ if (f !== 'set') return 'Elegí primero el conjunto en la columna «Conjunto».'; if (D[val]) rec.g = D[val].g }
   if (t === 'crit'){ if (f !== 'root') return 'Elegí primero el criterio en la columna «Criterio».'; rec.w = '1'; rec.ord = String(nextOrd(D, rec.g, '')) }
   return {id:uid(s.prefix), rec};
 }
@@ -1072,14 +1183,18 @@ function delText(D, t, id){
   if (t === 'root'){ const gs = groupsOfRoot(id, D).map(x => esc(D[x].name)); return `Se borrará «${nm}» del catálogo${gs.length ? ' y de los grupos donde se usa (' + gs.join(', ') + '), con sus valores cargados' : ''}.` }
   if (t === 'item') return `Se borrará el ítem «${nm}» y se quitará de sus instancias.`;
   if (t === 'inst') return `Se borrará la instancia «${nm}». Los ítems no se borran.`;
+  if (t === 'set'){ const us = instsUsingSet(id, D).map(n => esc(n.name)); return `Se borrará el conjunto «${nm}» con sus ajustes.${us.length ? ' Las instancias que lo usan (' + us.join(', ') + ') vuelven a la Base.' : ''}` }
+  if (t === 'adj') return 'Se borrará este ajuste: el criterio vuelve a seguir a la Base en ese conjunto.';
   return `Se borrará «${nm}».`;
 }
 function cascadeDel(sk, t, id){
   const st = STORE[sk], D = st.get(), r = D[id]; if (!r) return;
   if (t === 'group') Object.keys(D).filter(k => D[k].g === id).forEach(k => st.del(k));
   if (t === 'root') usesOf(id, D).forEach(u => { if (D[u.id]) cascadeDel(sk, 'crit', u.id) });
+  if (t === 'set') adjsOf(id, D).forEach(a => st.del(a.id));
   if (t === 'crit'){
     const gone = [id, ...descendants(id, r.g, D)]; gone.forEach(k => st.del(k));
+    recs('adj', D).filter(a => gone.includes(a.use)).forEach(a => st.del(a.id));
     Object.keys(D).filter(k => D[k].g === r.g).forEach(k => { const rec = {...D[k]}; let ch = false;
       Object.keys(rec).forEach(f => { if (gone.some(c => f === 'v.' + c || (f.startsWith('o.') && f.endsWith('.' + c)))){ delete rec[f]; ch = true } });
       if (ch) st.write(k, rec) });
@@ -1096,7 +1211,8 @@ function cascadeDel(sk, t, id){
 }
 
 function viewItems(g){
-  const its = items(g.id), leaves = tree(g.id).filter(c => c.leaf), ins = insts(g.id);
+  if (isText(g.id)) return viewTextItems(g);
+  const its = items(g.id), leaves = tree(g.id).filter(c => c.leaf && c.kind !== 'auto'), ins = insts(g.id);
   let h = `<div class="instbar"><p class="muted">${its.length} ítems en el grupo. Cada ítem es una fila de la pestaña «${esc(g.name)}».</p><button class="btn sm primary ed" data-act="newItem">+ Ítem</button></div>`;
   if (!its.length) return h + empty('Sin ítems', 'Cargá el primer ítem desde acá o agregá una fila en la Sheet.', 'newItem', 'Agregar ítem');
   h += `<div class="scroll"><table class="tbl"><thead><tr><th>Ítem</th>${leaves.map(c => `<th>${esc(c.name)}</th>`).join('')}<th>Instancias</th><th></th></tr></thead><tbody>
@@ -1107,14 +1223,276 @@ function viewItems(g){
   return h;
 }
 
-function viewCrit(g){
+function viewTextItems(g){
+  const its = items(g.id), ins = insts(g.id);
+  let h = `<div class="instbar"><p class="muted">${its.length} textos en el grupo. Cada texto es una fila de la pestaña «${esc(g.name)}».</p><button class="btn sm primary ed" data-act="newItem">+ Texto</button></div>`;
+  if (!its.length) return h + empty('Sin textos', 'Cargá el primer texto desde acá o pegalo en la columna «Texto» de la Sheet.', 'newItem', 'Agregar texto');
+  h += `<div class="scroll"><table class="tbl"><thead><tr><th>Texto</th><th>Palabras</th><th>Caracteres</th><th>Sin espacios</th><th>Legibilidad</th><th>Instancias</th><th></th></tr></thead><tbody>
+    ${its.map(it => { const m = metricsOf(it.txt); return `<tr><td><strong>${esc(it.name)}</strong><span class="cw">${esc((it.txt || 'Sin texto').replace(/\s+/g, ' ').slice(0, 70))}${(it.txt || '').length > 70 ? '…' : ''}</span></td>
+      <td class="val">${fmtN(m.words)}</td><td class="val">${fmtN(m.chars)}</td><td class="val">${fmtN(m.charsns)}</td><td class="val">${m.words ? fmtN(m.inflesz) + ' · ' + inflLabel(m.inflesz) : '—'}</td>
+      <td>${ins.filter(n => instIds(n).includes(it.id)).length}</td>
+      <td><div class="acts ed"><button class="btn sm" data-act="editText" data-id="${it.id}">Texto</button><button class="btn sm" data-act="editItem" data-id="${it.id}">Editar</button><button class="btn sm ghost" data-act="delItem" data-id="${it.id}">Borrar</button></div></td></tr>` }).join('')}
+  </tbody></table></div>`;
+  return h;
+}
+/* ---------- Textos: métricas, ayudas de escritura y diferencias ---------- */
+const TXT_MAX = 49000;   // una celda de Google Sheets admite hasta 50.000 caracteres
+const METRICS = {
+  words:    {label:'Palabras', unit:'palabras', dir:'min', w:'1'},
+  chars:    {label:'Caracteres con espacios', unit:'caracteres', dir:'min'},
+  charsns:  {label:'Caracteres sin espacios', unit:'caracteres', dir:'min'},
+  sentences:{label:'Oraciones', unit:'oraciones', dir:'min'},
+  paras:    {label:'Párrafos', unit:'párrafos', dir:'min'},
+  wps:      {label:'Palabras por oración (promedio)', unit:'pal./oración', dir:'min', w:'1'},
+  inflesz:  {label:'Legibilidad (INFLESZ)', unit:'puntos', dir:'max', w:'2'},
+  longsent: {label:'Oraciones largas (más de 30 palabras)', unit:'oraciones', dir:'min', w:'1'},
+  repeats:  {label:'Repeticiones cercanas', unit:'repeticiones', dir:'min', w:'1'},
+  fillers:  {label:'Muletillas', unit:'apariciones', dir:'min', w:'1'},
+  variety:  {label:'Variedad de vocabulario', unit:'% palabras distintas', dir:'max', w:'1'}
+};
+const DEFAULT_METRICS = ['words', 'wps', 'inflesz', 'longsent', 'repeats', 'fillers', 'variety'];
+const FILLERS = ['básicamente', 'realmente', 'simplemente', 'obviamente', 'literalmente', 'digamos', 'o sea', 'en este sentido', 'de alguna manera', 'de alguna forma',
+  'a nivel de', 'en lo que respecta a', 'cabe destacar', 'cabe mencionar', 'es importante destacar', 'es importante mencionar', 'por así decirlo', 'a la hora de',
+  'en el día de hoy', 'hoy en día', 'sin lugar a dudas', 'en definitiva', 'de hecho', 'en realidad', 'por lo tanto'];
+const STOP = new Set('para porque cuando donde desde hasta entre sobre según durante mediante también además aunque mientras entonces siempre nunca había habían estaba estaban este esta estos estas ese esa esos esas aquel aquella como pero muy más menos todo toda todos todas otro otra otros otras cada mismo misma ellos ellas nosotros usted ustedes puede pueden tiene tienen hacer hace sido será serán fueron porque'.split(' '));
+const WORD_RE = /[\p{L}\p{N}]+(?:[-'’][\p{L}\p{N}]+)*/gu;
+const isText = g => (S.app[g] || {}).kind === 'text';
+
+function graphemes(t){ try{ return [...new Intl.Segmenter('es', {granularity:'grapheme'}).segment(t)].map(x => x.segment) }catch(e){ return [...t] } }
+function syllables(w){
+  w = w.toLowerCase().replace(/[^a-záéíóúüñ]/g, ''); if (!w) return 0;
+  const strong = 'aeoáéíóú', vow = 'aeiouáéíóúü'; let n = 0, prev = null;
+  for (const ch of w){
+    if (!vow.includes(ch)){ prev = null; continue }
+    const st = strong.includes(ch);
+    if (prev === null) n++; else if (st && prev) n++;   // hiato entre vocales fuertes
+    prev = st;
+  }
+  return Math.max(1, n);
+}
+function sentencesOf(t){ return t.split(/(?<=[.!?…])\s+|\n+/).map(x => x.trim()).filter(x => x.match(WORD_RE)) }
+function fillerHits(t){ const low = t.toLowerCase(), out = []; FILLERS.forEach(f => { const re = new RegExp('(?<![\\p{L}])' + f.replace(/ /g, '\\s+') + '(?![\\p{L}])', 'giu'); let m; while ((m = re.exec(low))) out.push([m.index, m.index + m[0].length]) }); return out }
+function repeatHits(t){
+  const toks = [...t.matchAll(WORD_RE)], out = [], last = {};
+  toks.forEach((m, i) => { const w = m[0].toLowerCase(); if (w.length < 5 || STOP.has(w)) return;
+    if (last[w] != null && i - last[w].i <= 30){ if (!last[w].marked){ out.push([last[w].s, last[w].e]); last[w].marked = true } out.push([m.index, m.index + m[0].length]) }
+    last[w] = {i, s:m.index, e:m.index + m[0].length, marked:last[w] && i - last[w].i <= 30} });
+  return out;
+}
+const MCACHE = new Map();
+function metricsOf(t){
+  t = (t || '').normalize('NFC'); if (MCACHE.has(t)) return MCACHE.get(t);
+  const words = t.match(WORD_RE) || [], g = graphemes(t), sents = sentencesOf(t);
+  const syl = words.reduce((a, w) => a + syllables(w), 0);
+  const wc = words.length, sc = sents.length || (wc ? 1 : 0);
+  const m = {
+    words:wc, chars:g.length, charsns:g.filter(x => !/^\s+$/.test(x)).length, sentences:sc,
+    paras:t.split(/\n\s*\n/).filter(p => p.match(WORD_RE)).length,
+    wps:sc ? +(wc / sc).toFixed(1) : 0,
+    inflesz:wc ? +(206.835 - 62.3 * (syl / wc) - wc / sc).toFixed(1) : 0,
+    longsent:sents.filter(s => (s.match(WORD_RE) || []).length > 30).length,
+    repeats:repeatHits(t).length, fillers:fillerHits(t).length,
+    variety:wc ? +(100 * new Set(words.map(w => w.toLowerCase())).size / wc).toFixed(1) : 0
+  };
+  if (MCACHE.size > 200) MCACHE.clear(); MCACHE.set(t, m); return m;
+}
+function inflLabel(p){ return p < 40 ? 'muy difícil' : p < 55 ? 'algo difícil' : p < 65 ? 'normal' : p < 80 ? 'bastante fácil' : 'muy fácil' }
+const fmtN = n => Number(n).toLocaleString('es-AR', {maximumFractionDigits:1});
+function autoVal(c, it){ if (!METRICS[c.metric] || !it) return ''; return String(metricsOf(it.txt)[c.metric]) }
+
+/** Agrega las métricas por defecto como criterios del grupo (reutiliza los del catálogo si ya existen). */
+function addTextMetrics(g){
+  const have = new Set(crits(g).map(c => c.metric).filter(Boolean));
+  DEFAULT_METRICS.forEach(mk => {
+    if (have.has(mk)) return; const M = METRICS[mk];
+    let r = roots().find(x => x.kind === 'auto' && x.metric === mk);
+    let rid = r && r.id; if (!rid){ rid = uid('r'); setRec(rid, {t:'root', kind:'auto', metric:mk, name:uniqueRootName(M.label), dir:M.dir}) }
+    setRec(uid('c'), {t:'crit', g, root:rid, w:M.w || '1', ord:String(nextOrd(S.app, g, ''))});
+  });
+}
+
+/* resaltado de ayudas de escritura */
+function aidMarks(t, aids){
+  const marks = [];
+  if (aids.long){ let pos = 0; sentencesOf(t).forEach(s => { const i = t.indexOf(s, pos); if (i < 0) return; pos = i + s.length; if ((s.match(WORD_RE) || []).length > 30) marks.push([i, i + s.length, 'a-long']) }) }
+  if (aids.rep) repeatHits(t).forEach(([a, b]) => marks.push([a, b, 'a-rep']));
+  if (aids.fill) fillerHits(t).forEach(([a, b]) => marks.push([a, b, 'a-fill']));
+  return marks;
+}
+function renderMarked(t, marks){
+  if (!marks.length) return esc(t);
+  const pts = new Set([0, t.length]); marks.forEach(([a, b]) => { pts.add(a); pts.add(b) });
+  const cuts = [...pts].sort((x, y) => x - y); let h = '';
+  for (let i = 0; i < cuts.length - 1; i++){
+    const a = cuts[i], b = cuts[i + 1], cls = marks.filter(m => m[0] <= a && m[1] >= b).map(m => m[2]);
+    h += cls.length ? `<mark class="${[...new Set(cls)].join(' ')}">${esc(t.slice(a, b))}</mark>` : esc(t.slice(a, b));
+  }
+  return h;
+}
+
+/* diferencias: LCS sobre palabras u oraciones */
+function tokensOf(t, gran){
+  if (gran === 'sent'){ const out = []; const re = /[^.!?…\n]+[.!?…]*\s*|\n+/g; let m; while ((m = re.exec(t))) out.push(m[0]); return out }
+  return t.match(/\s+|[\p{L}\p{N}]+(?:[-'’][\p{L}\p{N}]+)*|[^\s\p{L}\p{N}]/gu) || [];
+}
+const keyOf = (tok, gran) => gran === 'sent' ? tok.trim().replace(/\s+/g, ' ') : (/^\s+$/.test(tok) ? ' ' : tok);
+function diffTexts(A, B, gran){
+  let a = tokensOf(A, gran), b = tokensOf(B, gran);
+  const ka = a.map(x => keyOf(x, gran)), kb = b.map(x => keyOf(x, gran));
+  let pre = 0; while (pre < ka.length && pre < kb.length && ka[pre] === kb[pre]) pre++;
+  let suf = 0; while (suf < ka.length - pre && suf < kb.length - pre && ka[ka.length - 1 - suf] === kb[kb.length - 1 - suf]) suf++;
+  const ops = []; const push = (t, s) => { const l = ops[ops.length - 1]; if (l && l.t === t) l.s += s; else ops.push({t, s}) };
+  for (let i = 0; i < pre; i++) push('eq', b[i]);
+  const ma = ka.slice(pre, ka.length - suf), mb = kb.slice(pre, kb.length - suf), ta = a.slice(pre, a.length - suf), tb = b.slice(pre, b.length - suf);
+  const n = ma.length, m = mb.length;
+  if (n * m > 6e6) return null;   // demasiado grande para comparar por palabra
+  const L = new Uint32Array((n + 1) * (m + 1)), W = m + 1;
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i * W + j] = ma[i] === mb[j] ? L[(i + 1) * W + j + 1] + 1 : Math.max(L[(i + 1) * W + j], L[i * W + j + 1]);
+  let i = 0, j = 0;
+  while (i < n && j < m){
+    if (ma[i] === mb[j]){ push('eq', tb[j]); i++; j++ }
+    else if (L[(i + 1) * W + j] >= L[i * W + j + 1]) push('del', ta[i++]); else push('ins', tb[j++]);
+  }
+  while (i < n) push('del', ta[i++]); while (j < m) push('ins', tb[j++]);
+  for (let k = b.length - suf; k < b.length; k++) push('eq', b[k]);
+  return ops;
+}
+const wcount = s => (s.match(WORD_RE) || []).length;
+
+/* ---------- vistas de textos dentro de Comparar ---------- */
+function cmpModeBar(){
+  const m = S.ui.cview || 'score';
+  return `<div class="cbar"><div class="segt" role="tablist">${[['score', 'Puntajes'], ['texts', 'Textos'], ['diff', 'Diferencias']].map(([k, l]) => `<button role="tab" aria-selected="${m === k}" class="${m === k ? 'on' : ''}" data-act="cview" data-k="${k}">${l}</button>`).join('')}</div>
+    <button class="btn sm" data-act="aiOpen">Consigna para Claude</button></div>`;
+}
+function metricsTable(its){
+  const ms = its.map(it => metricsOf(it.txt));
+  const rows = Object.entries(METRICS).map(([k, M]) => `<tr><th>${esc(M.label)}</th>${ms.map(m => `<td class="val">${fmtN(m[k])}${k === 'inflesz' && m.words ? ` <span class="muted">${inflLabel(m[k])}</span>` : ''}${k === 'variety' ? '%' : ''}</td>`).join('')}</tr>`).join('');
+  return `<div class="scroll"><table class="tbl mtbl"><thead><tr><th>Métrica</th>${its.map(it => `<th>${esc(it.name)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="hint">Caracteres «sin espacios» excluye espacios, tabulaciones y saltos de línea; acentos y emojis cuentan como un carácter. Los conteos pueden diferir levemente de otros editores. Legibilidad: escala INFLESZ para español (menos de 40 muy difícil · 55 a 65 normal · más de 80 muy fácil).</p>`;
+}
+function viewTexts(its){
+  const aids = S.ui.aids || {long:true, rep:true, fill:true};
+  const chip = (k, l, cls) => `<label class="aid ${cls}"><input type="checkbox" class="aidchk" data-k="${k}" ${aids[k] ? 'checked' : ''}> ${l}</label>`;
+  return `${aiCard(curInst() || {})}${metricsTable(its)}
+    <div class="aids"><span class="eyebrow">Ayudas de escritura</span>${chip('long', 'Oraciones largas', 'a-long')}${chip('rep', 'Repeticiones cercanas', 'a-rep')}${chip('fill', 'Muletillas', 'a-fill')}</div>
+    <div class="tcols">${its.map(it => { const m = metricsOf(it.txt);
+      return `<article class="tcard"><header><h3>${esc(it.name)}</h3><span class="muted val">${fmtN(m.words)} palabras · ${fmtN(m.chars)} car. · ${fmtN(m.charsns)} sin esp.</span>
+        <button class="btn sm ed" data-act="editText" data-id="${it.id}">Editar texto</button></header>
+        <div class="tbody">${it.txt ? renderMarked(it.txt, aidMarks(it.txt, aids)) : '<span class="muted">Sin texto cargado.</span>'}</div></article>` }).join('')}</div>`;
+}
+function viewDiff(its){
+  const d = S.ui.diff || {}, ids = its.map(x => x.id);
+  const a = ids.includes(d.a) ? d.a : ids[0], b = ids.includes(d.b) && d.b !== a ? d.b : ids.find(x => x !== a);
+  const mode = d.mode || 'side', gran = d.gran || 'word';
+  if (!b) return '<p class="hint">Agregá al menos dos textos a la instancia para ver diferencias.</p>';
+  const A = S.app[a].txt || '', B = S.app[b].txt || '';
+  let ops = diffTexts(A, B, gran), auto = false;
+  if (!ops){ ops = diffTexts(A, B, 'sent'); auto = true }
+  const del = ops.filter(o => o.t === 'del').reduce((s, o) => s + wcount(o.s), 0), ins = ops.filter(o => o.t === 'ins').reduce((s, o) => s + wcount(o.s), 0);
+  const eq = ops.filter(o => o.t === 'eq').reduce((s, o) => s + wcount(o.s), 0), wa = wcount(A), wb = wcount(B);
+  const sim = wa + wb ? Math.round(200 * eq / (wa + wb)) : 100, dl = wb - wa;
+  const sel = (id, v) => `<select id="${id}">${its.map(it => `<option value="${it.id}" ${it.id === v ? 'selected' : ''}>${esc(it.name)}</option>`).join('')}</select>`;
+  const sp = s => esc(s);
+  const left = ops.filter(o => o.t !== 'ins').map(o => o.t === 'del' ? `<del>${sp(o.s)}</del>` : sp(o.s)).join('');
+  const right = ops.filter(o => o.t !== 'del').map(o => o.t === 'ins' ? `<ins>${sp(o.s)}</ins>` : sp(o.s)).join('');
+  const uni = ops.map(o => o.t === 'del' ? `<del>${sp(o.s)}</del>` : o.t === 'ins' ? `<ins>${sp(o.s)}</ins>` : sp(o.s)).join('');
+  return `<div class="dctl">
+      <label class="fld" for="f_da"><span>Referencia</span>${sel('f_da', a)}</label>
+      <button class="btn sm ghost" data-act="diffSwap" aria-label="Intercambiar textos">⇄</button>
+      <label class="fld" for="f_db"><span>Comparar con</span>${sel('f_db', b)}</label>
+      <div class="segt sm">${[['side', 'Lado a lado'], ['uni', 'Unificado']].map(([k, l]) => `<button class="${mode === k ? 'on' : ''}" data-act="diffOpt" data-o="mode" data-v="${k}">${l}</button>`).join('')}</div>
+      <div class="segt sm">${[['word', 'Por palabra'], ['sent', 'Por oración']].map(([k, l]) => `<button class="${gran === k ? 'on' : ''}" data-act="diffOpt" data-o="gran" data-v="${k}">${l}</button>`).join('')}</div></div>
+    <div class="dsum"><span><strong>${sim}%</strong> similitud</span><span class="dl">−${fmtN(del)} palabras quitadas</span><span class="di">+${fmtN(ins)} palabras agregadas</span>
+      <span>Longitud: ${dl === 0 ? 'igual' : (dl < 0 ? '' : '+') + fmtN(dl) + ' palabras (' + (wa ? (dl < 0 ? '' : '+') + Math.round(100 * dl / wa) + '%' : '—') + ')'}</span></div>
+    ${auto ? '<p class="hint">Los textos son muy largos para comparar palabra por palabra: se muestran las diferencias por oración.</p>' : ''}
+    ${mode === 'side' ? `<div class="dcols"><div class="dpane"><h3>${esc(S.app[a].name)}</h3><div class="tbody">${left}</div></div><div class="dpane"><h3>${esc(S.app[b].name)}</h3><div class="tbody">${right}</div></div></div>`
+      : `<div class="dpane"><div class="tbody">${uni}</div></div>`}
+    <p class="hint">Si un párrafo cambió de lugar, se ve como quitado en un lado y agregado en el otro.</p>`;
+}
+
+/* editor de texto con contador */
+function textForm(id){
+  const it = S.app[id]; if (!it) return;
+  modal('Texto de «' + it.name + '»', `<label class="fld" for="f_txt"><span>Texto</span><textarea id="f_txt" rows="14" ${canEdit() ? '' : 'readonly'}>${esc(it.txt)}</textarea></label><p class="hint val" id="f_txt_c"></p>`, canEdit() ? () => {
+    const t = document.getElementById('f_txt').value; if (t.length > TXT_MAX){ toast('El texto supera el máximo de una celda de Google Sheets (49.000 caracteres).'); return false }
+    const r = {...S.app[id]}; if (t.trim()) r.txt = t; else delete r.txt; put(id, r);
+  } : null);
+  txtCount();
+}
+function txtCount(){ const t = document.getElementById('f_txt'), o = document.getElementById('f_txt_c'); if (!t || !o) return; const m = metricsOf(t.value);
+  o.textContent = `${fmtN(m.words)} palabras · ${fmtN(m.chars)} caracteres con espacios · ${fmtN(m.charsns)} sin espacios · ${fmtN(m.sentences)} oraciones` + (t.value.length > TXT_MAX ? ' · supera el máximo de 49.000 caracteres' : '') }
+
+/* ---------- Opción A: consigna para pegar en Claude (sin claves ni costos extra) ---------- */
+const AI_CRITS = [
+  ['clar', 'Claridad', 'se entiende a la primera lectura, sin ambigüedades'],
+  ['conc', 'Concisión', 'dice lo necesario sin palabras de más ni repeticiones'],
+  ['comp', 'Comprensión', 'el lector entiende qué se informa y qué tiene que hacer'],
+  ['tono', 'Tono adecuado', 'el registro es apropiado para el público'],
+  ['orto', 'Ortografía y gramática', 'sin errores de escritura ni puntuación']
+];
+function aiForm(){
+  const inst = curInst(); if (!inst) return;
+  const its = instIds(inst).map(id => ({...S.app[id], id})).filter(it => (it.txt || '').trim());
+  if (!its.length) return toast('Cargá al menos un texto en la instancia.');
+  modal('Consigna para Claude', `
+    <div class="segt seg2"><button type="button" class="on" data-ai="eval">Evaluar versiones</button><button type="button" data-ai="rewrite">Sugerir mejora</button></div>
+    <input type="hidden" id="f_ai_kind" value="eval">
+    <label class="fld onlyrw" for="f_ai_src" hidden><span>Texto a mejorar</span><select id="f_ai_src">${its.map(it => `<option value="${it.id}">${esc(it.name)}</option>`).join('')}</select></label>
+    <div class="fld"><span>Criterios</span><div class="checks aichk">${AI_CRITS.map(([k, l]) => `<label><input type="checkbox" id="f_ai_${k}" ${k !== 'orto' ? 'checked' : ''}> ${l}</label>`).join('')}</div></div>
+    <label class="fld" for="f_ai_goal"><span>Objetivo y público (opcional)</span><input id="f_ai_goal" placeholder="Ej.: anuncio para clientes, lectura en el celular"></label>
+    <div class="checks onlyev"><label><input type="checkbox" id="f_ai_met" checked> Incluir las métricas calculadas por CompareIt</label></div>
+    <label class="fld" for="f_ai_prompt"><span>Consigna <span class="muted" id="f_ai_len"></span></span><textarea id="f_ai_prompt" rows="9" readonly></textarea></label>
+    <div class="row"><button type="button" class="btn primary" data-act="aiCopy">Copiar consigna</button><a class="btn" href="https://claude.ai/new" target="_blank" rel="noopener">Abrir Claude ↗</a></div>
+    <p class="hint">Pegala en un chat nuevo de Claude. Usa tu plan actual: no hace falta clave ni tiene costo extra. Los textos salen de la app solo cuando vos los pegás.</p>
+    <label class="fld" for="f_ai_resp"><span id="f_ai_resp_l">Pegá acá la respuesta de Claude (opcional)</span><textarea id="f_ai_resp" rows="5" placeholder="Se guarda en la instancia para consultarla después."></textarea></label>`, () => {
+    const resp = document.getElementById('f_ai_resp').value.trim(); if (!resp) return;
+    if (!canEdit()) return;
+    const n = curInst(), kind = v('f_ai_kind');
+    if (kind === 'eval'){ put(n.id, {...S.app[n.id], ai:resp, aiAt:now()}); S.ui.cview = 'texts'; save(); render(); toast('Evaluación guardada en la instancia.'); return }
+    const src = S.app[v('f_ai_src')], nid = uid('i');
+    setRec(nid, {t:'item', g:S.ui.g, name:uniqueItemName('Sugerencia de Claude · ' + src.name), txt:resp});
+    setRec(n.id, {...S.app[n.id], items:[...instIds(n), nid].join(',')});
+    S.ui.cview = 'diff'; S.ui.diff = {...(S.ui.diff || {}), a:v('f_ai_src'), b:nid}; commit(); toast('La sugerencia se agregó como texto nuevo.');
+  }, 'Guardar respuesta');
+  aiRefresh();
+}
+function uniqueItemName(n){ let x = n, i = 2; while (items(S.ui.g).some(it => it.name === x)) x = n + ' ' + (i++); return x }
+function aiPrompt(){
+  const inst = curInst(); if (!inst) return '';
+  const its = instIds(inst).map(id => ({...S.app[id], id})).filter(it => (it.txt || '').trim());
+  const kind = v('f_ai_kind'), goal = v('f_ai_goal');
+  const cr = AI_CRITS.filter(([k]) => { const e = document.getElementById('f_ai_' + k); return e && e.checked });
+  const ctx = goal ? `Contexto: ${goal}.\n` : '';
+  if (kind === 'rewrite'){
+    const src = its.find(it => it.id === v('f_ai_src')) || its[0];
+    return `Actuá como editor/a profesional de textos en español rioplatense.\n${ctx}Reescribí el siguiente texto para mejorar ${cr.length ? cr.map(c => c[1].toLowerCase()).join(', ') : 'su redacción'}, manteniendo toda la información importante y el sentido original.\n${cr.map(c => `- ${c[1]}: ${c[2]}.`).join('\n')}\n\nRespondé solo con el texto reescrito, sin títulos, comentarios ni explicaciones, para poder pegarlo directamente.\n\n=== Texto original ===\n${src.txt.trim()}\n`;
+  }
+  const met = document.getElementById('f_ai_met') && document.getElementById('f_ai_met').checked;
+  const mt = met ? '\nMétricas calculadas (orientativas):\n' + its.map(it => { const m = metricsOf(it.txt); return `- ${it.name}: ${m.words} palabras, ${m.sentences} oraciones, ${m.wps} palabras por oración, legibilidad INFLESZ ${m.inflesz} (${inflLabel(m.inflesz)}), ${m.longsent} oraciones largas, ${m.fillers} muletillas.` }).join('\n') + '\n' : '';
+  return `Actuá como editor/a profesional de textos en español rioplatense.\nTe paso ${its.length} versiones de un mismo texto.\n${ctx}Evaluá cada versión con una nota de 1 (muy mal) a 5 (excelente) en estos criterios, con una justificación breve:\n${cr.map(c => `- ${c[1]}: ${c[2]}.`).join('\n')}\n\nRespondé con este formato:\n1. Una tabla con una fila por versión, una columna por criterio y el promedio.\n2. Para cada versión: hasta 3 fortalezas y hasta 3 debilidades.\n3. Tu recomendación: qué versión elegirías y qué le corregirías.\nNo reescribas los textos completos.\n${mt}\n${its.map(it => `=== ${it.name} ===\n${it.txt.trim()}`).join('\n\n')}\n`;
+}
+function aiRefresh(){
+  const ta = document.getElementById('f_ai_prompt'); if (!ta) return;
+  const k = v('f_ai_kind'); document.querySelectorAll('.onlyrw').forEach(x => x.hidden = k !== 'rewrite'); document.querySelectorAll('.onlyev').forEach(x => x.hidden = k === 'rewrite');
+  document.getElementById('f_ai_resp_l').textContent = k === 'rewrite' ? 'Pegá acá el texto que te devuelva Claude (opcional): se agrega como texto nuevo' : 'Pegá acá la respuesta de Claude (opcional)';
+  ta.value = aiPrompt(); const n = ta.value.length;
+  document.getElementById('f_ai_len').textContent = `· ${fmtN(n)} caracteres` + (n > 100000 ? ' · muy larga: puede no entrar en un solo mensaje' : '');
+}
+function aiCard(inst){
+  if (!inst.ai) return '';
+  return `<article class="tcard aicard"><header><h3>Evaluación de Claude</h3><span class="muted">pegada el ${inst.aiAt ? new Date(inst.aiAt).toLocaleDateString('es-AR') : '—'}</span>
+    <button class="btn sm ghost ed" data-act="aiClear">Quitar</button></header><div class="tbody">${esc(inst.ai)}</div></article>`;
+}
+
+function viewCritBase(g){
   const list = tree(g.id);
   let h = `<div class="instbar"><p class="muted" style="max-width:72ch">Los criterios vienen del catálogo general y se pueden usar en varios grupos. Nombre, tipo y escala son del criterio; el orden, el peso y de qué criterio depende son propios de cada grupo.</p>
     <div class="row ed"><button class="btn sm primary" data-act="newCrit" data-parent="">+ Criterio nuevo</button><button class="btn sm" data-act="fromCatalog">+ Desde el catálogo</button></div></div>`;
   if (!list.length) return h + empty('Sin criterios', 'Creá un criterio o traelo del catálogo para que la app pueda concluir ventajas y desventajas.', 'fromCatalog', 'Elegir del catálogo');
   h += `<div class="clist">${list.map(c => {
     const others = groupsOfRoot(c.root).filter(x => x !== g.id);
-    const kindLbl = c.kind === 'agg' || !c.leaf ? 'Agrupador' : c.kind === 'qual' ? 'Cualitativo' : 'Cuantitativo';
+    const kindLbl = c.kind === 'agg' || !c.leaf ? 'Agrupador' : c.kind === 'qual' ? 'Cualitativo' : c.kind === 'auto' ? 'Calculado' : 'Cuantitativo';
     return `<div class="crow ${c.depth === 0 ? 'top-level' : ''}" style="padding-left:${14 + c.depth * 22}px">
     <div class="cname"><strong>${esc(c.name)}</strong><span class="cw">${c.leaf ? esc(critHint(c)) + (c.kind === 'qual' ? ': ' + esc(numbered(c).join(' · ')) + (offOf(c).length ? ' · desestimados: ' + esc(offOf(c).join(', ')) : '') : '') : 'Agrupa ' + c.kids.length + ' subcriterios'}${c.desc ? ' · ' + esc(c.desc) : ''}</span></div>
     <span class="badge ${c.leaf ? '' : 'agg'}">${kindLbl}</span>
@@ -1137,8 +1515,8 @@ function rootTaken(n, D = S.app, except){ return roots(D).some(r => r.id !== exc
 function rootCopy(r){ const o = {t:'root'}; ROOTF.forEach(f => { if (r[f]) o[f] = r[f] }); return o }
 function scUsedRoot(D, rid){ const u = {}; usesOf(rid, D).forEach(x => items(x.g, D).forEach(it => { const v = it['v.' + x.id]; if (v) u[v] = (u[v] || 0) + 1 })); return u }
 function scaleCopyList(D, except){ return roots(D).filter(r => r.id !== except && r.kind === 'qual' && levelsOf(r).length > 1).map(r => [r.id, r.name, r.scale, r.off || '']) }
-function kindOpts(k){ return [['num', 'Cuantitativo'], ['qual', 'Cualitativo (escala)'], ['agg', 'Agrupador']].map(([v, l]) => `<option value="${v}" ${k === v ? 'selected' : ''}>${l}</option>`).join('') }
-function toggleKind(k){ document.querySelectorAll('.onlynum').forEach(x => x.hidden = k !== 'num'); document.querySelectorAll('.onlyqual').forEach(x => x.hidden = k !== 'qual') }
+function kindOpts(k){ return [['num', 'Cuantitativo'], ['qual', 'Cualitativo (escala)'], ['agg', 'Agrupador'], ['auto', 'Calculado del texto']].map(([v, l]) => `<option value="${v}" ${k === v ? 'selected' : ''}>${l}</option>`).join('') }
+function toggleKind(k){ document.querySelectorAll('.onlynum').forEach(x => x.hidden = k !== 'num'); document.querySelectorAll('.onlydir').forEach(x => x.hidden = k !== 'num' && k !== 'auto'); document.querySelectorAll('.onlyauto').forEach(x => x.hidden = k !== 'auto'); document.querySelectorAll('.onlyqual').forEach(x => x.hidden = k !== 'qual') }
 
 function critForm(id, parent){
   const g = S.ui.g, use = id ? S.app[id] : {w:'1', p:parent || ''};
@@ -1156,17 +1534,20 @@ function critForm(id, parent){
       <label class="fld" for="f_parent"><span>Depende de (en este grupo)</span><select id="f_parent"><option value="">(criterio principal)</option>${opts.map(o => `<option value="${o.id}" ${o.id === use.p ? 'selected' : ''}>${'· '.repeat(o.depth)}${esc(o.name)}</option>`).join('')}</select></label>
       <label class="fld" for="f_w"><span>Peso (en este grupo)</span><input id="f_w" inputmode="decimal" value="${esc(use.w || '1')}"></label>
       <label class="fld" for="f_kind"><span>Tipo</span><select id="f_kind">${kindOpts(k)}</select></label>
-      <label class="fld onlynum" for="f_dir" ${k !== 'num' ? 'hidden' : ''}><span>Sentido</span><select id="f_dir"><option value="max" ${root.dir !== 'min' ? 'selected' : ''}>Más es mejor</option><option value="min" ${root.dir === 'min' ? 'selected' : ''}>Menos es mejor</option></select></label>
+      <label class="fld onlyauto" for="f_metric" ${k !== 'auto' ? 'hidden' : ''}><span>Métrica</span><select id="f_metric">${Object.entries(METRICS).map(([mk, M]) => `<option value="${mk}" ${root.metric === mk ? 'selected' : ''}>${esc(M.label)}</option>`).join('')}</select></label>
+      <label class="fld onlydir" for="f_dir" ${k !== 'num' && k !== 'auto' ? 'hidden' : ''}><span>Sentido</span><select id="f_dir"><option value="max" ${root.dir !== 'min' ? 'selected' : ''}>Más es mejor</option><option value="min" ${root.dir === 'min' ? 'selected' : ''}>Menos es mejor</option></select></label>
       <label class="fld onlynum" for="f_unit" ${k !== 'num' ? 'hidden' : ''}><span>Unidad</span><input id="f_unit" value="${esc(root.unit)}" placeholder="kg, h, ARS…"></label>
     </div>
     <div class="onlyqual" ${k !== 'qual' ? 'hidden' : ''}>${scaleEditorHtml(root, id ? scUsedRoot(S.app, use.root) : {}, scaleCopyList(S.app, use.root))}</div>
-    <p class="hint">Un agrupador no tiene valores propios: se calcula como promedio ponderado de sus subcriterios.</p>`, () => {
+    <p class="hint">Un agrupador no tiene valores propios: se calcula como promedio ponderado de sus subcriterios. Un criterio calculado toma su valor del texto de cada ítem (solo en grupos de textos).</p>`, () => {
     let name = v('f_name'); if (!name){ toast('Poné un nombre al criterio.'); return false }
     const kind = v('f_kind'); let res = null;
     if (kind === 'qual'){ res = scResult(); if (typeof res === 'string'){ toast(res); return false } }
     const rootNew = {t:'root', name, kind}; const desc = v('f_desc'); if (desc) rootNew.desc = desc;
     if (kind === 'qual'){ rootNew.scale = res.labels.join(', '); if (res.off.length) rootNew.off = res.off.join(', ') }
-    if (kind === 'num'){ rootNew.dir = v('f_dir'); const un = v('f_unit'); if (un) rootNew.unit = un }
+    if (kind === 'num' || kind === 'auto') rootNew.dir = v('f_dir');
+    if (kind === 'num'){ const un = v('f_unit'); if (un) rootNew.unit = un }
+    if (kind === 'auto') rootNew.metric = v('f_metric');
     const changed = !id || !same(rootCopy(root), rootNew);
     let scope = 'all';
     if (others.length && changed){ const sel = document.querySelector('input[name=f_scope]:checked'); if (!sel){ toast('Elegí si el cambio se aplica en todos los grupos o solo en este.'); return false } scope = sel.value }
@@ -1254,6 +1635,160 @@ function linkRootForm(useId){
   } : null, 'Vincular');
 }
 
+/* ---------- Conjuntos de criterios: guardan solo las diferencias con la Base ---------- */
+const setsOf = (g, src = S.app) => recs('set', src).filter(x => x.g === g).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es'));
+const adjsOf = (sid, src = S.app) => recs('adj', src).filter(a => a.set === sid);
+const instsUsingSet = (sid, src = S.app) => recs('inst', src).filter(n => n.set === sid);
+function adjMap(sid, src){ const m = {}; if (sid) adjsOf(sid, src).forEach(a => { if (a.use) m[a.use] = a }); return m }
+/** Árbol de criterios del grupo con los ajustes de un conjunto aplicados. */
+function treeFor(g, sid, src = S.app){
+  const base = tree(g, src); if (!sid || !src[sid]) return base;
+  const m = adjMap(sid, src);
+  return base.map(c => {
+    const a = m[c.id]; if (!a) return c;
+    const o = {...c, adj:a};
+    if (a.alt && src[a.alt] && c.leaf && src[a.alt].kind !== 'agg'){ const r = src[a.alt]; ROOTF.forEach(f => { if (r[f]) o[f] = r[f]; else delete o[f] }); o.alt = a.alt }
+    if (a.w) o.w = a.w;
+    if (a.on === 'no') o.setOff = true;
+    return o;
+  });
+}
+function adjDiffs(c, base, src = S.app){
+  const a = c.adj; if (!a) return [];
+  const d = [];
+  if (a.on === 'no') d.push(['dis', 'Excluido']); else if (a.on === 'si') d.push(['pin', 'Incluido fijado']);
+  if (a.w) d.push(String(a.w) === String(base.w || '1') ? ['pin', 'Peso fijado'] : ['chg', `Peso ${base.w || 1} → ${a.w}`]);
+  if (a.alt) d.push(a.alt === base.root ? ['pin', 'Definición fijada'] : ['chg', 'Usa «' + ((src[a.alt] || {}).name || '?') + '»']);
+  return d;
+}
+function setAdj(sid, cid, patch){
+  if (!canEdit()) return;
+  const set = S.app[sid]; if (!set) return;
+  const a = recs('adj').find(x => x.set === sid && x.use === cid);
+  const rec = a ? {...S.app[a.id]} : {t:'adj', g:set.g, set:sid, use:cid};
+  Object.entries(patch).forEach(([k, v]) => { if (v) rec[k] = String(v); else delete rec[k] });
+  if (!['on', 'w', 'alt'].some(k => rec[k])){ if (a) rmRec(a.id) } else setRec(a ? a.id : uid('a'), rec);
+  commit();
+}
+function copyAdjs(fromSid, toSid, g){ if (!fromSid) return; adjsOf(fromSid).forEach(a => { const r = {...a, set:toSid, g}; delete r.id; setRec(uid('a'), r) }) }
+function setNameTaken(g, n, except){ return setsOf(g).some(x => x.id !== except && (x.name || '').toLowerCase() === n.toLowerCase()) }
+
+function viewCrit(g){
+  const sets = setsOf(g.id), sid = (S.ui.cset || {})[g.id] || '', cur = sid && S.app[sid] ? {...S.app[sid], id:sid} : null;
+  const bar = `<div class="setbar"><span class="eyebrow">Configuración de criterios</span>
+    <div class="instlist"><button class="ichip ${!cur ? 'on' : ''}" data-act="pickSet" data-id="">Base</button>
+      ${sets.map(x => `<button class="ichip ${cur && cur.id === x.id ? 'on' : ''}" data-act="pickSet" data-id="${x.id}">${esc(x.name)}<span>${adjsOf(x.id).length}</span></button>`).join('')}
+      <button class="btn sm ed" data-act="newSet">+ Conjunto</button></div></div>`;
+  return bar + (cur ? viewSet(g, cur) : viewCritBase(g));
+}
+function viewSet(g, set){
+  const list = treeFor(g.id, set.id), base = Object.fromEntries(tree(g.id).map(c => [c.id, c]));
+  const used = instsUsingSet(set.id).map(n => n.name);
+  const off = new Set(); list.forEach(c => { if (c.setOff || (c.p && off.has(c.p))) off.add(c.id) });
+  let h = `<div class="sharewarn"><strong>Conjunto «${esc(set.name)}»${set.desc ? ' · ' + esc(set.desc) : ''}</strong>
+    Lo que no cambies acá se toma de la Base, incluidos los cambios futuros. «Fijar» deja el valor actual guardado en el conjunto aunque después cambie la Base.
+    <span class="muted">${used.length ? 'Lo usan: ' + esc(used.join(', ')) : 'Todavía no lo usa ninguna instancia: asignalo desde Editar instancia o desde Comparar.'}</span>
+    <div class="row ed"><button class="btn sm" data-act="editSet" data-id="${set.id}">Renombrar</button><button class="btn sm" data-act="newSet" data-from="${set.id}">Replicar conjunto</button><button class="btn sm ghost" data-act="delSet" data-id="${set.id}">Borrar conjunto</button></div></div>`;
+  if (!list.length) return h + empty('El grupo no tiene criterios', 'Definí los criterios en la Base y después ajustalos en el conjunto.', null, '');
+  h += `<div class="clist">${list.map(c => {
+    const b = base[c.id] || c, byParent = off.has(c.id) && !c.setOff, diffs = adjDiffs(c, b);
+    const alts = c.leaf ? roots().filter(r => r.kind === b.kind && r.id !== b.root) : [];
+    return `<div class="crow xrow ${c.depth === 0 ? 'top-level' : ''} ${off.has(c.id) ? 'xoff' : ''}" style="padding-left:${14 + c.depth * 22}px">
+      <label class="crl cname"><input type="checkbox" class="sx-on" id="sx_on_${c.id}" data-set="${set.id}" data-c="${c.id}" ${off.has(c.id) ? '' : 'checked'} ${byParent || !canEdit() ? 'disabled' : ''} aria-label="Incluir ${esc(c.name)} en el conjunto">
+        <span><strong>${esc(c.name)}</strong><span class="cw">${byParent ? 'excluido junto con su agrupador' : c.leaf ? esc(critHint(c)) : 'Agrupa ' + c.kids.length + ' subcriterios'}</span></span></label>
+      ${diffs.map(([k, t]) => `<span class="badge d-${k}">${esc(t)}</span>`).join('')}
+      <div class="acts xacts ed">
+        <label class="xw" for="sx_w_${c.id}">Peso <input id="sx_w_${c.id}" class="sx-w" data-set="${set.id}" data-c="${c.id}" data-base="${esc(b.w || '1')}" inputmode="decimal" value="${esc(c.w || '1')}"></label>
+        ${c.leaf ? `<label class="xalt" for="sx_alt_${c.id}"><span class="sr">Definición</span><select id="sx_alt_${c.id}" class="sx-alt" data-set="${set.id}" data-c="${c.id}">
+          <option value="" ${!c.alt ? 'selected' : ''}>Según la Base: ${esc(b.name)}</option>
+          ${c.adj && c.adj.alt === b.root ? `<option value="${b.root}" selected>${esc(b.name)} (fijada)</option>` : ''}
+          ${alts.map(r => `<option value="${r.id}" ${c.alt === r.id && r.id !== b.root ? 'selected' : ''}>Usar «${esc(r.name)}»</option>`).join('')}</select></label>` : ''}
+        <button class="btn sm" data-act="setPin" data-set="${set.id}" data-c="${c.id}" title="Guardar los valores actuales en el conjunto">Fijar</button>
+        ${c.adj ? `<button class="btn sm ghost" data-act="setReset" data-set="${set.id}" data-c="${c.id}" title="Quitar los ajustes y seguir a la Base">↺ Base</button>` : ''}
+      </div></div>` }).join('')}</div>
+    <p class="hint">La estructura (de qué criterio depende cada uno y el orden) se define en la Base. Para usar otra escala o sentido, elegí una réplica del criterio en «Definición»: los valores cargados en los ítems son los mismos.</p>`;
+  return h;
+}
+function setForm(id, fromSid){
+  const g = S.ui.g, set = id ? S.app[id] : {}, from = fromSid && S.app[fromSid] ? fromSid : '';
+  const sets = setsOf(g);
+  modal(id ? 'Renombrar conjunto' : 'Nuevo conjunto de criterios', `
+    <label class="fld" for="f_name"><span>Nombre</span><input id="f_name" value="${esc(id ? set.name : (from ? 'Copia de ' + S.app[from].name : ''))}" placeholder="Ej.: Viaje, Presupuesto ajustado"></label>
+    <label class="fld" for="f_desc"><span>Descripción</span><input id="f_desc" value="${esc(set.desc)}" placeholder="Para qué se usa (opcional)"></label>
+    ${id ? '' : `<label class="fld" for="f_from"><span>Partir de</span><select id="f_from"><option value="">La Base (sin ajustes)</option>${sets.map(x => `<option value="${x.id}" ${x.id === from ? 'selected' : ''}>Conjunto «${esc(x.name)}» (copia sus ajustes)</option>`).join('')}</select></label>`}`, () => {
+    const name = v('f_name'); if (!name){ toast('Poné un nombre al conjunto.'); return false }
+    if (setNameTaken(g, name, id)){ toast('Ya hay un conjunto con ese nombre en este grupo.'); return false }
+    if (!canEdit()) return;
+    const rec = {...set, t:'set', g, name}; const d = v('f_desc'); if (d) rec.desc = d; else delete rec.desc;
+    const sid = id || uid('s'); setRec(sid, rec);
+    if (!id) copyAdjs(v('f_from'), sid, g);
+    S.ui.cset = {...(S.ui.cset || {}), [g]:sid}; commit();
+  }, id ? 'Guardar' : 'Crear');
+}
+function saveAsSetForm(){
+  const g = S.ui.g, inst = curInst(); if (!inst) return;
+  const excl = (S.ui.excl || {})[inst.id] || [], from = inst.set && S.app[inst.set] ? inst.set : '';
+  modal('Guardar como conjunto', `
+    <p class="hint">Se crea un conjunto con ${excl.length} criterio${excl.length > 1 ? 's' : ''} excluido${excl.length > 1 ? 's' : ''}${from ? ', a partir del conjunto «' + esc(S.app[from].name) + '» que usa esta instancia' : ', a partir de la Base'}.</p>
+    <label class="fld" for="f_name"><span>Nombre del conjunto</span><input id="f_name" value="${esc(inst.name)}"></label>
+    <div class="checks"><label><input type="checkbox" id="f_assign" checked> Usarlo en «${esc(inst.name)}»</label></div>`, () => {
+    const name = v('f_name'); if (!name){ toast('Poné un nombre al conjunto.'); return false }
+    if (setNameTaken(g, name)){ toast('Ya hay un conjunto con ese nombre en este grupo.'); return false }
+    if (!canEdit()) return;
+    const sid = uid('s'); setRec(sid, {t:'set', g, name}); copyAdjs(from, sid, g);
+    excl.forEach(cid => { const a = recs('adj').find(x => x.set === sid && x.use === cid);
+      if (a) setRec(a.id, {...S.app[a.id], on:'no'}); else setRec(uid('a'), {t:'adj', g, set:sid, use:cid, on:'no'}) });
+    if (document.getElementById('f_assign').checked){ setRec(inst.id, {...S.app[inst.id], set:sid}); if (S.ui.excl) delete S.ui.excl[inst.id] }
+    log(`Se creó el conjunto «${name}».`); commit();
+  }, 'Guardar');
+}
+
+/* ---------- instancias: navegación y orden ---------- */
+function goInst(id){
+  const list = insts(S.ui.g), cur = curInst(); if (!cur || cur.id === id) return;
+  const a = list.findIndex(n => n.id === cur.id), b = list.findIndex(n => n.id === id);
+  S.slide = b > a ? 'slide-l' : 'slide-r'; S.ui.inst[S.ui.g] = id; save(); render();
+}
+function stepInst(d){ const list = insts(S.ui.g), cur = curInst(); if (!cur) return; const n = list[list.findIndex(x => x.id === cur.id) + d]; if (n) goInst(n.id) }
+function saveInstOrder(ids){
+  if (!canEdit()) return; let ch = false;
+  ids.forEach((id, k) => { if (S.app[id] && String(S.app[id].ord || '') !== String(k + 1)){ setRec(id, {...S.app[id], ord:String(k + 1)}); ch = true } });
+  if (ch) commit(); else render();
+}
+let chipDrag = null, chipDragged = false;
+document.addEventListener('pointerdown', e => {
+  const chip = e.target.closest && e.target.closest('.can-drag .ichip'); if (!chip || e.button > 0) return;
+  chipDrag = {chip, list:chip.parentNode, x:e.clientX, y:e.clientY, pid:e.pointerId, on:false};
+});
+document.addEventListener('pointermove', e => {
+  const d = chipDrag; if (!d || e.pointerId !== d.pid) return;
+  if (!d.on){ if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return; d.on = true; d.chip.classList.add('dragging') }
+  e.preventDefault();
+  const over = document.elementFromPoint(e.clientX, e.clientY), t = over && over.closest('.ichip');
+  if (!t || t === d.chip || t.parentNode !== d.list) return;
+  const r = t.getBoundingClientRect();
+  d.list.insertBefore(d.chip, e.clientX < r.left + r.width / 2 ? t : t.nextSibling);
+}, {passive:false});
+function endChipDrag(e){
+  const d = chipDrag; if (!d || e.pointerId !== d.pid) return; chipDrag = null;
+  if (!d.on) return;
+  chipDragged = true; d.chip.classList.remove('dragging');
+  saveInstOrder([...d.list.querySelectorAll('.ichip')].map(c => c.dataset.id));
+}
+document.addEventListener('pointerup', endChipDrag); document.addEventListener('pointercancel', endChipDrag);
+document.addEventListener('click', e => { if (chipDragged){ chipDragged = false; e.stopPropagation(); e.preventDefault() } }, true);
+document.addEventListener('keydown', e => {
+  if (S.ui.view !== 'group' || S.ui.tab !== 'cmp' || !$('#modal').hidden || S.drawer || e.ctrlKey || e.metaKey) return;
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  const t = e.target, d = e.key === 'ArrowRight' ? 1 : -1;
+  if (e.altKey && t.classList && t.classList.contains('ichip')){   // Alt + flechas: mover la instancia enfocada
+    e.preventDefault(); const ids = insts(S.ui.g).map(n => n.id), i = ids.indexOf(t.dataset.id), j = i + d;
+    if (j < 0 || j >= ids.length) return; [ids[i], ids[j]] = [ids[j], ids[i]]; S.focusNext = 'ich_' + t.dataset.id; saveInstOrder(ids); return;
+  }
+  if (e.altKey || e.shiftKey || (t.closest && t.closest('input,select,textarea,[contenteditable]'))) return;
+  e.preventDefault(); stepInst(d);
+});
+
 /* ---------- panel de sincronización ---------- */
 function openSync(){ S.drawer = true; $('#drawer').hidden = false; renderDrawer() }
 function renderDrawer(){
@@ -1328,24 +1863,33 @@ function groupForm(id){
   const g = id ? S.app[id] : {};
   modal(id ? 'Editar grupo' : 'Nuevo grupo', `
     <label class="fld" for="f_name"><span>Nombre (será el nombre de la pestaña)</span><input id="f_name" value="${esc(g.name)}" placeholder="Ej.: Notebooks"></label>
-    <label class="fld" for="f_desc"><span>Naturaleza / descripción</span><textarea id="f_desc" rows="3">${esc(g.desc)}</textarea></label>`, () => {
+    <label class="fld" for="f_desc"><span>Naturaleza / descripción</span><textarea id="f_desc" rows="3">${esc(g.desc)}</textarea></label>
+    <label class="fld" for="f_gkind"><span>Qué se compara</span><select id="f_gkind"><option value="">Ítems con valores (productos, servicios, opciones…)</option><option value="text" ${g.kind === 'text' ? 'selected' : ''}>Textos (versiones de un escrito)</option></select></label>
+    <div class="checks onlytxt" ${g.kind === 'text' ? '' : 'hidden'}><label><input type="checkbox" id="f_gmet" ${id && crits(id).some(c => c.kind === 'auto') ? '' : 'checked'}> Agregar las métricas de texto como criterios (palabras, legibilidad, oraciones largas…)</label></div>`, () => {
     const name = v('f_name'); if (!name){ toast('Poné un nombre al grupo.'); return false }
     if (groups().some(x => x.name.toLowerCase() === name.toLowerCase() && x.id !== id)){ toast('Ya hay un grupo con ese nombre: serían la misma pestaña.'); return false }
-    const nid = id || uid('g'); put(nid, {...g, t:'group', name, desc:v('f_desc')}); S.ui.g = nid; S.ui.view = 'group'; render();
+    if (!canEdit()) return;
+    const nid = id || uid('g'), rec = {...g, t:'group', name, desc:v('f_desc')}, k = v('f_gkind'); if (k) rec.kind = k; else delete rec.kind;
+    setRec(nid, rec); if (k === 'text' && document.getElementById('f_gmet').checked) addTextMetrics(nid);
+    S.ui.g = nid; S.ui.view = 'group'; commit();
   });
 }
-function itemForm(id){
-  const g = S.ui.g, it = id ? S.app[id] : {}, leaves = tree(g).filter(c => c.leaf), ins = insts(g);
+function itemForm(id){ itemFormInner(id); txtCount() }
+function itemFormInner(id){
+  const g = S.ui.g, it = id ? S.app[id] : {}, leaves = tree(g).filter(c => c.leaf && c.kind !== 'auto'), ins = insts(g), tx = isText(g);
   const field = c => { const cur = it['v.' + c.id] ?? '';
     if (c.kind === 'qual') return `<label class="fld" for="f_v_${c.id}"><span>${esc(c.name)}</span><select id="f_v_${c.id}"><option value="">—</option>${levelsOf(c).map((o, i) => `<option value="${esc(o)}" ${o === cur ? 'selected' : ''}>${i + 1}. ${esc(o)}</option>`).join('')}${offOf(c).filter(o => o === cur).map(o => `<option value="${esc(o)}" selected>${esc(o)} (desestimado)</option>`).join('')}</select></label>`;
     return `<label class="fld" for="f_v_${c.id}"><span>${esc(c.name)}${c.unit ? ' (' + esc(c.unit) + ')' : ''}</span><input id="f_v_${c.id}" inputmode="decimal" value="${esc(cur)}"></label>` };
   modal(id ? 'Editar ítem' : 'Nuevo ítem', `
-    <label class="fld" for="f_name"><span>Nombre</span><input id="f_name" value="${esc(it.name)}"></label>
-    ${leaves.length ? `<div class="fgrid">${leaves.map(field).join('')}</div>` : '<p class="hint">El grupo no tiene criterios: definilos para cargar valores.</p>'}
+    <label class="fld" for="f_name"><span>Nombre</span><input id="f_name" value="${esc(it.name)}" ${tx ? 'placeholder="Ej.: Versión 2"' : ''}></label>
+    ${tx ? `<label class="fld" for="f_txt"><span>Texto</span><textarea id="f_txt" rows="10">${esc(it.txt)}</textarea></label><p class="hint val" id="f_txt_c"></p>` : ''}
+    ${leaves.length ? `<div class="fgrid">${leaves.map(field).join('')}</div>` : tx ? '' : '<p class="hint">El grupo no tiene criterios: definilos para cargar valores.</p>'}
     <label class="fld" for="f_notes"><span>Notas</span><textarea id="f_notes" rows="2">${esc(it.notes)}</textarea></label>
     ${ins.length ? `<div class="fld"><span>Incluir en instancias</span><div class="checks">${ins.map(n => `<label><input type="checkbox" id="f_in_${n.id}" ${id && instIds(n).includes(id) ? 'checked' : ''}> ${esc(n.name)}</label>`).join('')}</div></div>` : ''}`, () => {
     const name = v('f_name'); if (!name){ toast('Poné un nombre al ítem.'); return false }
+    if (tx && document.getElementById('f_txt').value.length > TXT_MAX){ toast('El texto supera el máximo de una celda de Google Sheets (49.000 caracteres).'); return false }
     const nid = id || uid('i'); const rec = {...it, t:'item', g, name, notes:v('f_notes')};
+    if (tx){ const t = document.getElementById('f_txt').value; if (t.trim()) rec.txt = t; else delete rec.txt }
     leaves.forEach(c => { const x = v('f_v_' + c.id); if (x) rec['v.' + c.id] = x; else delete rec['v.' + c.id] });
     setRec(nid, rec);
     ins.forEach(n => { const on = document.getElementById('f_in_' + n.id).checked; const list = instIds(n); const has = list.includes(nid);
@@ -1357,10 +1901,12 @@ function instForm(id){
   const g = S.ui.g, n = id ? S.app[id] : {}, sel = id ? instIds({...n}) : [];
   modal(id ? 'Editar instancia' : 'Nueva instancia', `
     <label class="fld" for="f_name"><span>Nombre</span><input id="f_name" value="${esc(n.name)}" placeholder="Ej.: Para la oficina"></label>
-    <div class="fld"><span>Ítems a comparar</span><div class="checks">${items(g).map(it => `<label><input type="checkbox" id="f_it_${it.id}" ${sel.includes(it.id) ? 'checked' : ''}> ${esc(it.name)}</label>`).join('') || '<p class="hint">El grupo todavía no tiene ítems.</p>'}</div></div>`, () => {
+    <div class="fld"><span>Ítems a comparar</span><div class="checks">${items(g).map(it => `<label><input type="checkbox" id="f_it_${it.id}" ${sel.includes(it.id) ? 'checked' : ''}> ${esc(it.name)}</label>`).join('') || '<p class="hint">El grupo todavía no tiene ítems.</p>'}</div></div>
+    <label class="fld" for="f_inst_set"><span>Criterios que usa</span><select id="f_inst_set"><option value="">Base del grupo</option>${setsOf(g).map(x => `<option value="${x.id}" ${x.id === n.set ? 'selected' : ''}>Conjunto «${esc(x.name)}»</option>`).join('')}</select></label>`, () => {
     const name = v('f_name'); if (!name){ toast('Poné un nombre a la instancia.'); return false }
     const chosen = items(g).filter(it => document.getElementById('f_it_' + it.id).checked).map(it => it.id);
-    const nid = id || uid('n'); put(nid, {...n, t:'inst', g, name, items:chosen.join(',')}); S.ui.inst[g] = nid; save(); render();
+    const nid = id || uid('n'); const rec = {...n, t:'inst', g, name, items:chosen.join(',')}; const isv = v('f_inst_set'); if (isv) rec.set = isv; else delete rec.set; if (!id) rec.ord = String(Math.max(0, ...insts(g).map(x => +x.ord || 0)) + 1);
+    put(nid, rec); S.ui.inst[g] = nid; save(); render();
   });
 }
 /* ---------- editor de escala: niveles de mejor a peor, numerados y reordenables ---------- */
@@ -1449,6 +1995,8 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('input', e => { const t = e.target; if (t.classList && t.classList.contains('sc-in') && SE){ SE.rows[+t.dataset.i].label = t.value }
   if (t.classList && t.classList.contains('sc-on') && SE){ SE.rows[+t.dataset.i].off = !t.checked; scRender('sc_on_' + t.dataset.i) }
+  if (t.id === 'f_txt') txtCount();
+  if (t.id && t.id.startsWith('f_ai_') && t.id !== 'f_ai_resp' && t.id !== 'f_ai_prompt') aiRefresh();
   if (t.id === 'f_cat_q'){ const q = t.value.trim().toLowerCase(); document.querySelectorAll('.catrow').forEach(r => r.hidden = !!q && !r.dataset.n.includes(q)) } });
 document.addEventListener('change', e => {
   const t = e.target; if (!SE) return;
@@ -1502,6 +2050,21 @@ const ACT = {
   pickGroup(el){ S.ui.view = 'group'; S.ui.g = el.dataset.id; save(); render() },
   openSheet(){ S.ui.view = 'sheet'; save(); render() },
   tab(el){ if (el.dataset.k === 'grid'){ S.ui.view = 'plan'; S.ui.planTab = S.ui.g; save(); render(); return } S.ui.tab = el.dataset.k; save(); render() },
+  pickSet(el){ S.ui.cset = {...(S.ui.cset || {}), [S.ui.g]:el.dataset.id}; save(); render() },
+  newSet(el){ setForm(null, el.dataset.from) }, editSet(el){ setForm(el.dataset.id) }, saveAsSet(){ saveAsSetForm() },
+  delSet(el){ const id = el.dataset.id; confirmDel(delText(S.app, 'set', id), () => { if (!canEdit()) return; cascadeDel('app', 'set', id); commit() }) },
+  setPin(el){ const sid = el.dataset.set, cid = el.dataset.c, c = treeFor(S.ui.g, sid).find(x => x.id === cid), b = tree(S.ui.g).find(x => x.id === cid); if (!c || !b) return;
+    const p = {on:c.setOff ? 'no' : 'si', w:c.w || '1'}; if (b.leaf) p.alt = c.alt || b.root; setAdj(sid, cid, p); toast('Valores fijados en el conjunto.') },
+  setReset(el){ setAdj(el.dataset.set, el.dataset.c, {on:'', w:'', alt:''}) },
+  cview(el){ S.ui.cview = el.dataset.k; save(); render() },
+  diffOpt(el){ S.ui.diff = {...(S.ui.diff || {}), [el.dataset.o]:el.dataset.v}; save(); render() },
+  diffSwap(){ const a = v('f_da'), b = v('f_db'); S.ui.diff = {...(S.ui.diff || {}), a:b, b:a}; save(); render() },
+  editText(el){ textForm(el.dataset.id) },
+  aiOpen(){ aiForm() },
+  aiClear(){ const n = curInst(); if (!n) return; const r = {...S.app[n.id]}; delete r.ai; delete r.aiAt; put(n.id, r) },
+  aiCopy(){ const ta = document.getElementById('f_ai_prompt'); if (!ta) return;
+    const fallback = () => { ta.focus(); ta.select(); toast('Seleccioné la consigna: copiala con Ctrl+C (o mantené apretado y elegí Copiar).') };
+    try{ navigator.clipboard.writeText(ta.value).then(() => toast('Consigna copiada. Pegala en un chat nuevo de Claude.'), fallback) }catch(e){ fallback() } },
   inclAll(){ const n = curInst(); if (n && S.ui.excl) delete S.ui.excl[n.id]; save(); render() },
   openPlan(){ S.ui.view = 'plan'; save(); render() },
   planTab(el){ S.ui[el.dataset.sk === 'app' ? 'planTab' : 'sheetTab'] = el.dataset.k; save(); render() },
@@ -1525,7 +2088,8 @@ const ACT = {
   goCrit(){ S.ui.tab = 'crit'; render() },
   newGroup(){ groupForm() }, editGroup(){ groupForm(S.ui.g) },
   delGroup(){ const g = S.ui.g; confirmDel(delText(S.app, 'group', g), () => { if (!canEdit()) return; cascadeDel('app', 'group', g); S.ui.g = ''; fixUi(); commit() }) },
-  pickInst(el){ S.ui.inst[S.ui.g] = el.dataset.id; save(); render() },
+  pickInst(el){ goInst(el.dataset.id) },
+  instStep(el){ stepInst(+el.dataset.d) },
   newInst(){ instForm() }, editInst(){ instForm(curInst()?.id) },
   delInst(){ const n = curInst(); confirmDel(delText(S.app, 'inst', n.id), () => { if (!canEdit()) return; cascadeDel('app', 'inst', n.id); commit() }) },
   newItem(){ itemForm() }, editItem(el){ itemForm(el.dataset.id) },
@@ -1581,6 +2145,8 @@ const ACT = {
 };
 
 document.addEventListener('click', e => {
+  const ai = e.target.closest && e.target.closest('[data-ai]');
+  if (ai){ ai.parentNode.querySelectorAll('[data-ai]').forEach(b => b.classList.toggle('on', b === ai)); document.getElementById('f_ai_kind').value = ai.dataset.ai; aiRefresh(); return }
   const el = e.target.closest('[data-act]'); const menu = $('#menu');
   if (!menu.hidden && !e.target.closest('#menu') && el?.dataset.act !== 'cell') menu.hidden = true;
   if (e.target === $('#modal')) return closeModal();
@@ -1592,6 +2158,16 @@ document.addEventListener('change', e => {
   else if (t.id === 'f_concl'){ const n = curInst(); if (n) put(n.id, {...S.app[n.id], concl:t.value.trim()}) }
   else if (t.id === 'f_auto'){ S.auto = t.value; save(); planPoll(true) }
   else if (t.classList.contains('pc')) planChange(t);
+  else if (t.id && t.id.startsWith('f_ai_') && t.id !== 'f_ai_resp') aiRefresh();
+  else if (t.id === 'f_gkind'){ document.querySelectorAll('.onlytxt').forEach(x => x.hidden = t.value !== 'text') }
+  else if (t.classList.contains('aidchk')){ S.ui.aids = {...(S.ui.aids || {long:true, rep:true, fill:true}), [t.dataset.k]:t.checked}; save(); render() }
+  else if (t.id === 'f_da' || t.id === 'f_db'){ S.ui.diff = {...(S.ui.diff || {}), [t.id === 'f_da' ? 'a' : 'b']:t.value}; save(); render() }
+  else if (t.classList.contains('sx-on')){ const a = recs('adj').find(x => x.set === t.dataset.set && x.use === t.dataset.c); setAdj(t.dataset.set, t.dataset.c, {on:t.checked ? (a && a.on === 'si' ? 'si' : '') : 'no'}) }
+  else if (t.classList.contains('sx-w')){ const val = t.value.trim().replace(',', '.'); if (val && isNaN(+val)){ toast('El peso tiene que ser un número.'); render(); return }
+    const a = recs('adj').find(x => x.set === t.dataset.set && x.use === t.dataset.c), pinned = a && a.w && String(a.w) === t.dataset.base;
+    setAdj(t.dataset.set, t.dataset.c, {w:!val || (val === t.dataset.base && !pinned) ? '' : val}) }
+  else if (t.classList.contains('sx-alt')) setAdj(t.dataset.set, t.dataset.c, {alt:t.value})
+  else if (t.id === 'f_iset'){ const n = curInst(); if (n){ const r = {...S.app[n.id]}; if (t.value) r.set = t.value; else delete r.set; put(n.id, r) } }
   else if (t.classList.contains('cx')){ const n = curInst(); if (!n) return; S.ui.excl = S.ui.excl || {};
     const set = new Set(S.ui.excl[n.id] || []); if (t.checked) set.delete(t.dataset.c); else set.add(t.dataset.c);
     if (set.size) S.ui.excl[n.id] = [...set]; else delete S.ui.excl[n.id]; save(); render() }
