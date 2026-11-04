@@ -53,8 +53,8 @@ button{font:inherit;color:inherit}
 @keyframes pulse{50%{opacity:.3}}
 @media (prefers-reduced-motion:reduce){.st-busy .dot{animation:none}}
 
-.shell{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:240px minmax(0,1fr);gap:28px;padding-block:22px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.side{display:flex;flex-direction:column;gap:8px;min-width:0}
+.shell{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:var(--side-w,240px) minmax(0,1fr);gap:28px;padding-block:22px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.side{display:flex;flex-direction:column;gap:8px;min-width:0;position:relative}
 .side-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}
 .glist{display:flex;flex-direction:column;gap:4px}
 .gitem{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid transparent;background:transparent;border-radius:var(--r);padding:9px 12px;cursor:pointer;width:100%}
@@ -439,6 +439,25 @@ th.drop-a{box-shadow:inset -3px 0 0 var(--accent)}
 .eyeb{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;min-width:40px;min-height:40px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .eyeb[aria-pressed="true"]{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
 @media (max-width:860px){ .gfold{border:1px solid var(--line);background:var(--surface);min-height:40px} }
+body.side-off .shell{grid-template-columns:minmax(0,1fr)}
+body.side-off .side{display:none}
+.sidebar-off{display:flex;gap:8px;flex-wrap:wrap}
+.siderz{position:absolute;top:0;bottom:0;right:-17px;width:10px;cursor:col-resize;touch-action:none;border-radius:4px}
+.siderz:hover,body.resizing .siderz{background:color-mix(in srgb,var(--accent) 25%,transparent)}
+.sidecol{min-width:32px;justify-content:center}
+.side-h .row{gap:4px;flex-wrap:nowrap}
+.cmp.fixed{table-layout:fixed;min-width:0}
+.cmp.fixed th,.cmp.fixed td{overflow-wrap:anywhere}
+.rank,.ithandle{flex:none;white-space:nowrap;overflow-wrap:normal}
+.cmp.fixed thead th,.cmp.fixed .sticky{min-width:0;max-width:none}
+.cmp thead th[data-it]{position:relative}
+.colrz{position:absolute;top:0;bottom:0;right:-5px;width:10px;cursor:col-resize;touch-action:none;z-index:2}
+.colrz::after{content:"";position:absolute;top:8px;bottom:8px;left:4px;width:2px;border-radius:2px;background:var(--line)}
+.colrz:hover::after,body.resizing .colrz::after{background:var(--accent)}
+body.resizing{cursor:col-resize;user-select:none}
+.laybar{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;font-size:.84rem}
+.laybar em{color:var(--warn);font-style:normal;font-weight:600}
+@media (max-width:860px){ .siderz{display:none} }
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.88rem;z-index:70;max-width:calc(100% - 32px)}
 
 @media (max-width:860px){
@@ -546,7 +565,7 @@ th.drop-a{box-shadow:inset -3px 0 0 var(--accent)}
 const SCHEMA = JSON.parse(document.getElementById('ci-schema').textContent);
 /** Fecha y hora de esta versión de la app (se completa sola al generar los archivos). */
 const APP_NAME = 'COMPAREIt(em)';
-const APP_BUILD = '04/11/2026 16:31';
+const APP_BUILD = '04/11/2026 17:36';
 const $ = s => document.querySelector(s);
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
@@ -971,7 +990,8 @@ function renderSide(){
   const gbtn = g => `<button class="gitem ${S.ui.view === 'group' && S.ui.g === g.id ? 'on' : ''} ${g.arch ? 'garch' : ''}" data-act="pickGroup" data-id="${g.id}">
       <span class="gname">${esc(g.name)}</span><span class="gmeta">${items(g.id).length} ítems · ${insts(g.id).length} instancias</span></button>`;
   $('#side').innerHTML = `
-    <div class="side-h"><span class="eyebrow">Grupos</span><button class="btn sm ghost ed" data-act="newGroup">+ Grupo</button></div>
+    <div class="side-h"><span class="eyebrow">Grupos</span><span class="row"><button class="btn sm ghost ed" data-act="newGroup">+ Grupo</button><button class="btn sm ghost sidecol" data-act="sideCollapse" title="Colapsar la barra lateral" aria-label="Colapsar la barra lateral">«</button></span></div>
+    <div class="siderz" data-rz="side" title="Arrastrá para cambiar el ancho de la barra" aria-hidden="true"></div>
     <nav class="glist">${gs.map(gbtn).join('')}
       ${ar.length ? `<button class="gfold" data-act="toggleArch" aria-expanded="${open}"><span>${open ? '▾' : '▸'}</span> Archivados (${ar.length})</button>${open ? ar.map(gbtn).join('') : ''}` : ''}
       ${nh ? `<button class="gfold" data-act="openHidden">${EYE_OFF} Ocultos (${nh})</button>` : ''}</nav>
@@ -1001,6 +1021,8 @@ function renderMain(){
   else if ((!S.ui.g || !S.app[S.ui.g]) && groups().length){ m.innerHTML = `<div class="empty"><h3>No hay grupos visibles</h3><p>Tenés ${hiddenGroups().length} grupo${hiddenGroups().length === 1 ? '' : 's'} oculto${hiddenGroups().length === 1 ? '' : 's'} en este dispositivo.</p><button class="btn primary" data-act="openHidden">Ver ocultos</button></div>`; }
   else if (!S.ui.g || !S.app[S.ui.g]){ m.innerHTML = empty('No hay grupos todavía', 'Un grupo reúne ítems de la misma naturaleza (por ejemplo, notebooks) y se guarda como una pestaña de la Google Sheet.', 'newGroup', 'Crear grupo'); }
   else m.innerHTML = viewGroup({...S.app[S.ui.g], id:S.ui.g});
+  if (S.lay.collapsed) m.insertAdjacentHTML('afterbegin', `<div class="sidebar-off"><button class="btn sm" data-act="sideExpand" title="Volver a mostrar la barra lateral con su ancho fijado">» Mostrar barra lateral</button>${S.layUndo.length ? '<button class="btn sm ghost" data-act="layUndo">↶ Deshacer</button>' : ''}</div>`);
+  sizeCols();
   if (S.drawer) renderDrawer();
 }
 
@@ -1041,7 +1063,7 @@ function viewCmp(g){
   const pct = x => x == null ? null : Math.round(x * 100);
   const ranked = [...its].sort((a, b) => (ev.total[b.id] ?? -1) - (ev.total[a.id] ?? -1));
   const rank = id => ranked.findIndex(x => x.id === id) + 1;
-  const head = `<tr><th class="sticky"><span class="eyebrow">Criterio</span></th>${its.map(it => { const p = pct(ev.total[it.id]); return `<th data-it="${it.id}">
+  const head = `<tr><th class="sticky"><span class="eyebrow">Criterio</span></th>${its.map(it => { const p = pct(ev.total[it.id]); return `<th data-it="${it.id}"><span class="colrz" data-rz="col" title="Arrastrá para cambiar el ancho de todas las columnas" aria-hidden="true"></span>
       <div class="ith">${canMove ? `<button type="button" class="ithandle" id="ih_${it.id}" data-it="${it.id}" aria-label="Mover ${esc(it.name)}" title="Arrastrar para mover (o Alt + ← →)">⠿</button>` : ''}<span class="rank ${rank(it.id) === 1 ? 'r1' : ''}">${rank(it.id)}º</span>${esc(it.name)}</div>
       <div class="tot"><span class="val">${p ?? '—'}</span><span class="muted">/100</span></div><div class="bar"><i style="width:${p ?? 0}%"></i></div></th>` }).join('')}</tr>`;
   const rows = ev.list.map(c => {
@@ -1053,7 +1075,7 @@ function viewCmp(g){
     return `<tr><th class="sticky" ${pad}><label class="crl">${chk}<span><span class="cn">${esc(c.name)}</span><span class="cw">${critHint(c)} · peso ${c.w || 1}</span></span></label></th>${its.map(it => { const r = ev.res[c.id][it.id];
       return `<td class="cell m-${r.mark}" data-act="cell" data-it="${it.id}" data-c="${c.id}"><span class="val">${esc(fmt(c, r.raw))}</span>${MK[r.mark] ? `<span class="mk">${MK[r.mark]}${r.manual ? ' ✎' : ''}</span>` : ''}</td>` }).join('')}</tr>`;
   }).join('');
-  h += `${its.length > 2 ? '<p class="swipe">Deslizá la tabla para ver todos los ítems →</p>' : ''}<div class="scroll"><table class="cmp"><thead>${head}</thead><tbody>${rows}</tbody></table></div>`;
+  h += `${layBar()}${its.length > 2 ? '<p class="swipe">Deslizá la tabla para ver todos los ítems →</p>' : ''}<div class="scroll"><table class="cmp"><thead>${head}</thead><tbody>${rows}</tbody></table></div>`;
 
   const marks = (it, m) => leaves.filter(c => ev.res[c.id][it.id].mark === m).map(c => c.name);
   const sims = leaves.filter(c => its.length > 1 && its.every(it => ev.res[c.id][it.id].mark === 'eq'));
@@ -1986,6 +2008,91 @@ document.addEventListener('keydown', e => {
   if (j < 0 || j >= ids.length) return; [ids[i], ids[j]] = [ids[j], ids[i]]; S.focusNext = 'ih_' + t.dataset.it; saveItemOrder(ids);
 }, true);
 
+/* ---------- Vista: barra lateral y ancho de columnas (configuración por dispositivo) ---------- */
+const LAY_CODE = {side:240, collapsed:false, col:0};   // col 0 = automático (promedio de los ítems)
+const laySaved = () => LS.get('ci_lay_saved', null), layDef = () => LS.get('ci_lay_def', null);
+const layBase = () => ({...LAY_CODE, ...(layDef() || {})});
+S.lay = {...layBase(), ...(laySaved() || {})}; S.layUndo = [];
+const layKey = l => JSON.stringify({side:l.side, collapsed:!!l.collapsed, col:l.col || 0});
+const desk = () => innerWidth > 860;
+function applySide(){
+  document.documentElement.style.setProperty('--side-w', S.lay.side + 'px');
+  document.body.classList.toggle('side-off', !!S.lay.collapsed);
+}
+function layChange(patch){
+  const prev = {...S.lay}, next = {...S.lay, ...patch};
+  if (layKey(prev) === layKey(next)) return;
+  S.layUndo.push(prev); if (S.layUndo.length > 40) S.layUndo.shift();
+  S.lay = next; applySide(); render();
+}
+/* columnas de ítems: todas del mismo ancho; en computadora siempre entran al menos 4 sin desplazarse */
+function colBounds(box, sw){
+  const avail = Math.max(0, box.clientWidth - sw - 2);
+  const min = desk() ? 120 : 104;
+  const max = desk() ? Math.floor(avail / 4) : avail;
+  return {min, max:Math.max(min, max)};
+}
+function applyColW(t, sw, n, w){
+  let cg = t.querySelector('colgroup'); if (!cg){ cg = document.createElement('colgroup'); t.prepend(cg) }
+  cg.innerHTML = `<col style="width:${sw}px">` + `<col style="width:${w}px">`.repeat(n);
+  t.classList.add('fixed'); t.style.width = (sw + n * w) + 'px';
+  const lbl = document.getElementById('lay_colw'); if (lbl) lbl.textContent = (S.lay.col ? '' : 'automático · ') + w + ' px';
+}
+function sizeCols(){
+  const t = document.querySelector('table.cmp'); if (!t) return;
+  const box = t.closest('.scroll'), ths = [...t.querySelectorAll('thead th[data-it]')]; if (!box || !ths.length) return;
+  t.classList.remove('fixed'); const cg = t.querySelector('colgroup'); if (cg) cg.remove(); t.style.width = '';
+  const st = t.querySelector('thead th.sticky');
+  const sw = Math.min(Math.max(st.offsetWidth, desk() ? 170 : 118), desk() ? 240 : 132);
+  const b = colBounds(box, sw);
+  let w = S.lay.col || Math.round(ths.reduce((a, th) => a + th.offsetWidth, 0) / ths.length);
+  w = Math.min(Math.max(w, b.min), b.max);
+  S.colG = {t, sw, n:ths.length, w, b}; applyColW(t, sw, ths.length, w);
+}
+function layBar(){
+  const dirty = layKey(S.lay) !== layKey({...layBase(), ...(laySaved() || {})});
+  return `<div class="laybar"><span class="muted">Columnas: <span id="lay_colw" class="val">${S.lay.col ? S.lay.col + ' px' : 'automático'}</span>${dirty ? ' · <em>cambios sin guardar</em>' : ''}</span>
+    <div class="row"><button class="btn sm" data-act="layUndo" ${S.layUndo.length ? '' : 'disabled'} title="Deshacer el último cambio de vista">↶ Deshacer</button>
+      <button class="btn sm" data-act="laySave" title="Guardar esta configuración en este dispositivo">Guardar configuración</button>
+      <button class="btn sm ghost" data-act="layDefault" title="Volver a la configuración default">Restablecer default</button>
+      <details class="more"><summary class="btn sm ghost">Más</summary><div class="more-m">
+        <button data-act="laySetDefault">Establecer la actual como nueva default</button>
+        <button data-act="layReset" class="danger-t">Reset total (configuración de fábrica)</button></div></details></div></div>`;
+}
+/* arrastre de la barra lateral y de los bordes de columna */
+let rz = null;
+document.addEventListener('pointerdown', e => {
+  const h = e.target.closest && e.target.closest('[data-rz]'); if (!h || e.button > 0) return;
+  e.preventDefault(); e.stopPropagation();
+  rz = {type:h.dataset.rz, x:e.clientX, pid:e.pointerId, start:h.dataset.rz === 'side' ? S.lay.side : (S.colG ? S.colG.w : 160), val:null};
+  document.body.classList.add('resizing');
+}, true);
+document.addEventListener('pointermove', e => {
+  if (!rz || e.pointerId !== rz.pid) return; e.preventDefault();
+  const dx = e.clientX - rz.x;
+  if (rz.type === 'side'){ rz.val = Math.min(420, Math.max(180, Math.round(rz.start + dx))); document.documentElement.style.setProperty('--side-w', rz.val + 'px') }
+  else if (S.colG){ const g = S.colG; rz.val = Math.min(g.b.max, Math.max(g.b.min, Math.round(rz.start + dx))); applyColW(g.t, g.sw, g.n, rz.val) }
+}, {passive:false});
+function endRz(e){
+  if (!rz || e.pointerId !== rz.pid) return; const r = rz; rz = null; document.body.classList.remove('resizing');
+  if (r.val == null || r.val === r.start) return;
+  if (r.type === 'side') layChange({side:r.val}); else layChange({col:r.val});
+}
+document.addEventListener('pointerup', endRz); document.addEventListener('pointercancel', endRz);
+let rsT = null; addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(sizeCols, 120) });
+const LAY_ACT = {
+  sideCollapse(){ layChange({collapsed:true}) },
+  sideExpand(){ layChange({collapsed:false}) },
+  layUndo(){ const p = S.layUndo.pop(); if (!p) return; S.lay = p; applySide(); render(); toast('Se deshizo el último cambio de vista.') },
+  laySave(){ LS.set('ci_lay_saved', S.lay); render(); toast('Configuración guardada en este dispositivo.') },
+  layDefault(){ layChange({...layBase()}); toast('Se restableció la configuración default.') },
+  laySetDefault(){ modal('Nueva configuración default', '<p>La configuración actual (barra lateral y ancho de columnas) pasa a ser la default de este dispositivo. «Restablecer default» va a volver a ella.</p><p class="hint">La default anterior se reemplaza y no se puede recuperar con Deshacer.</p>', () => {
+    LS.set('ci_lay_def', S.lay); LS.set('ci_lay_saved', S.lay); render(); toast('Nueva configuración default establecida.') }, 'Establecer') },
+  layReset(){ modal('Reset total de la vista', '<p>Se borran la configuración guardada y la default personalizada de este dispositivo, y la vista vuelve a la configuración de fábrica de la app.</p><p class="hint">Tus datos no se tocan. Esta acción no se puede deshacer.</p>', () => {
+    try{ localStorage.removeItem('ci_lay_saved'); localStorage.removeItem('ci_lay_def') }catch(e){}
+    S.layUndo = []; S.lay = {...LAY_CODE}; applySide(); render(); toast('Vista restablecida a la configuración de fábrica.') }, 'Reset total', true) }
+};
+
 /* ---------- grupos ocultos (por dispositivo) y archivados (sincronizado) ---------- */
 const EYE = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>';
 const EYE_OFF = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M2 12s3.6-7 10-7c2 0 3.7.7 5.1 1.6M22 12s-3.6 7-10 7c-2 0-3.7-.7-5.1-1.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 3l18 18" stroke="currentColor" stroke-width="1.8"/></svg>';
@@ -2428,6 +2535,7 @@ const ACT = {
     log('Datos de ejemplo restablecidos.'); fixUi(); save(); render() }, 'Restablecer', true) }
 };
 
+Object.assign(ACT, LAY_ACT);
 document.addEventListener('click', e => {
   const ai = e.target.closest && e.target.closest('[data-ai]');
   if (ai){ ai.parentNode.querySelectorAll('[data-ai]').forEach(b => b.classList.toggle('on', b === ai)); document.getElementById('f_ai_kind').value = ai.dataset.ai; aiRefresh(); return }
@@ -2478,5 +2586,5 @@ addEventListener('online', () => { log('Conexión a internet restablecida.'); sy
 addEventListener('offline', () => { if (MODE === 'sim') return; clearTimeout(pollT); nextAt = 0; S.reach = false; S.err = 'Sin conexión a internet: los cambios quedan en la copia local.'; render() });
 if (navigator.connection && navigator.connection.addEventListener) navigator.connection.addEventListener('change', () => planPoll(true));
 function loadInfo(){ return withRetry(() => MODE === 'gas' ? gcall('getInfo') : apiCall(API, 'getInfo')).then(i => { S.sheet = i; LS.set('ci_sheet', i); render() }).catch(e => { if (!S.sheet){ S.err = errText(e); log('No se pudo leer la planilla: ' + S.err); render() } }) }
-fixUi(); render(); sync(true).then(() => { planPoll(true); if (REAL) loadInfo() });
+applySide(); fixUi(); render(); sync(true).then(() => { planPoll(true); if (REAL) loadInfo() });
 </script>
