@@ -400,6 +400,11 @@ a.btn{text-decoration:none;color:var(--ink)}
 .aver{font-family:var(--f-mono);font-size:.64rem;font-weight:400;color:var(--muted);letter-spacing:0;white-space:nowrap}
 @media (max-width:480px){ .aver{white-space:normal;max-width:130px;line-height:1.2} }
 .gh-a{flex-wrap:wrap}
+.logo{border:0;background:transparent;padding:4px;margin:-4px;border-radius:8px;cursor:pointer;display:inline-flex;line-height:0}
+.logo:hover{background:var(--sunk)}
+.logo:active svg{transform:rotate(-12deg)}
+.logo svg{transition:transform .15s}
+@media (prefers-reduced-motion:reduce){.logo svg{transition:none}}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.88rem;z-index:70;max-width:calc(100% - 32px)}
 
 @media (max-width:860px){
@@ -421,7 +426,7 @@ a.btn{text-decoration:none;color:var(--ink)}
 </style>
 
 <header class="top"><div class="top-in">
-  <div class="brand"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="3" y="9" width="8" height="14" rx="2" fill="var(--accent)"/><rect x="15" y="4" width="8" height="19" rx="2" fill="var(--ink)" opacity=".85"/><path d="M1 24h24" stroke="var(--muted)" stroke-width="1.5"/></svg><span class="bname">CompareIt</span><span class="bmeta"><span class="srcbadge" id="srcBadge">Simulación</span><span class="aver" id="appVer"></span></span></div>
+  <div class="brand"><button type="button" class="logo" data-act="hardReload" title="Recargar la app sin caché" aria-label="Recargar la app sin caché"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="3" y="9" width="8" height="14" rx="2" fill="var(--accent)"/><rect x="15" y="4" width="8" height="19" rx="2" fill="var(--ink)" opacity=".85"/><path d="M1 24h24" stroke="var(--muted)" stroke-width="1.5"/></svg></button><span class="bname">CompareIt</span><span class="bmeta"><span class="srcbadge" id="srcBadge">Simulación</span><span class="aver" id="appVer"></span></span></div>
   <div class="seg" role="group" aria-label="Modo de uso">
     <button data-act="mode" data-m="app" id="m_app"><span class="long">Editar en la app</span><span class="short">App</span></button>
     <button data-act="mode" data-m="sheet" id="m_sheet"><span class="long">Cargar en la Sheet</span><span class="short">Sheet</span></button>
@@ -505,7 +510,7 @@ a.btn{text-decoration:none;color:var(--ink)}
 const SCHEMA = JSON.parse(document.getElementById('ci-schema').textContent);
 /** Fecha y hora de esta versión de la app (se completa sola al generar los archivos). */
 const APP_NAME = 'COMPAREIt(em)';
-const APP_BUILD = '04/11/2026 12:55';
+const APP_BUILD = '04/11/2026 13:21';
 const $ = s => document.querySelector(s);
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
@@ -518,6 +523,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const v = id => { const e = document.getElementById(id); return e ? e.value.trim() : '' };
 const hhmm = iso => iso ? new Date(iso).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : '—';
+try{ const u = new URL(location.href); if (u.searchParams.has('v')){ u.searchParams.delete('v'); history.replaceState(null, '', u.pathname + (u.search || '') + u.hash) } }catch(e){}
 const API = LS.get('ci_api', null);
 const MODE = (window.google && window.google.script && window.google.script.run) ? 'gas' : (API && API.url ? 'api' : 'sim');
 const REAL = MODE !== 'sim';
@@ -602,10 +608,11 @@ else if (!LS.get('ci_sd', false) && hadLocal){ flipScales(S.app); flipScales(S.b
 LS.set('ci_sd', true);
 if (!LS.get('ci_rt', false) && hadLocal){ migrateRoots(S.app); migrateRoots(S.base) }
 LS.set('ci_rt', true);
-S.err = ''; S.sheet = null;
+S.err = ''; S.sheet = REAL ? LS.get('ci_sheet', null) : null; S.retry = 0;
 function errText(e){
   const m = e && (e.message || (typeof e === 'string' ? e : '')) || String(e || '');
   if (!REAL && m === 'offline') return 'conexión cortada en la simulación';
+  if (m === 'timeout') return 'La planilla tardó demasiado en responder (más de 45 segundos). Se va a reintentar en la próxima sincronización.';
   if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'No se pudo llegar a la URL de la aplicación web. Revisá la URL (/exec), que el acceso sea «Cualquier usuario» y tu conexión a internet. Desde claude.ai esta conexión está bloqueada: usá el archivo HTML abierto en tu navegador.';
   return m || 'error sin detalle';
 }
@@ -721,13 +728,25 @@ const Sim = {
 const gcall = (fn, ...a) => new Promise((ok, ko) => google.script.run.withSuccessHandler(ok).withFailureHandler(ko)[fn](...a));
 const Gas = { ver: () => gcall('getVersion'), pull: () => gcall('getAll'), push: (up, dels, base) => gcall('putChanges', up, dels, base || '') };
 async function apiCall(cfg, action, extra){
-  const r = await fetch(cfg.url, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify({action, key:cfg.key, ...extra})});
+  const ctl = window.AbortController ? new AbortController() : null, to = ctl ? setTimeout(() => ctl.abort(), 45000) : null;
+  let r; try{ r = await fetch(cfg.url, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify({action, key:cfg.key, ...extra}), signal:ctl ? ctl.signal : undefined}) }
+  catch(e){ if (e && e.name === 'AbortError') throw new Error('timeout'); throw e } finally{ if (to) clearTimeout(to) }
   if (!r.ok) throw new Error('La aplicación web respondió con error HTTP ' + r.status + '.');
   let j; try{ j = await r.json() }catch(e){ throw new Error('La URL no devolvió datos de CompareIt. Usá la URL que termina en /exec y publicá una nueva versión con acceso «Cualquier usuario».') }
   if (!j.ok) throw new Error(j.error); return j.data;
 }
 const Api = { ver: () => apiCall(API, 'getVersion'), pull: () => apiCall(API, 'getAll'), push: (up, dels, base) => apiCall(API, 'putChanges', {up, dels, baseVer:base || ''}) };
-const adapter = MODE === 'gas' ? Gas : MODE === 'api' ? Api : Sim;
+/** Errores pasajeros (red, demora o bloqueo momentáneo de la planilla): se reintenta antes de mostrar el error. */
+const transientErr = m => /Failed to fetch|NetworkError|Load failed|timeout|HTTP 5\d\d|HTTP 429|lock|bloqueo|too many|demasiad|temporar|internal|interno|try again|intent[áa] de nuevo/i.test(m);
+async function withRetry(fn){
+  for (let i = 1; ; i++){
+    try{ const r = await fn(); if (S.retry){ S.retry = 0; renderStatus() } return r }
+    catch(e){ const m = String((e && e.message) || e); if (i >= 3 || !transientErr(m)){ S.retry = 0; throw e }
+      S.retry = i + 1; renderStatus(); await wait(i === 1 ? 1500 : 4000) }
+  }
+}
+const base = MODE === 'gas' ? Gas : MODE === 'api' ? Api : Sim;
+const adapter = MODE === 'sim' ? Sim : { ver: () => withRetry(base.ver), pull: () => withRetry(base.pull), push: (u, d, b) => withRetry(() => base.push(u, d, b)) };
 
 /* ---------- sincronización con fusión a 3 vías ---------- */
 function norm(r){ if (!r) return null; const o = {}; Object.keys(r).filter(k => k !== 'u').sort().forEach(k => { if (r[k] !== '' && r[k] != null) o[k] = String(r[k]) }); return o }
@@ -893,7 +912,7 @@ function empty(title, text, act, label){
 function renderStatus(){
   const pend = pendingKeys().length, conf = S.conflicts.length;
   let cls = 'st-ok', txt = 'Sincronizado';
-  if (S.syncing){ cls = 'st-busy'; txt = 'Sincronizando…' }
+  if (S.syncing){ cls = 'st-busy'; txt = S.retry ? `Reintentando (${S.retry}/3)…` : 'Sincronizando…' }
   else if (conf){ cls = 'st-conf'; txt = conf + (conf === 1 ? ' conflicto' : ' conflictos') }
   else if (!S.online || !S.reach){ cls = REAL ? 'st-conf' : 'st-off'; txt = (REAL ? 'Error de conexión' : 'Sin conexión') + (pend ? ' · ' + pend + ' pend.' : '') }
   else if (pend){ cls = 'st-pend'; txt = pend + ' pendientes' }
@@ -2210,6 +2229,13 @@ const ACT = {
   aiCopy(){ const ta = document.getElementById('f_ai_prompt'); if (!ta) return;
     const fallback = () => { ta.focus(); ta.select(); toast('Seleccioné la consigna: copiala con Ctrl+C (o mantené apretado y elegí Copiar).') };
     try{ navigator.clipboard.writeText(ta.value).then(() => toast('Consigna copiada. Pegala en un chat nuevo de Claude.'), fallback) }catch(e){ fallback() } },
+  async hardReload(){
+    toast('Recargando la app sin caché…'); save();
+    try{ if (window.caches) for (const k of await caches.keys()) await caches.delete(k) }catch(e){}
+    if (MODE === 'gas' || /claude/.test(location.host)){ location.reload(); return }
+    try{ await fetch(location.pathname, {cache:'reload'}) }catch(e){}
+    try{ const u = new URL(location.href); u.searchParams.set('v', Date.now()); location.replace(u.toString()) }catch(e){ location.reload() }
+  },
   inclAll(){ const n = curInst(); if (n && S.ui.excl) delete S.ui.excl[n.id]; save(); render() },
   openPlan(){ S.ui.view = 'plan'; save(); render() },
   planTab(el){ S.ui[el.dataset.sk === 'app' ? 'planTab' : 'sheetTab'] = el.dataset.k; save(); render() },
@@ -2337,6 +2363,6 @@ document.addEventListener('visibilitychange', () => {
 addEventListener('online', () => { log('Conexión a internet restablecida.'); sync(true).then(() => planPoll(true)) });
 addEventListener('offline', () => { if (MODE === 'sim') return; clearTimeout(pollT); nextAt = 0; S.reach = false; S.err = 'Sin conexión a internet: los cambios quedan en la copia local.'; render() });
 if (navigator.connection && navigator.connection.addEventListener) navigator.connection.addEventListener('change', () => planPoll(true));
-fixUi(); render(); sync(true).then(() => planPoll(true));
-if (REAL) (MODE === 'gas' ? gcall('getInfo') : apiCall(API, 'getInfo')).then(i => { S.sheet = i; render() }).catch(e => { S.err = errText(e); log('No se pudo leer la planilla: ' + S.err); render() });
+function loadInfo(){ return withRetry(() => MODE === 'gas' ? gcall('getInfo') : apiCall(API, 'getInfo')).then(i => { S.sheet = i; LS.set('ci_sheet', i); render() }).catch(e => { if (!S.sheet){ S.err = errText(e); log('No se pudo leer la planilla: ' + S.err); render() } }) }
+fixUi(); render(); sync(true).then(() => { planPoll(true); if (REAL) loadInfo() });
 </script>
