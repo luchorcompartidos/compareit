@@ -396,6 +396,10 @@ a.btn{text-decoration:none;color:var(--ink)}
 .aicard .tbody{max-width:none}
 .aichk{flex-direction:row;flex-wrap:wrap;gap:6px 14px}
 #f_ai_prompt{font-family:var(--f-mono);font-size:.78rem;line-height:1.45}
+.bmeta{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
+.aver{font-family:var(--f-mono);font-size:.64rem;font-weight:400;color:var(--muted);letter-spacing:0;white-space:nowrap}
+@media (max-width:480px){ .aver{white-space:normal;max-width:130px;line-height:1.2} }
+.gh-a{flex-wrap:wrap}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.88rem;z-index:70;max-width:calc(100% - 32px)}
 
 @media (max-width:860px){
@@ -417,7 +421,7 @@ a.btn{text-decoration:none;color:var(--ink)}
 </style>
 
 <header class="top"><div class="top-in">
-  <div class="brand"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="3" y="9" width="8" height="14" rx="2" fill="var(--accent)"/><rect x="15" y="4" width="8" height="19" rx="2" fill="var(--ink)" opacity=".85"/><path d="M1 24h24" stroke="var(--muted)" stroke-width="1.5"/></svg><span class="bname">CompareIt</span><span class="srcbadge" id="srcBadge">Simulación</span></div>
+  <div class="brand"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="3" y="9" width="8" height="14" rx="2" fill="var(--accent)"/><rect x="15" y="4" width="8" height="19" rx="2" fill="var(--ink)" opacity=".85"/><path d="M1 24h24" stroke="var(--muted)" stroke-width="1.5"/></svg><span class="bname">CompareIt</span><span class="bmeta"><span class="srcbadge" id="srcBadge">Simulación</span><span class="aver" id="appVer"></span></span></div>
   <div class="seg" role="group" aria-label="Modo de uso">
     <button data-act="mode" data-m="app" id="m_app"><span class="long">Editar en la app</span><span class="short">App</span></button>
     <button data-act="mode" data-m="sheet" id="m_sheet"><span class="long">Cargar en la Sheet</span><span class="short">Sheet</span></button>
@@ -499,6 +503,9 @@ a.btn{text-decoration:none;color:var(--ink)}
 <script>
 /* ---------- utilidades ---------- */
 const SCHEMA = JSON.parse(document.getElementById('ci-schema').textContent);
+/** Fecha y hora de esta versión de la app (se completa sola al generar los archivos). */
+const APP_NAME = 'COMPAREIt(em)';
+const APP_BUILD = '04/11/2026 12:55';
 const $ = s => document.querySelector(s);
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
@@ -894,6 +901,7 @@ function renderStatus(){
   $('#m_app').classList.toggle('on', S.mode === 'app'); $('#m_sheet').classList.toggle('on', S.mode === 'sheet');
   document.body.classList.toggle('ro', S.mode === 'sheet');
   $('#srcBadge').textContent = REAL ? 'Sheet real' : 'Simulación';
+  $('#appVer').textContent = APP_BUILD ? 'Versión ' + APP_NAME + ' ' + APP_BUILD : ''; $('#appVer').title = 'Fecha y hora de la última versión de la app';
 }
 
 function renderSide(){
@@ -904,6 +912,7 @@ function renderSide(){
       <span class="gname">${esc(g.name)}</span><span class="gmeta">${items(g.id).length} ítems · ${insts(g.id).length} instancias</span></button>`).join('')}</nav>
     <div class="side-h"><span class="eyebrow">Vistas</span></div>
     <button class="gitem ${S.ui.view === 'plan' ? 'on' : ''}" data-act="openPlan"><span class="gname">Planilla</span><span class="gmeta">Todas las entidades en grilla</span></button>
+    <button class="gitem ed" data-act="importCmp"><span class="gname">Importar comparación</span><span class="gmeta">Desde un archivo o texto exportado</span></button>
     <div class="side-h"><span class="eyebrow">Fuente de datos</span></div>
     ${REAL ? (S.sheet ? `<a class="gitem sheetbtn" href="${esc(S.sheet.url)}" target="_blank" rel="noopener"><span class="gname">Abrir planilla ↗</span><span class="gmeta">${esc(S.sheet.name)}</span></a>` : `<div class="gitem"><span class="gname">Google Sheet</span><span class="gmeta">${S.err ? 'Error: ver panel de sincronización' : 'Conectando…'}</span></div>`)
     : `<button class="gitem sheetbtn ${S.ui.view === 'sheet' ? 'on' : ''}" data-act="openSheet"><span class="gname">Sheet simulada</span><span class="gmeta">Prueba de sincronización</span></button>
@@ -933,7 +942,7 @@ function viewGroup(g){
   const tabs = [['cmp', 'Comparar'], ['items', 'Ítems'], ['grid', 'Grilla'], ['crit', 'Criterios']];
   return `${S.mode === 'sheet' ? `<div class="banner"><strong>Modo «Cargar en la Sheet».</strong>&nbsp;La app solo muestra los datos; cargá y editá en la Google Sheet. La vista se actualiza sola cuando la Sheet cambia, o con «Sincronizar ahora».</div>` : ''}
   <header class="gh"><div class="gh-t"><span class="eyebrow">Grupo · pestaña «${esc(g.name)}»</span><h1>${esc(g.name)}</h1>${g.desc ? `<p class="lead">${esc(g.desc)}</p>` : ''}</div>
-    <div class="gh-a ed"><button class="btn sm" data-act="editGroup">Editar grupo</button><button class="btn sm ghost" data-act="delGroup">Borrar</button></div></header>
+    <div class="gh-a"><button class="btn sm ed" data-act="editGroup">Editar grupo</button><button class="btn sm ed" data-act="replGroup">Replicar grupo</button><button class="btn sm" data-act="exportCmp">Exportar</button><button class="btn sm ghost ed" data-act="delGroup">Borrar</button></div></header>
   <div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${S.ui.tab === k}" class="tab ${S.ui.tab === k ? 'on' : ''}" data-act="tab" data-k="${k}">${l}</button>`).join('')}</div>
   ${S.ui.tab === 'items' ? viewItems(g) : S.ui.tab === 'crit' ? viewCrit(g) : viewCmp(g)}`;
 }
@@ -956,7 +965,7 @@ function viewCmp(g){
       <h2>${esc(cur.name)}</h2>
       <button class="navb" data-act="instStep" data-d="1" aria-label="Instancia siguiente" ${ix >= ins.length - 1 ? 'disabled' : ''}>›</button>
       <span class="instpos">${ix + 1} de ${ins.length}</span></div><p class="muted">${its.length} ítems · ${leaves.length} criterios evaluados${nSet ? ` · ${nSet} excluido${nSet > 1 ? 's' : ''} por el conjunto` : ''}${nOff ? ` · ${nOff} desestimado${nOff > 1 ? 's' : ''} <button class="btn sm ghost" data-act="inclAll">Incluir todos</button>${canEdit() ? ' <button class="btn sm" data-act="saveAsSet">Guardar como conjunto</button>' : ''}` : ''}</p>${gsets.length || iset ? setSel : ''}<p class="hint">Desmarcá un criterio para dejarlo afuera de la comparación${canEdit() ? '; tocá una celda para forzar ventaja o desventaja' : ''}.<span class="kbd-only"> Con ← → del teclado pasás de una instancia a otra.</span></p></div>
-    <div class="row ed"><button class="btn sm" data-act="editInst">Editar instancia</button><button class="btn sm ghost" data-act="delInst">Borrar</button></div></div>`;
+    <div class="row"><button class="btn sm ed" data-act="editInst">Editar instancia</button><button class="btn sm ed" data-act="replInst">Replicar</button><button class="btn sm" data-act="exportCmp">Exportar</button><button class="btn sm ghost ed" data-act="delInst">Borrar</button></div></div>`;
   if (!its.length) return h + empty('La instancia no tiene ítems', 'Editá la instancia para elegir qué ítems comparar.', 'editInst', 'Elegir ítems');
   if (isText(g.id)){ h += cmpModeBar(); const cv = S.ui.cview || 'score'; if (cv === 'texts') return h + viewTexts(its); if (cv === 'diff') return h + viewDiff(its) }
   if (!ev.list.length) return h + empty('El grupo no tiene criterios', 'Los criterios definen cómo se evalúan los ítems y de ellos salen las ventajas y desventajas.', 'goCrit', 'Definir criterios');
@@ -1485,6 +1494,134 @@ function aiCard(inst){
     <button class="btn sm ghost ed" data-act="aiClear">Quitar</button></header><div class="tbody">${esc(inst.ai)}</div></article>`;
 }
 
+/* ---------- Réplicas, exportación e importación ---------- */
+function uniqueGroupName(n){ let x = n, i = 2; while (groups().some(g => (g.name || '').toLowerCase() === x.toLowerCase())) x = n + ' ' + (i++); return x }
+const stripU = r => { const o = {...r}; delete o.u; return o };
+/** Paquete autocontenido de un grupo (todas sus instancias) o de algunas instancias. */
+function makeBundle(gid, only){
+  const D = S.app, g = D[gid], ins = insts(gid).filter(n => !only || only.includes(n.id));
+  const itemIds = only ? [...new Set(ins.flatMap(n => instIds(n)))] : items(gid).map(i => i.id);
+  const uses = recs('crit').filter(u => u.g === gid);
+  const setIds = only ? [...new Set(ins.map(n => n.set).filter(x => x && D[x]))] : setsOf(gid).map(s => s.id);
+  const adjs = recs('adj').filter(a => setIds.includes(a.set));
+  const rootIds = [...new Set([...uses.map(u => u.root), ...adjs.map(a => a.alt).filter(Boolean)])].filter(id => D[id]);
+  return {format:'compareit', v:1, app:APP_NAME + ' ' + APP_BUILD, at:now(), scope:only ? 'inst' : 'group',
+    group:stripU({...g, id:gid}), roots:rootIds.map(id => stripU({...D[id], id})), uses:uses.map(stripU),
+    items:itemIds.filter(id => D[id]).map(id => stripU({...D[id], id})), sets:setIds.map(id => stripU({...D[id], id})), adjs:adjs.map(stripU),
+    insts:ins.map(n => { const o = stripU(n); const ex = (S.ui.excl || {})[n.id]; if (ex && ex.length) o.excl = ex; return o })};
+}
+/** Crea una copia nueva e independiente a partir de un paquete. rootMode: keep | reuse | new */
+function cloneBundle(B, opt){
+  const map = {}, rootMap = {};
+  B.roots.forEach(r => {
+    if (opt.rootMode === 'keep' && S.app[r.id] && S.app[r.id].t === 'root'){ rootMap[r.id] = r.id; return }
+    const same = roots().find(x => (x.name || '').toLowerCase() === (r.name || '').toLowerCase());
+    if (opt.rootMode === 'reuse' && same){ rootMap[r.id] = same.id; return }
+    const id = uid('r'), rec = {...r}; delete rec.id; rec.t = 'root'; rec.name = uniqueRootName(r.name || 'Criterio'); setRec(id, rec); rootMap[r.id] = id;
+  });
+  const gid = uid('g'), grec = {...B.group}; delete grec.id; grec.t = 'group'; grec.name = opt.name; setRec(gid, grec);
+  B.uses.forEach(u => map[u.id] = uid('c')); B.items.forEach(i => map[i.id] = uid('i')); B.sets.forEach(s => map[s.id] = uid('s'));
+  B.uses.forEach(u => { const r = {...u}; delete r.id; r.t = 'crit'; r.g = gid; r.root = rootMap[u.root] || u.root; if (r.p && map[r.p]) r.p = map[r.p]; else delete r.p; setRec(map[u.id], r) });
+  B.items.forEach(i => { const r = {}; Object.entries(i).forEach(([k, v]) => { if (k === 'id') return; if (k.startsWith('v.')){ const c = map[k.slice(2)]; if (c) r['v.' + c] = v } else r[k] = v }); r.t = 'item'; r.g = gid; setRec(map[i.id], r) });
+  B.sets.forEach(s => { const r = {...s}; delete r.id; r.t = 'set'; r.g = gid; setRec(map[s.id], r) });
+  B.adjs.forEach(a => { if (!map[a.set] || !map[a.use]) return; const r = {...a}; delete r.id; r.t = 'adj'; r.g = gid; r.set = map[a.set]; r.use = map[a.use]; if (r.alt) r.alt = rootMap[r.alt] || r.alt; setRec(uid('a'), r) });
+  const made = [];
+  B.insts.forEach(n => {
+    const id = uid('n'), r = {};
+    Object.entries(n).forEach(([k, v]) => { if (k === 'id' || k === 'excl') return;
+      if (k.startsWith('o.')){ const [, it, c] = k.split('.'); if (map[it] && map[c]) r['o.' + map[it] + '.' + map[c]] = v } else r[k] = v });
+    r.t = 'inst'; r.g = gid; r.items = (n.items || '').split(',').map(x => map[x]).filter(Boolean).join(',');
+    if (r.set && map[r.set]) r.set = map[r.set]; else delete r.set;
+    setRec(id, r); made.push(id);
+    if (n.excl && n.excl.length){ S.ui.excl = S.ui.excl || {}; S.ui.excl[id] = n.excl.map(c => map[c]).filter(Boolean) }
+  });
+  return {gid, insts:made};
+}
+function checkBundle(B){
+  if (!B || B.format !== 'compareit') return 'No es un archivo de CompareIt.';
+  if (B.v !== 1) return 'El archivo es de una versión de CompareIt que esta app no reconoce.';
+  if (!B.group || !Array.isArray(B.uses) || !Array.isArray(B.items) || !Array.isArray(B.insts) || !Array.isArray(B.roots)) return 'El archivo está incompleto o dañado.';
+  B.sets = B.sets || []; B.adjs = B.adjs || []; return null;
+}
+
+/* réplica liviana de una instancia: mismos ítems (si cambiás un valor, cambia en ambas) */
+function replInstForm(){
+  const n = curInst(); if (!n) return;
+  modal('Replicar instancia', `
+    <p class="hint">La réplica copia los ítems elegidos, el conjunto de criterios, los ajustes manuales y la conclusión. Podés cambiar todo eso sin afectar a «${esc(n.name)}». Los ítems son los mismos: si cambiás un valor de un ítem, cambia en las dos. Para una copia totalmente independiente usá «Replicar grupo».</p>
+    <label class="fld" for="f_name"><span>Nombre</span><input id="f_name" value="${esc(n.name + ' (copia)')}"></label>`, () => {
+    const name = v('f_name'); if (!name){ toast('Poné un nombre.'); return false }
+    if (!canEdit()) return;
+    const id = uid('n'), r = stripU(S.app[n.id]); r.name = name; r.ord = String(Math.max(0, ...insts(S.ui.g).map(x => +x.ord || 0)) + 1);
+    setRec(id, r); const ex = (S.ui.excl || {})[n.id]; if (ex) S.ui.excl[id] = [...ex];
+    S.ui.inst[S.ui.g] = id; S.slide = 'slide-l'; log(`Se replicó la instancia «${n.name}» como «${name}».`); commit();
+  }, 'Replicar');
+}
+/* réplica profunda del grupo: independiente de la original */
+function replGroupForm(){
+  const g = S.app[S.ui.g]; if (!g) return;
+  modal('Replicar grupo', `
+    <p class="hint">Crea un grupo nuevo e independiente con copias de sus ítems, criterios del grupo, conjuntos e instancias, y su propia pestaña en la Sheet. Lo que cambies en la copia no afecta a «${esc(g.name)}». Los criterios del catálogo se siguen compartiendo entre ambos grupos.</p>
+    <label class="fld" for="f_name"><span>Nombre del grupo nuevo</span><input id="f_name" value="${esc(uniqueGroupName(g.name + ' (copia)'))}"></label>`, () => {
+    const name = v('f_name'); if (!name){ toast('Poné un nombre.'); return false }
+    if (groups().some(x => (x.name || '').toLowerCase() === name.toLowerCase())){ toast('Ya hay un grupo con ese nombre: serían la misma pestaña.'); return false }
+    if (!canEdit()) return;
+    const res = cloneBundle(makeBundle(S.ui.g, null), {name, rootMode:'keep'});
+    S.ui.g = res.gid; S.ui.view = 'group'; S.ui.tab = 'cmp'; log(`Se replicó el grupo «${g.name}» como «${name}».`); commit();
+  }, 'Replicar');
+}
+/* exportar */
+function exportForm(){
+  const n = curInst(), g = S.app[S.ui.g]; if (!g) return;
+  const fname = s => ('compareit-' + s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '') + '.json';
+  modal('Exportar comparación', `
+    <div class="checks">
+      ${n ? `<label><input type="radio" name="f_exp_scope" value="inst" checked> Solo la instancia «${esc(n.name)}» (con sus ítems, criterios y conjunto)</label>` : ''}
+      <label><input type="radio" name="f_exp_scope" value="group" ${n ? '' : 'checked'}> Todo el grupo «${esc(g.name)}» (todas sus instancias e ítems)</label></div>
+    <label class="fld" for="f_exp_txt"><span>Contenido <span class="muted" id="f_exp_len"></span></span><textarea id="f_exp_txt" rows="6" readonly></textarea></label>
+    <div class="row"><button type="button" class="btn primary" data-act="expDownload">Descargar archivo</button><button type="button" class="btn" data-act="expCopy">Copiar como texto</button></div>
+    <p class="hint">En el otro dispositivo usá «Importar comparación» y elegí el archivo o pegá el texto. Siempre se importa como una réplica nueva: no pisa nada. Si estás viendo la app desde claude.ai, la descarga está bloqueada: usá «Copiar como texto».</p>`, null);
+  const upd = () => { const sc = (document.querySelector('input[name=f_exp_scope]:checked') || {}).value || 'group';
+    const B = makeBundle(S.ui.g, sc === 'inst' && n ? [n.id] : null), t = JSON.stringify(B);
+    const ta = document.getElementById('f_exp_txt'); ta.value = t; ta.dataset.fname = fname(g.name + (sc === 'inst' && n ? '-' + n.name : ''));
+    document.getElementById('f_exp_len').textContent = `· ${B.insts.length} instancia${B.insts.length === 1 ? '' : 's'}, ${B.items.length} ítems, ${B.uses.length} criterios · ${fmtN(Math.round(t.length / 1024))} KB` };
+  EXP_UPD = upd; upd();
+}
+let EXP_UPD = null;
+/* importar */
+function importForm(){
+  modal('Importar comparación', `
+    <label class="fld" for="f_imp_file"><span>Archivo exportado desde CompareIt (.json)</span><input type="file" id="f_imp_file" accept=".json,application/json"></label>
+    <label class="fld" for="f_imp_txt"><span>…o pegá el texto exportado</span><textarea id="f_imp_txt" rows="5" placeholder='{"format":"compareit", …}'></textarea></label>
+    <div id="f_imp_info" class="hint">Se va a crear como un grupo nuevo e independiente.</div>
+    <label class="fld" for="f_imp_name"><span>Nombre del grupo nuevo</span><input id="f_imp_name"></label>
+    <div class="checks" id="f_imp_roots" hidden>
+      <label><input type="radio" name="f_imp_rm" value="reuse" checked> Reutilizar los criterios del catálogo que tengan el mismo nombre</label>
+      <label><input type="radio" name="f_imp_rm" value="new"> Crear todos los criterios como nuevos</label></div>`, () => {
+    let B; try{ B = JSON.parse(v('f_imp_txt')) }catch(e){ toast('El texto no es un archivo de CompareIt válido.'); return false }
+    const err = checkBundle(B); if (err){ toast(err); return false }
+    const name = v('f_imp_name'); if (!name){ toast('Poné un nombre al grupo nuevo.'); return false }
+    if (groups().some(x => (x.name || '').toLowerCase() === name.toLowerCase())){ toast('Ya hay un grupo con ese nombre: serían la misma pestaña.'); return false }
+    if (!canEdit()) return;
+    const rm = (document.querySelector('input[name=f_imp_rm]:checked') || {}).value || 'reuse';
+    const res = cloneBundle(B, {name, rootMode:rm});
+    S.ui.g = res.gid; S.ui.view = 'group'; S.ui.tab = 'cmp'; if (res.insts[0]) S.ui.inst[res.gid] = res.insts[0];
+    log(`Se importó «${B.group.name}» como «${name}».`); commit(); toast('Comparación importada.');
+  }, 'Importar');
+}
+function impPreview(){
+  const info = document.getElementById('f_imp_info'), rbox = document.getElementById('f_imp_roots'); if (!info) return;
+  let B; const t = v('f_imp_txt'); if (!t){ info.textContent = 'Se va a crear como un grupo nuevo e independiente.'; rbox.hidden = true; return }
+  try{ B = JSON.parse(t) }catch(e){ info.textContent = 'El texto no es un archivo de CompareIt válido.'; rbox.hidden = true; return }
+  const err = checkBundle(B); if (err){ info.textContent = err; rbox.hidden = true; return }
+  const same = B.roots.filter(r => roots().some(x => (x.name || '').toLowerCase() === (r.name || '').toLowerCase()));
+  const diff = same.filter(r => { const x = roots().find(y => (y.name || '').toLowerCase() === (r.name || '').toLowerCase()); return x.kind !== r.kind || (x.scale || '') !== (r.scale || '') || (x.dir || '') !== (r.dir || '') });
+  info.innerHTML = `<strong>«${esc(B.group.name)}»</strong> · ${B.insts.length} instancia${B.insts.length === 1 ? '' : 's'} · ${B.items.length} ítems · ${B.uses.length} criterios${B.at ? ' · exportado el ' + new Date(B.at).toLocaleString('es-AR') : ''}.`
+    + (same.length ? ` ${same.length} criterio${same.length === 1 ? ' ya existe' : 's ya existen'} en tu catálogo con el mismo nombre${diff.length ? `; ${diff.length} con otra definición (${esc(diff.map(r => r.name).join(', '))}): si los reutilizás, se usa la definición de tu catálogo` : ''}.` : '');
+  rbox.hidden = !same.length;
+  const nm = document.getElementById('f_imp_name'); if (!nm.value) nm.value = uniqueGroupName(B.group.name + (B.scope === 'inst' && B.insts[0] ? ' · ' + B.insts[0].name : '') + ' (importado)');
+}
+
 function viewCritBase(g){
   const list = tree(g.id);
   let h = `<div class="instbar"><p class="muted" style="max-width:72ch">Los criterios vienen del catálogo general y se pueden usar en varios grupos. Nombre, tipo y escala son del criterio; el orden, el peso y de qué criterio depende son propios de cada grupo.</p>
@@ -1826,6 +1963,7 @@ function renderDrawer(){
         <p class="hint">Sin marcar, la app arranca con lo que ya tenga la planilla. Funciona con el archivo HTML abierto en tu navegador; desde claude.ai la conexión está bloqueada.</p>
         <div class="row"><button class="btn sm primary" data-act="apiConnect">Probar y conectar</button></div>`}
       ${MODE === 'api' ? `<p class="muted">Conectada por URL. <button class="btn sm ghost" data-act="apiDisconnect">Desconectar</button></p>` : ''}</section>
+    <section class="dr-sec"><span class="eyebrow">Versión de la app</span><p>${APP_BUILD ? 'Versión ' + esc(APP_NAME) + ' ' + esc(APP_BUILD) + ' (hora de Argentina)' : '—'}</p></section>
     <section class="dr-sec"><span class="eyebrow">Estado</span>
       <p>${S.syncing ? 'Sincronizando…' : !S.online || !S.reach ? 'Sin conexión: trabajás sobre la copia local y los cambios quedan en cola.' : 'Conectado con la Google Sheet.'}</p>
       ${S.err ? `<div class="errbox"><strong>Error real devuelto:</strong><code>${esc(S.err)}</code></div>` : ''}
@@ -1996,6 +2134,7 @@ document.addEventListener('click', e => {
 document.addEventListener('input', e => { const t = e.target; if (t.classList && t.classList.contains('sc-in') && SE){ SE.rows[+t.dataset.i].label = t.value }
   if (t.classList && t.classList.contains('sc-on') && SE){ SE.rows[+t.dataset.i].off = !t.checked; scRender('sc_on_' + t.dataset.i) }
   if (t.id === 'f_txt') txtCount();
+  if (t.id === 'f_imp_txt') impPreview();
   if (t.id && t.id.startsWith('f_ai_') && t.id !== 'f_ai_resp' && t.id !== 'f_ai_prompt') aiRefresh();
   if (t.id === 'f_cat_q'){ const q = t.value.trim().toLowerCase(); document.querySelectorAll('.catrow').forEach(r => r.hidden = !!q && !r.dataset.n.includes(q)) } });
 document.addEventListener('change', e => {
@@ -2061,6 +2200,12 @@ const ACT = {
   diffSwap(){ const a = v('f_da'), b = v('f_db'); S.ui.diff = {...(S.ui.diff || {}), a:b, b:a}; save(); render() },
   editText(el){ textForm(el.dataset.id) },
   aiOpen(){ aiForm() },
+  replInst(){ replInstForm() }, replGroup(){ replGroupForm() }, exportCmp(){ exportForm() }, importCmp(){ importForm() },
+  expCopy(){ const ta = document.getElementById('f_exp_txt'); if (!ta) return; const fb = () => { ta.focus(); ta.select(); toast('Seleccioné el contenido: copialo con Ctrl+C (o mantené apretado y elegí Copiar).') };
+    try{ navigator.clipboard.writeText(ta.value).then(() => toast('Copiado. Pegalo en «Importar comparación» del otro dispositivo.'), fb) }catch(e){ fb() } },
+  expDownload(){ const ta = document.getElementById('f_exp_txt'); if (!ta) return;
+    try{ const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([ta.value], {type:'application/json'})); a.download = ta.dataset.fname || 'compareit.json';
+      document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove() }, 1000); toast('Descarga iniciada. Si no aparece, usá «Copiar como texto».') }catch(e){ toast('No se pudo descargar: usá «Copiar como texto».') } },
   aiClear(){ const n = curInst(); if (!n) return; const r = {...S.app[n.id]}; delete r.ai; delete r.aiAt; put(n.id, r) },
   aiCopy(){ const ta = document.getElementById('f_ai_prompt'); if (!ta) return;
     const fallback = () => { ta.focus(); ta.select(); toast('Seleccioné la consigna: copiala con Ctrl+C (o mantené apretado y elegí Copiar).') };
@@ -2159,6 +2304,9 @@ document.addEventListener('change', e => {
   else if (t.id === 'f_auto'){ S.auto = t.value; save(); planPoll(true) }
   else if (t.classList.contains('pc')) planChange(t);
   else if (t.id && t.id.startsWith('f_ai_') && t.id !== 'f_ai_resp') aiRefresh();
+  else if (t.name === 'f_exp_scope'){ if (EXP_UPD) EXP_UPD() }
+  else if (t.id === 'f_imp_file'){ const f = t.files && t.files[0]; if (!f) return; const rd = new FileReader();
+    rd.onload = () => { document.getElementById('f_imp_txt').value = rd.result; impPreview() }; rd.onerror = () => toast('No se pudo leer el archivo.'); rd.readAsText(f) }
   else if (t.id === 'f_gkind'){ document.querySelectorAll('.onlytxt').forEach(x => x.hidden = t.value !== 'text') }
   else if (t.classList.contains('aidchk')){ S.ui.aids = {...(S.ui.aids || {long:true, rep:true, fill:true}), [t.dataset.k]:t.checked}; save(); render() }
   else if (t.id === 'f_da' || t.id === 'f_db'){ S.ui.diff = {...(S.ui.diff || {}), [t.id === 'f_da' ? 'a' : 'b']:t.value}; save(); render() }
