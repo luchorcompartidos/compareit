@@ -284,6 +284,46 @@ a.gitem{text-decoration:none;color:inherit}
   .st-ok .dot{width:11px;height:11px}
   .side .side-h:first-child .btn{padding:6px 10px}
 }
+.sced{display:flex;flex-direction:column;gap:10px}
+.sc-head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:.88rem;font-weight:500}
+.sc-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.sc-row{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:4px 6px}
+.sc-row.dragging{border-color:var(--accent);box-shadow:0 6px 18px rgb(0 0 0 / .18);position:relative;z-index:2}
+.sc-h{border:0;background:transparent;cursor:grab;font-size:1.1rem;color:var(--muted);padding:6px 4px;touch-action:none;min-width:32px;min-height:36px}
+.sc-row.dragging .sc-h{cursor:grabbing}
+.sc-n{font-family:var(--f-mono);font-size:.8rem;font-weight:500;min-width:24px;height:24px;border-radius:6px;background:var(--sunk);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.sc-row:first-child .sc-n{background:var(--accent);color:var(--accent-ink)}
+.sc-in{flex:1;min-width:0;border:1px solid transparent;padding:6px 8px}
+.sc-in:hover{border-color:var(--line)}
+.sc-u{font-size:.72rem;color:var(--muted);white-space:nowrap}
+.sc-b{border:1px solid var(--line);background:var(--surface);border-radius:6px;min-width:32px;min-height:32px;cursor:pointer;color:var(--ink)}
+.sc-b:disabled{opacity:.35;cursor:default}
+.sc-add{display:flex;gap:6px}
+.sc-add input{flex:1;min-width:0}
+.sc-pre select{width:auto;max-width:100%}
+.sc-rem{border:1px solid color-mix(in srgb,var(--warn) 45%,var(--line));background:color-mix(in srgb,var(--warn) 9%,var(--surface));border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;font-size:.86rem}
+@media (max-width:480px){ .sc-u{display:none} .sc-head .hint{display:none} }
+.badge.shared{color:var(--adv);background:color-mix(in srgb,var(--adv) 14%,transparent)}
+.sharewarn{border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));background:color-mix(in srgb,var(--accent) 7%,var(--surface));border-radius:8px;padding:10px 12px;font-size:.88rem;display:flex;flex-direction:column;gap:8px}
+.sharewarn .checks label{font-weight:500}
+.more{position:relative}
+.more summary{list-style:none}
+.more summary::-webkit-details-marker{display:none}
+.more-m{position:absolute;right:0;top:calc(100% + 4px);z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgb(0 0 0 / .18);padding:6px;display:flex;flex-direction:column;min-width:240px}
+.more-m button{border:0;background:transparent;text-align:left;padding:9px 10px;border-radius:6px;cursor:pointer;font-size:.88rem;color:var(--ink)}
+.more-m button:hover{background:var(--sunk)}
+.more-m .danger-t{color:var(--dis)}
+.catlist{max-height:40vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.catrow{align-items:flex-start!important;padding:4px 0}
+.catrow input{margin-top:4px}
+.catrow .cw{display:block}
+.more-m{max-width:calc(100vw - 32px)}
+.clist{border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.clist > .crow:first-child{border-radius:var(--r) var(--r) 0 0}
+.clist > .crow:last-child{border-radius:0 0 var(--r) var(--r)}
+.brand{min-width:0}
+.srcbadge{flex:none}
+@media (max-width:480px){ .bname{display:none} }
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.88rem;z-index:70;max-width:calc(100% - 32px)}
 
 @media (max-width:860px){
@@ -305,7 +345,7 @@ a.gitem{text-decoration:none;color:inherit}
 </style>
 
 <header class="top"><div class="top-in">
-  <div class="brand"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="3" y="9" width="8" height="14" rx="2" fill="var(--accent)"/><rect x="15" y="4" width="8" height="19" rx="2" fill="var(--ink)" opacity=".85"/><path d="M1 24h24" stroke="var(--muted)" stroke-width="1.5"/></svg>CompareIt<span class="srcbadge" id="srcBadge">Simulación</span></div>
+  <div class="brand"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="3" y="9" width="8" height="14" rx="2" fill="var(--accent)"/><rect x="15" y="4" width="8" height="19" rx="2" fill="var(--ink)" opacity=".85"/><path d="M1 24h24" stroke="var(--muted)" stroke-width="1.5"/></svg><span class="bname">CompareIt</span><span class="srcbadge" id="srcBadge">Simulación</span></div>
   <div class="seg" role="group" aria-label="Modo de uso">
     <button data-act="mode" data-m="app" id="m_app"><span class="long">Editar en la app</span><span class="short">App</span></button>
     <button data-act="mode" data-m="sheet" id="m_sheet"><span class="long">Cargar en la Sheet</span><span class="short">Sheet</span></button>
@@ -343,14 +383,18 @@ a.gitem{text-decoration:none;color:inherit}
  "group": {"tab":"_Grupos","label":"Grupos","single":"Grupo","newName":"Nuevo grupo","prefix":"g","cols":[
   {"f":"name","h":"Nombre","type":"text","req":1,"wide":1},
   {"f":"desc","h":"Descripción","type":"text","wide":1}]},
- "crit": {"tab":"_Criterios","label":"Criterios","single":"Criterio","newName":"Nuevo criterio","prefix":"c","cols":[
-  {"f":"g","h":"Grupo","type":"ref","ref":"group","req":1},
-  {"f":"p","h":"Padre","type":"ref","ref":"crit","scope":"g"},
+ "root": {"tab":"_Criterios","label":"Criterios","single":"Criterio","newName":"Nuevo criterio","prefix":"r","cols":[
   {"f":"name","h":"Nombre","type":"text","req":1,"wide":1},
-  {"f":"kind","h":"Tipo","type":"enum","opts":[["num","Cuantitativo"],["qual","Cualitativo"]]},
+  {"f":"desc","h":"Descripción","type":"text","wide":1},
+  {"f":"kind","h":"Tipo","type":"enum","opts":[["num","Cuantitativo"],["qual","Cualitativo"],["agg","Agrupador"]]},
   {"f":"dir","h":"Sentido","type":"enum","opts":[["max","Más es mejor"],["min","Menos es mejor"]]},
   {"f":"unit","h":"Unidad","type":"text"},
-  {"f":"scale","h":"Escala","type":"text","wide":1},
+  {"f":"scale","h":"Escala","type":"scale","wide":1},
+  {"f":"_uses","h":"Usado en","type":"uses","virtual":1,"wide":1}]},
+ "crit": {"tab":"_Usos","label":"Usos","single":"Uso de criterio","newName":"","prefix":"c","cols":[
+  {"f":"g","h":"Grupo","type":"ref","ref":"group","req":1},
+  {"f":"root","h":"Criterio","type":"ref","ref":"root","req":1},
+  {"f":"p","h":"Padre","type":"ref","ref":"crit","scope":"g"},
   {"f":"w","h":"Peso","type":"num"},
   {"f":"ord","h":"Orden","type":"num"}]},
  "inst": {"tab":"_Instancias","label":"Instancias","single":"Instancia","newName":"Nueva instancia","prefix":"n","cols":[
@@ -392,7 +436,7 @@ function seed(){
   A('c_port', {t:'crit', g:'g_nb', p:'', name:'Portabilidad', ord:'2', w:'2'});
   A('c_peso', {t:'crit', g:'g_nb', p:'c_port', name:'Peso', kind:'num', dir:'min', unit:'kg', ord:'1', w:'1'});
   A('c_bat', {t:'crit', g:'g_nb', p:'c_port', name:'Autonomía', kind:'num', dir:'max', unit:'h', ord:'2', w:'1'});
-  A('c_pant', {t:'crit', g:'g_nb', p:'', name:'Pantalla', kind:'qual', scale:'Regular, Buena, Muy buena, Excelente', ord:'3', w:'1'});
+  A('c_pant', {t:'crit', g:'g_nb', p:'', name:'Pantalla', kind:'qual', scale:'Excelente, Muy buena, Buena, Regular', ord:'3', w:'1'});
   A('c_prec', {t:'crit', g:'g_nb', p:'', name:'Precio', kind:'num', dir:'min', unit:'ARS', ord:'4', w:'3'});
   [['i_a','Notebook Alfa 14',14200,16,1.35,11,'Muy buena',1450000],
    ['i_b','Notebook Beta 15',17800,32,1.9,7,'Buena',1720000],
@@ -407,18 +451,37 @@ function seed(){
   A('c_vel', {t:'crit', g:'g_isp', p:'', name:'Velocidad', kind:'num', dir:'max', unit:'Mbps', ord:'1', w:'2'});
   A('c_cost', {t:'crit', g:'g_isp', p:'', name:'Abono mensual', kind:'num', dir:'min', unit:'ARS', ord:'2', w:'3'});
   A('c_serv', {t:'crit', g:'g_isp', p:'', name:'Servicio', ord:'3', w:'2'});
-  A('c_est', {t:'crit', g:'g_isp', p:'c_serv', name:'Estabilidad', kind:'qual', scale:'Baja, Media, Alta', ord:'1', w:'2'});
-  A('c_ate', {t:'crit', g:'g_isp', p:'c_serv', name:'Atención al cliente', kind:'qual', scale:'Mala, Regular, Buena', ord:'2', w:'1'});
+  A('c_est', {t:'crit', g:'g_isp', p:'c_serv', name:'Estabilidad', kind:'qual', scale:'Alta, Media, Baja', ord:'1', w:'2'});
+  A('c_ate', {t:'crit', g:'g_isp', p:'c_serv', name:'Atención al cliente', kind:'qual', scale:'Buena, Regular, Mala', ord:'2', w:'1'});
   [['i_p1','Fibra Norte',600,32000,'Alta','Regular'],['i_p2','Cable Sur',300,24000,'Media','Buena'],['i_p3','Fibra Centro',1000,41000,'Alta','Buena']]
   .forEach(([id,name,vel,cost,est,ate]) => A(id, {t:'item', g:'g_isp', name, 'v.c_vel':''+vel, 'v.c_cost':''+cost, 'v.c_est':est, 'v.c_ate':ate}));
   A('n_casa', {t:'inst', g:'g_isp', name:'Casa familiar', items:'i_p1,i_p2,i_p3'});
   A('n_tele', {t:'inst', g:'g_isp', name:'Teletrabajo', items:'i_p1,i_p3'});
+  migrateRoots(R);
   return R;
 }
 
 /* ---------- estado ---------- */
 let SIM = LS.get('ci_sim', null);
-if (!SIM) SIM = {records: seed()};
+const hadLocal = !!LS.get('ci_app', null);
+if (!SIM) SIM = {records: seed(), sd: true, rt: true};
+/** Criterios del formato anterior (uno por grupo) → criterio raíz + uso. IDs determinísticos: c_x → r_x (igual que en el script). */
+function migrateRoots(R){
+  Object.entries(R || {}).forEach(([id, c]) => {
+    if (c.t !== 'crit' || c.root) return;
+    const rid = 'r' + (id.indexOf('_') >= 0 ? id.slice(id.indexOf('_')) : '_' + id);
+    const kind = Object.values(R).some(x => x.t === 'crit' && x.p === id && x.g === c.g) ? 'agg' : (c.kind || 'num');
+    const root = {t:'root', kind}; if (c.name) root.name = c.name;
+    if (kind === 'qual' && c.scale) root.scale = c.scale;
+    if (kind === 'num'){ if (c.dir) root.dir = c.dir; if (c.unit) root.unit = c.unit }
+    const use = {t:'crit', g:c.g, root:rid}; ['p', 'w', 'ord'].forEach(f => { if (c[f]) use[f] = c[f] });
+    if (c.u){ root.u = c.u; use.u = c.u }
+    R[rid] = root; R[id] = use;
+  });
+}
+function flipScales(R){ Object.values(R || {}).forEach(r => { if (r.t === 'crit' && r.scale) r.scale = r.scale.split(',').map(x => x.trim()).filter(Boolean).reverse().join(', ') }) }
+if (!SIM.sd){ flipScales(SIM.records); SIM.sd = true; LS.set('ci_sim', SIM) }
+if (!SIM.rt){ migrateRoots(SIM.records); SIM.rt = true; LS.set('ci_sim', SIM) }
 function simBump(from){ SIM.ver = Date.now().toString(36) + Math.random().toString(36).slice(2, 6); SIM.verAt = now(); SIM.verFrom = from; LS.set('ci_sim', SIM) }
 if (!SIM.ver) simBump('Planilla');
 const S = {
@@ -430,6 +493,10 @@ const S = {
   syncing: false, drawer: false
 };
 if (!S.app){ const init = REAL ? {} : SIM.records; S.app = clone(init); S.base = clone(init); }
+else if (!LS.get('ci_sd', false) && hadLocal){ flipScales(S.app); flipScales(S.base) }
+LS.set('ci_sd', true);
+if (!LS.get('ci_rt', false) && hadLocal){ migrateRoots(S.app); migrateRoots(S.base) }
+LS.set('ci_rt', true);
 S.err = ''; S.sheet = null;
 function errText(e){
   const m = e && (e.message || (typeof e === 'string' ? e : '')) || String(e || '');
@@ -446,18 +513,28 @@ function log(m){ S.log.unshift({t:now(), m}); S.log = S.log.slice(0, 14) }
 /* ---------- acceso a datos ---------- */
 const recs = (t, src = S.app) => Object.entries(src).filter(([, r]) => r.t === t).map(([id, r]) => ({...r, id}));
 const groups = (src = S.app) => recs('group', src).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es'));
-const crits = (g, src = S.app) => recs('crit', src).filter(c => c.g === g);
+const ROOTF = ['name', 'desc', 'kind', 'dir', 'unit', 'scale'];
+/** Uso de criterio con los atributos de su criterio raíz. */
+function withRoot(u, src){ const r = src[u.root] || {}, o = {...u}; ROOTF.forEach(f => { if (r[f] != null && r[f] !== '') o[f] = r[f]; else delete o[f] }); if (!o.name) o.name = '(criterio sin definir)'; return o }
+const crits = (g, src = S.app) => recs('crit', src).filter(c => c.g === g).map(c => withRoot(c, src));
+const roots = (src = S.app) => recs('root', src).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es'));
+const usesOf = (rid, src = S.app) => recs('crit', src).filter(u => u.root === rid);
+const groupsOfRoot = (rid, src = S.app) => [...new Set(usesOf(rid, src).map(u => u.g))].filter(g => src[g]);
 const items = (g, src = S.app) => recs('item', src).filter(i => i.g === g).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es'));
 const insts = (g, src = S.app) => recs('inst', src).filter(i => i.g === g).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es'));
 const instIds = n => (n.items || '').split(',').map(x => x.trim()).filter(x => x && S.app[x]);
-const scaleOf = c => (c.scale || '').split(',').map(x => x.trim()).filter(Boolean);
+/** Niveles de mejor a peor, tal como se guardan. */
+const levelsOf = c => (c.scale || '').split(',').map(x => x.trim()).filter(Boolean);
+/** De peor a mejor: la usa el cálculo de puntajes. */
+const scaleOf = c => levelsOf(c).reverse();
+const numbered = c => levelsOf(c).map((x, i) => (i + 1) + '. ' + x);
 
 function tree(g, src = S.app){
   const cs = crits(g, src);
   const kids = p => cs.filter(c => (c.p || '') === p).sort((a, b) => (+a.ord || 0) - (+b.ord || 0));
   const walk = (p, d) => kids(p).flatMap(c => {
     const k = kids(c.id).map(x => x.id);
-    return [{...c, depth:d, leaf:!k.length, kids:k}, ...walk(c.id, d + 1)];
+    return [{...c, depth:d, leaf:!k.length && c.kind !== 'agg', kids:k}, ...walk(c.id, d + 1)];
   });
   return walk('', 0);
 }
@@ -666,11 +743,12 @@ async function resolve(keys){
 }
 
 /* ---------- etiquetas legibles para conflictos ---------- */
-const TYPE = {group:'Grupo', crit:'Criterio', item:'Ítem', inst:'Instancia'};
-const nameOf = id => (S.app[id] || S.base[id] || SIM.records[id] || {}).name || id;
-function recLabel(r){ if (!r) return ''; const g = r.g ? ' · ' + nameOf(r.g) : ''; return `${TYPE[r.t] || 'Registro'}: ${r.name || '(sin nombre)'}${g}` }
+const TYPE = {group:'Grupo', root:'Criterio', crit:'Uso de criterio', item:'Ítem', inst:'Instancia'};
+const anyRec = id => S.app[id] || S.base[id] || SIM.records[id] || {};
+const nameOf = id => { const r = anyRec(id); return (r.t === 'crit' ? anyRec(r.root).name : r.name) || id };
+function recLabel(r){ if (!r) return ''; const g = r.g ? ' · ' + nameOf(r.g) : ''; const n = r.t === 'crit' ? anyRec(r.root).name : r.name; return `${TYPE[r.t] || 'Registro'}: ${n || '(sin nombre)'}${g}` }
 function fieldLabel(f){
-  const F = {name:'Nombre', desc:'Descripción', notes:'Notas', items:'Ítems', concl:'Conclusión', p:'Criterio padre', kind:'Tipo', dir:'Sentido', unit:'Unidad', scale:'Escala', w:'Peso', ord:'Orden', g:'Grupo', t:'Tipo de registro'};
+  const F = {name:'Nombre', desc:'Descripción', notes:'Notas', items:'Ítems', concl:'Conclusión', p:'Criterio padre', root:'Criterio', kind:'Tipo', dir:'Sentido', unit:'Unidad', scale:'Escala', w:'Peso', ord:'Orden', g:'Grupo', t:'Tipo de registro'};
   if (F[f]) return F[f];
   if (f.startsWith('v.')) return nameOf(f.slice(2));
   if (f.startsWith('o.')){ const [, it, c] = f.split('.'); return `Ajuste manual: ${nameOf(it)} / ${nameOf(c)}` }
@@ -679,6 +757,7 @@ function fieldLabel(f){
 function showVal(f, val){
   if (val === '') return '<span class="muted">(vacío)</span>';
   if (f === 'items') return esc(val.split(',').map(nameOf).join(', '));
+  if (f === 'root' || f === 'p' || f === 'g') return esc(nameOf(val));
   if (f.startsWith('o.')) return {adv:'Ventaja', dis:'Desventaja', eq:'Similar'}[val] || esc(val);
   return esc(val);
 }
@@ -832,7 +911,7 @@ function planCols(t, key, D){
   if (!s.perGroup) return s.cols;
   const leaves = tree(key, D).filter(c => c.leaf);
   return [s.cols[0], ...leaves.map(c => c.kind === 'qual'
-    ? {f:'v.' + c.id, h:c.name, type:'enum', opts:scaleOf(c).map(o => [o, o])}
+    ? {f:'v.' + c.id, h:c.name, type:'enum', opts:levelsOf(c).map((o, i) => [o, (i + 1) + '. ' + o])}
     : {f:'v.' + c.id, h:c.name + (c.unit ? ' (' + c.unit + ')' : ''), type:'num'}), ...s.cols.slice(1)];
 }
 function planRows(t, key, D){
@@ -851,7 +930,7 @@ function refOptions(col, rec, D, id){
     const ban = id && id !== 'new' ? [id, ...descendants(id, g, D)] : [];
     return tree(g, D).filter(c => !ban.includes(c.id)).map(c => [c.id, '· '.repeat(c.depth) + c.name]);
   }
-  return recs(col.ref, D).filter(r => !col.scope || r[col.scope] === rec[col.scope]).map(r => [r.id, r.name || r.id]);
+  return recs(col.ref, D).filter(r => !col.scope || r[col.scope] === rec[col.scope]).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es')).map(r => [r.id, r.name || r.id]);
 }
 function planCell(sk, t, key, D, rec, id, col, ro){
   const val = rec ? String(rec[col.f] ?? '') : '';
@@ -861,6 +940,15 @@ function planCell(sk, t, key, D, rec, id, col, ro){
     const opts = col.type === 'enum' ? col.opts : refOptions(col, rec || {}, D, id);
     const known = opts.some(o => o[0] === val);
     return `<td><select ${data} ${ro ? 'disabled' : ''}><option value=""></option>${opts.map(o => `<option value="${esc(o[0])}" ${o[0] === val ? 'selected' : ''}>${esc(o[1])}</option>`).join('')}${val && !known ? `<option value="${esc(val)}" selected>${esc(val)} (no existe)</option>` : ''}</select></td>`;
+  }
+  if (col.type === 'uses'){
+    const gs = rec ? groupsOfRoot(id, D).map(x => D[x].name) : [];
+    return `<td class="wide"><div class="ro-c">${rec ? (gs.length ? esc(gs.join(', ')) : 'sin uso') : ''}</div></td>`;
+  }
+  if (col.type === 'scale'){
+    if (!rec) return '<td><div class="ro-c">—</div></td>';
+    const q = rec.kind === 'qual';
+    return `<td class="wide"><button type="button" class="mcell" id="${pid}" data-act="pickScale" data-sk="${sk}" data-id="${id}" ${ro || !q ? 'disabled' : ''}>${q ? (levelsOf(rec).length ? esc(numbered(rec).join('  ')) : '<span class="muted">Definir…</span>') : '<span class="muted">—</span>'}</button></td>`;
   }
   if (col.type === 'multi'){
     if (!rec) return '<td><div class="ro-c">—</div></td>';
@@ -890,7 +978,7 @@ function viewPlan(sk){
   const isApp = sk === 'app';
   const title = isApp ? (S.sheet ? S.sheet.name : REAL ? 'Google Sheet' : 'Datos de la app') : 'Sheet simulada';
   return `<header class="gh"><div class="gh-t"><span class="eyebrow">${isApp ? 'Vista' : 'Herramienta de prueba'}</span><h1>${isApp ? 'Planilla' : 'Sheet simulada'}</h1>
-      <p class="lead">${isApp ? 'Todos los datos de la app con las mismas pestañas que tu Google Sheet: una por grupo con sus ítems, y _Grupos, _Criterios e _Instancias. Cada cambio se guarda al salir de la celda y se sincroniza.' : 'Imita la Google Sheet para probar la sincronización sin conexión real. Lo que edites acá lo toma la app en la próxima sincronización, como si lo hubieras cambiado en la Sheet.'}</p></div></header>
+      <p class="lead">${isApp ? 'Todos los datos de la app con las mismas pestañas que tu Google Sheet: una por grupo con sus ítems, y _Grupos, _Criterios (el catálogo), _Usos (qué criterios usa cada grupo) e _Instancias. Cada cambio se guarda al salir de la celda y se sincroniza.' : 'Imita la Google Sheet para probar la sincronización sin conexión real. Lo que edites acá lo toma la app en la próxima sincronización, como si lo hubieras cambiado en la Sheet.'}</p></div></header>
     ${ro ? '<div class="banner"><strong>Modo «Cargar en la Sheet».</strong>&nbsp;La planilla es de solo lectura; editá en la Google Sheet.</div>' : ''}
     <div class="gs"><div class="gs-bar"><span class="gs-title"><i></i>${esc(title)}</span>
       ${isApp ? (S.sheet ? `<a class="btn sm" href="${esc(S.sheet.url)}" target="_blank" rel="noopener">Abrir en Google Sheets ↗</a>` : '') : `<label class="switch"><input type="checkbox" id="f_online" ${S.online ? 'checked' : ''}> Conexión con la app</label>`}
@@ -909,14 +997,16 @@ function planCheck(t, D, id, rec, f, val, col){
   if (t === 'group' && f === 'name' && groups(D).some(x => x.id !== id && (x.name || '').toLowerCase() === val.toLowerCase())) return 'Ya hay un grupo con ese nombre: serían la misma pestaña de la Sheet.';
   if (t === 'crit' && f === 'p' && val && (val === id || descendants(id, rec.g, D).includes(val))) return 'Un criterio no puede depender de sí mismo ni de sus subcriterios.';
   if (t === 'crit' && f === 'p' && val && D[val] && D[val].g !== rec.g) return 'El criterio padre tiene que ser del mismo grupo.';
-  if (t === 'crit' && f === 'scale' && rec.kind === 'qual' && scaleOf({scale:val}).length < 2) return 'La escala necesita al menos dos niveles separados por comas.';
+  if (t === 'root' && f === 'name' && rootTaken(val, D, id)) return 'Ya existe un criterio con ese nombre en el catálogo.';
+  if (t === 'crit' && (f === 'root' || f === 'g')){ const g2 = f === 'g' ? val : rec.g, r2 = f === 'root' ? val : rec.root;
+    if (r2 && recs('crit', D).some(u => u.id !== id && u.g === g2 && u.root === r2)) return 'Ese criterio ya está en ese grupo.' }
   return null;
 }
 function planApply(t, D, id, rec, f, val){
   const extra = [], old = String(rec[f] ?? '');
   if (val) rec[f] = val; else delete rec[f];
-  if (t === 'crit' && f === 'kind'){
-    if (val === 'qual' && scaleOf(rec).length < 2){ rec.scale = 'Bajo, Medio, Alto'; toast('Se cargó una escala de ejemplo: ajustala en la columna Escala.') }
+  if (t === 'root' && f === 'kind'){
+    if (val === 'qual' && levelsOf(rec).length < 2){ rec.scale = 'Alto, Medio, Bajo'; toast('Se cargó una escala de ejemplo: tocá la celda Escala para ajustarla.') }
     if (val !== 'qual' && !rec.dir) rec.dir = 'max';
   }
   if (t === 'crit' && f === 'p') rec.ord = String(nextOrd(D, rec.g, val));
@@ -937,8 +1027,9 @@ function planNew(t, key, D, f, val){
     const g = f === 'g' ? val : (D[S.ui.g] ? S.ui.g : (groups(D)[0] || {}).id);
     if (!g) return 'Primero creá un grupo en la pestaña _Grupos.'; rec.g = g;
   }
-  if (f !== 'name'){ let n = s.newName, i = 2; if (t === 'group') while (groups(D).some(x => (x.name || '').toLowerCase() === n.toLowerCase())) n = s.newName + ' ' + (i++); rec.name = n }
-  if (t === 'crit'){ rec.kind = 'num'; rec.dir = 'max'; rec.w = '1'; rec.p = ''; rec.ord = String(nextOrd(D, rec.g, '')) }
+  if (f !== 'name' && s.cols.some(c => c.f === 'name')){ let n = s.newName, i = 2; if (t === 'group' || t === 'root') while (recs(t, D).some(x => (x.name || '').toLowerCase() === n.toLowerCase())) n = s.newName + ' ' + (i++); rec.name = n }
+  if (t === 'root'){ rec.kind = 'num'; rec.dir = 'max' }
+  if (t === 'crit'){ if (f !== 'root') return 'Elegí primero el criterio en la columna «Criterio».'; rec.w = '1'; rec.ord = String(nextOrd(D, rec.g, '')) }
   return {id:uid(s.prefix), rec};
 }
 function planChange(el){
@@ -964,7 +1055,9 @@ function planChange(el){
 function delText(D, t, id){
   const r = D[id] || {}, nm = esc(r.name || id);
   if (t === 'group') return `Se borrará el grupo «${nm}» con sus ítems, criterios e instancias.`;
-  if (t === 'crit'){ const n = descendants(id, r.g, D).length; return `Se borrará el criterio «${nm}»${n ? ' y sus ' + n + ' subcriterios' : ''}, junto con los valores cargados.` }
+  if (t === 'crit'){ const n = descendants(id, r.g, D).length, cn = esc((D[r.root] || {}).name || id);
+    return `Se quitará «${cn}» del grupo «${esc((D[r.g] || {}).name || '')}»${n ? ' junto con sus ' + n + ' subcriterios' : ''} y los valores cargados en ese grupo. El criterio sigue en el catálogo.` }
+  if (t === 'root'){ const gs = groupsOfRoot(id, D).map(x => esc(D[x].name)); return `Se borrará «${nm}» del catálogo${gs.length ? ' y de los grupos donde se usa (' + gs.join(', ') + '), con sus valores cargados' : ''}.` }
   if (t === 'item') return `Se borrará el ítem «${nm}» y se quitará de sus instancias.`;
   if (t === 'inst') return `Se borrará la instancia «${nm}». Los ítems no se borran.`;
   return `Se borrará «${nm}».`;
@@ -972,6 +1065,7 @@ function delText(D, t, id){
 function cascadeDel(sk, t, id){
   const st = STORE[sk], D = st.get(), r = D[id]; if (!r) return;
   if (t === 'group') Object.keys(D).filter(k => D[k].g === id).forEach(k => st.del(k));
+  if (t === 'root') usesOf(id, D).forEach(u => { if (D[u.id]) cascadeDel(sk, 'crit', u.id) });
   if (t === 'crit'){
     const gone = [id, ...descendants(id, r.g, D)]; gone.forEach(k => st.del(k));
     Object.keys(D).filter(k => D[k].g === r.g).forEach(k => { const rec = {...D[k]}; let ch = false;
@@ -1003,20 +1097,151 @@ function viewItems(g){
 
 function viewCrit(g){
   const list = tree(g.id);
-  let h = `<div class="instbar"><p class="muted" style="max-width:70ch">Los criterios se evalúan en orden y pueden anidarse. Un criterio con subcriterios se calcula como promedio ponderado de ellos. Los cuantitativos comparan números; los cualitativos usan una escala ordenada de peor a mejor.</p>
-    <button class="btn sm primary ed" data-act="newCrit" data-parent="">+ Criterio</button></div>`;
-  if (!list.length) return h + empty('Sin criterios', 'Definí al menos un criterio para que la app pueda concluir ventajas y desventajas.', 'newCrit', 'Agregar criterio');
-  h += `<div class="scroll">${list.map(c => `<div class="crow ${c.depth === 0 ? 'top-level' : ''}" style="padding-left:${14 + c.depth * 22}px">
-    <div class="cname"><strong>${esc(c.name)}</strong><span class="cw">${c.leaf ? esc(critHint(c)) + (c.kind === 'qual' ? ': ' + esc(scaleOf(c).join(' → ')) : '') : 'Agrupa ' + c.kids.length + ' subcriterios'}</span></div>
-    <span class="badge ${c.leaf ? '' : 'agg'}">${c.leaf ? (c.kind === 'qual' ? 'Cualitativo' : 'Cuantitativo') : 'Agrupador'}</span>
+  let h = `<div class="instbar"><p class="muted" style="max-width:72ch">Los criterios vienen del catálogo general y se pueden usar en varios grupos. Nombre, tipo y escala son del criterio; el orden, el peso y de qué criterio depende son propios de cada grupo.</p>
+    <div class="row ed"><button class="btn sm primary" data-act="newCrit" data-parent="">+ Criterio nuevo</button><button class="btn sm" data-act="fromCatalog">+ Desde el catálogo</button></div></div>`;
+  if (!list.length) return h + empty('Sin criterios', 'Creá un criterio o traelo del catálogo para que la app pueda concluir ventajas y desventajas.', 'fromCatalog', 'Elegir del catálogo');
+  h += `<div class="clist">${list.map(c => {
+    const others = groupsOfRoot(c.root).filter(x => x !== g.id);
+    const kindLbl = c.kind === 'agg' || !c.leaf ? 'Agrupador' : c.kind === 'qual' ? 'Cualitativo' : 'Cuantitativo';
+    return `<div class="crow ${c.depth === 0 ? 'top-level' : ''}" style="padding-left:${14 + c.depth * 22}px">
+    <div class="cname"><strong>${esc(c.name)}</strong><span class="cw">${c.leaf ? esc(critHint(c)) + (c.kind === 'qual' ? ': ' + esc(numbered(c).join(' · ')) : '') : 'Agrupa ' + c.kids.length + ' subcriterios'}${c.desc ? ' · ' + esc(c.desc) : ''}</span></div>
+    <span class="badge ${c.leaf ? '' : 'agg'}">${kindLbl}</span>
+    ${others.length ? `<span class="badge shared" title="También en: ${esc(others.map(nameOf).join(', '))}">Compartido · ${others.length + 1} grupos</span>` : ''}
     <span class="badge">peso ${c.w || 1}</span>
     <div class="acts ed"><button class="btn sm ghost" data-act="moveCrit" data-id="${c.id}" data-d="-1" aria-label="Subir">↑</button><button class="btn sm ghost" data-act="moveCrit" data-id="${c.id}" data-d="1" aria-label="Bajar">↓</button>
-      <button class="btn sm" data-act="newCrit" data-parent="${c.id}">+ Sub</button><button class="btn sm" data-act="editCrit" data-id="${c.id}">Editar</button><button class="btn sm ghost" data-act="delCrit" data-id="${c.id}">Borrar</button></div>
-  </div>`).join('')}</div>`;
+      <button class="btn sm" data-act="newCrit" data-parent="${c.id}">+ Sub</button><button class="btn sm" data-act="editCrit" data-id="${c.id}">Editar</button>
+      <details class="more"><summary class="btn sm ghost">Más</summary><div class="more-m">
+        <button data-act="replicate" data-id="${c.id}">Replicar…</button>
+        ${others.length ? `<button data-act="independize" data-id="${c.id}">Independizar en este grupo…</button>` : ''}
+        <button data-act="linkRoot" data-id="${c.id}">Vincular a otro criterio del catálogo…</button>
+        <button data-act="delCrit" data-id="${c.id}" class="danger-t">Quitar de este grupo</button></div></details></div>
+  </div>` }).join('')}</div>`;
   return h;
 }
 
-/* ---------- vista: Google Sheet simulada ---------- */
+/* ---------- Criterios Raíz: utilidades ---------- */
+function uniqueRootName(n, D = S.app, except){ let x = n, i = 2; while (roots(D).some(r => r.id !== except && (r.name || '').toLowerCase() === x.toLowerCase())) x = n + ' ' + (i++); return x }
+function rootTaken(n, D = S.app, except){ return roots(D).some(r => r.id !== except && (r.name || '').toLowerCase() === n.toLowerCase()) }
+function rootCopy(r){ const o = {t:'root'}; ROOTF.forEach(f => { if (r[f]) o[f] = r[f] }); return o }
+function scUsedRoot(D, rid){ const u = {}; usesOf(rid, D).forEach(x => items(x.g, D).forEach(it => { const v = it['v.' + x.id]; if (v) u[v] = (u[v] || 0) + 1 })); return u }
+function scaleCopyList(D, except){ return roots(D).filter(r => r.id !== except && r.kind === 'qual' && levelsOf(r).length > 1).map(r => [r.id, r.name, r.scale]) }
+function kindOpts(k){ return [['num', 'Cuantitativo'], ['qual', 'Cualitativo (escala)'], ['agg', 'Agrupador']].map(([v, l]) => `<option value="${v}" ${k === v ? 'selected' : ''}>${l}</option>`).join('') }
+function toggleKind(k){ document.querySelectorAll('.onlynum').forEach(x => x.hidden = k !== 'num'); document.querySelectorAll('.onlyqual').forEach(x => x.hidden = k !== 'qual') }
+
+function critForm(id, parent){
+  const g = S.ui.g, use = id ? S.app[id] : {w:'1', p:parent || ''};
+  const root = id ? (S.app[use.root] || {}) : {kind:'num', dir:'max'};
+  const others = id ? groupsOfRoot(use.root).filter(x => x !== g) : [];
+  const banned = id ? [id, ...descendants(id, g)] : [];
+  const opts = tree(g).filter(x => !banned.includes(x.id));
+  const k = root.kind || 'num';
+  modal(id ? 'Editar criterio' : 'Nuevo criterio', `
+    ${others.length ? `<div class="sharewarn"><strong>Criterio compartido.</strong> También se usa en: ${esc(others.map(nameOf).join(', '))}. Cambiar el nombre, la descripción, el tipo, el sentido, la unidad o la escala afecta a esos grupos. «Depende de» y el peso son propios de este grupo.
+      <div class="checks"><label><input type="radio" name="f_scope" value="all"> Aplicar en todos los grupos</label><label><input type="radio" name="f_scope" value="one"> Independizar: aplicar solo en «${esc(nameOf(g))}»</label></div></div>` : ''}
+    <label class="fld" for="f_name"><span>Nombre</span><input id="f_name" value="${esc(root.name)}"></label>
+    <label class="fld" for="f_desc"><span>Descripción</span><textarea id="f_desc" rows="2">${esc(root.desc)}</textarea></label>
+    <div class="fgrid">
+      <label class="fld" for="f_parent"><span>Depende de (en este grupo)</span><select id="f_parent"><option value="">(criterio principal)</option>${opts.map(o => `<option value="${o.id}" ${o.id === use.p ? 'selected' : ''}>${'· '.repeat(o.depth)}${esc(o.name)}</option>`).join('')}</select></label>
+      <label class="fld" for="f_w"><span>Peso (en este grupo)</span><input id="f_w" inputmode="decimal" value="${esc(use.w || '1')}"></label>
+      <label class="fld" for="f_kind"><span>Tipo</span><select id="f_kind">${kindOpts(k)}</select></label>
+      <label class="fld onlynum" for="f_dir" ${k !== 'num' ? 'hidden' : ''}><span>Sentido</span><select id="f_dir"><option value="max" ${root.dir !== 'min' ? 'selected' : ''}>Más es mejor</option><option value="min" ${root.dir === 'min' ? 'selected' : ''}>Menos es mejor</option></select></label>
+      <label class="fld onlynum" for="f_unit" ${k !== 'num' ? 'hidden' : ''}><span>Unidad</span><input id="f_unit" value="${esc(root.unit)}" placeholder="kg, h, ARS…"></label>
+    </div>
+    <div class="onlyqual" ${k !== 'qual' ? 'hidden' : ''}>${scaleEditorHtml(levelsOf(root), id ? scUsedRoot(S.app, use.root) : {}, scaleCopyList(S.app, use.root))}</div>
+    <p class="hint">Un agrupador no tiene valores propios: se calcula como promedio ponderado de sus subcriterios.</p>`, () => {
+    let name = v('f_name'); if (!name){ toast('Poné un nombre al criterio.'); return false }
+    const kind = v('f_kind'); let res = null;
+    if (kind === 'qual'){ res = scResult(); if (typeof res === 'string'){ toast(res); return false } }
+    const rootNew = {t:'root', name, kind}; const desc = v('f_desc'); if (desc) rootNew.desc = desc;
+    if (kind === 'qual') rootNew.scale = res.labels.join(', ');
+    if (kind === 'num'){ rootNew.dir = v('f_dir'); const un = v('f_unit'); if (un) rootNew.unit = un }
+    const changed = !id || !same(rootCopy(root), rootNew);
+    let scope = 'all';
+    if (others.length && changed){ const sel = document.querySelector('input[name=f_scope]:checked'); if (!sel){ toast('Elegí si el cambio se aplica en todos los grupos o solo en este.'); return false } scope = sel.value }
+    if (!id && rootTaken(name)){ toast(`Ya existe «${name}» en el catálogo: usá «+ Desde el catálogo» o elegí otro nombre.`); return false }
+    if (id && scope === 'all' && rootTaken(name, S.app, use.root)){ toast(`Ya existe otro criterio llamado «${name}» en el catálogo.`); return false }
+    if (!canEdit()) return;
+    let rid = id ? use.root : uid('r');
+    if (id && scope === 'one' && changed){
+      rid = uid('r');
+      if (rootTaken(name)) rootNew.name = uniqueRootName(name + ' (' + nameOf(g) + ')');
+      log(`«${root.name}» se independizó en «${nameOf(g)}» como «${rootNew.name}».`);
+    }
+    if (changed) setRec(rid, rootNew);
+    if (id && res) (scope === 'one' ? [{id, g}] : usesOf(use.root)).forEach(u => scApplyToItems(STORE.app, S.app, u.id, u.g, res));
+    const p = v('f_parent'); let ord = use.ord;
+    if (!id || p !== (use.p || '')) ord = String(nextOrd(S.app, g, p));
+    const useNew = {t:'crit', g, root:rid, w:v('f_w') || '1', ord}; if (p) useNew.p = p;
+    SE = null; put(id || uid('c'), useNew);
+  });
+  scRender();
+}
+
+/* ---------- acciones sobre criterios ---------- */
+function catalogForm(){
+  const g = S.ui.g, inG = new Set(crits(g).map(c => c.root));
+  const avail = roots().filter(r => !inG.has(r.id));
+  const opts = tree(g).filter(c => !c.leaf || c.kind === 'agg');
+  modal('Agregar desde el catálogo', avail.length ? `
+    <label class="fld" for="f_cat_q"><span>Buscar</span><input id="f_cat_q" placeholder="Nombre del criterio"></label>
+    <div class="checks catlist">${avail.map(r => { const gs = groupsOfRoot(r.id).map(nameOf);
+      return `<label class="catrow" data-n="${esc((r.name || '').toLowerCase())}"><input type="checkbox" id="f_cat_${r.id}"> <span><strong>${esc(r.name)}</strong><span class="cw">${esc(r.kind === 'agg' ? 'Agrupador' : critHint(r))}${gs.length ? ' · usado en ' + esc(gs.join(', ')) : ' · sin uso'}</span></span></label>` }).join('')}</div>
+    <label class="fld" for="f_cat_p"><span>Agregar dentro de</span><select id="f_cat_p"><option value="">(criterio principal)</option>${opts.map(o => `<option value="${o.id}">${'· '.repeat(o.depth)}${esc(o.name)}</option>`).join('')}</select></label>`
+    : '<p class="hint">Todos los criterios del catálogo ya están en este grupo. Creá uno nuevo con «+ Criterio nuevo».</p>', avail.length ? () => {
+    const chosen = avail.filter(r => document.getElementById('f_cat_' + r.id).checked);
+    if (!chosen.length){ toast('Marcá al menos un criterio.'); return false }
+    if (!canEdit()) return;
+    const p = v('f_cat_p');
+    chosen.forEach(r => { const u = {t:'crit', g, root:r.id, w:'1', ord:String(nextOrd(S.app, g, p))}; if (p) u.p = p; setRec(uid('c'), u) });
+    commit(); toast(chosen.length === 1 ? 'Criterio agregado al grupo.' : chosen.length + ' criterios agregados al grupo.');
+  } : null, 'Agregar');
+}
+function replicateForm(useId){
+  const use = S.app[useId], root = S.app[use.root] || {}, g = use.g;
+  modal('Replicar criterio', `
+    <p class="hint">La réplica copia toda la definición de «${esc(root.name)}» (tipo, sentido, unidad y escala) y queda como un criterio nuevo e independiente.</p>
+    <label class="fld" for="f_name"><span>Nombre de la réplica</span><input id="f_name" value="${esc(uniqueRootName('Copia de ' + root.name))}"></label>
+    <div class="checks"><label><input type="checkbox" id="f_rep_add" checked> Agregarla también a «${esc(nameOf(g))}»</label></div>`, () => {
+    const name = v('f_name'); if (!name){ toast('Poné un nombre a la réplica.'); return false }
+    if (rootTaken(name)){ toast('Ese nombre ya existe en el catálogo: la réplica necesita uno distinto.'); return false }
+    if (!canEdit()) return;
+    const rid = uid('r'); setRec(rid, {...rootCopy(root), name});
+    if (document.getElementById('f_rep_add').checked){ const u = {t:'crit', g, root:rid, w:use.w || '1', ord:String(nextOrd(S.app, g, use.p || ''))}; if (use.p) u.p = use.p; setRec(uid('c'), u) }
+    log(`Se replicó «${root.name}» como «${name}».`); commit();
+  }, 'Replicar');
+}
+function independizeForm(useId){
+  const use = S.app[useId], root = S.app[use.root] || {}, g = use.g;
+  modal('Independizar criterio', `
+    <p>«${esc(root.name)}» deja de estar vinculado al criterio compartido solo en «${esc(nameOf(g))}». Se crea una copia con la misma definición, que podés cambiar sin afectar a los otros grupos. Los valores cargados en este grupo se conservan.</p>
+    <label class="fld" for="f_name"><span>Nombre del criterio independiente</span><input id="f_name" value="${esc(uniqueRootName(root.name + ' (' + nameOf(g) + ')'))}"></label>`, () => {
+    const name = v('f_name'); if (!name){ toast('Poné un nombre.'); return false }
+    if (rootTaken(name)){ toast('Ese nombre ya existe en el catálogo.'); return false }
+    if (!canEdit()) return;
+    const rid = uid('r'); setRec(rid, {...rootCopy(root), name}); setRec(useId, {...use, root:rid});
+    log(`«${root.name}» se independizó en «${nameOf(g)}» como «${name}».`); commit();
+  }, 'Independizar');
+}
+function linkRootForm(useId){
+  const use = S.app[useId], root = S.app[use.root] || {}, g = use.g;
+  const inG = new Set(crits(g).map(c => c.root));
+  const avail = roots().filter(r => r.id !== use.root && !inG.has(r.id));
+  modal('Vincular a otro criterio', avail.length ? `
+    <p class="hint">«${esc(root.name)}» pasa a usar la definición de otro criterio del catálogo. Sirve para unificar criterios iguales de distintos grupos. Los valores cargados se conservan; los que no existan en la escala del criterio elegido no cuentan en la comparación.</p>
+    <label class="fld" for="f_link"><span>Criterio del catálogo</span><select id="f_link">${avail.map(r => `<option value="${r.id}">${esc(r.name)} · ${esc(r.kind === 'agg' ? 'Agrupador' : critHint(r))}</option>`).join('')}</select></label>
+    ${usesOf(use.root).length === 1 ? `<div class="checks"><label><input type="checkbox" id="f_link_rm" checked> Quitar «${esc(root.name)}» del catálogo (queda sin uso)</label></div>` : ''}`
+    : '<p class="hint">No hay otros criterios en el catálogo que no estén ya en este grupo.</p>', avail.length ? () => {
+    const to = v('f_link'), target = S.app[to]; if (!target) return false;
+    if (!canEdit()) return;
+    setRec(useId, {...use, root:to});
+    const rm = document.getElementById('f_link_rm');
+    if (rm && rm.checked && !usesOf(use.root).some(u => u.id !== useId)) rmRec(use.root);
+    if (target.kind === 'qual'){ const lv = levelsOf(target); const bad = items(g).filter(it => it['v.' + useId] && !lv.includes(it['v.' + useId])).length;
+      if (bad) toast(`${bad} ítem${bad > 1 ? 's tienen' : ' tiene'} valores que no están en la escala de «${target.name}».`) }
+    log(`«${root.name}» en «${nameOf(g)}» quedó vinculado a «${target.name}».`); commit();
+  } : null, 'Vincular');
+}
+
 /* ---------- panel de sincronización ---------- */
 function openSync(){ S.drawer = true; $('#drawer').hidden = false; renderDrawer() }
 function renderDrawer(){
@@ -1084,7 +1309,7 @@ function modal(title, body, fn, label = 'Guardar', danger = false){
   onSave = fn; $('#modal').hidden = false;
   setTimeout(() => $('#mBody').querySelector('input:not([type=checkbox]),select,textarea')?.focus(), 30);
 }
-function closeModal(){ $('#modal').hidden = true; onSave = null }
+function closeModal(){ $('#modal').hidden = true; onSave = null; SE = null }
 function confirmDel(text, fn){ modal('Confirmar borrado', `<p>${text}</p><p class="hint">El borrado también se aplica en la Google Sheet al sincronizar.</p>`, fn, 'Borrar', true) }
 
 function groupForm(id){
@@ -1100,7 +1325,7 @@ function groupForm(id){
 function itemForm(id){
   const g = S.ui.g, it = id ? S.app[id] : {}, leaves = tree(g).filter(c => c.leaf), ins = insts(g);
   const field = c => { const cur = it['v.' + c.id] ?? '';
-    if (c.kind === 'qual') return `<label class="fld" for="f_v_${c.id}"><span>${esc(c.name)}</span><select id="f_v_${c.id}"><option value="">—</option>${scaleOf(c).map(o => `<option ${o === cur ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></label>`;
+    if (c.kind === 'qual') return `<label class="fld" for="f_v_${c.id}"><span>${esc(c.name)}</span><select id="f_v_${c.id}"><option value="">—</option>${levelsOf(c).map((o, i) => `<option value="${esc(o)}" ${o === cur ? 'selected' : ''}>${i + 1}. ${esc(o)}</option>`).join('')}</select></label>`;
     return `<label class="fld" for="f_v_${c.id}"><span>${esc(c.name)}${c.unit ? ' (' + esc(c.unit) + ')' : ''}</span><input id="f_v_${c.id}" inputmode="decimal" value="${esc(cur)}"></label>` };
   modal(id ? 'Editar ítem' : 'Nuevo ítem', `
     <label class="fld" for="f_name"><span>Nombre</span><input id="f_name" value="${esc(it.name)}"></label>
@@ -1126,30 +1351,125 @@ function instForm(id){
     const nid = id || uid('n'); put(nid, {...n, t:'inst', g, name, items:chosen.join(',')}); S.ui.inst[g] = nid; save(); render();
   });
 }
-function critForm(id, parent){
-  const g = S.ui.g, c = id ? S.app[id] : {kind:'num', dir:'max', w:'1', p:parent || ''};
-  const banned = id ? [id, ...descendants(id, g)] : [];
-  const opts = tree(g).filter(x => !banned.includes(x.id));
-  modal(id ? 'Editar criterio' : 'Nuevo criterio', `
-    <label class="fld" for="f_name"><span>Nombre</span><input id="f_name" value="${esc(c.name)}"></label>
-    <div class="fgrid">
-      <label class="fld" for="f_parent"><span>Depende de</span><select id="f_parent"><option value="">(criterio principal)</option>${opts.map(o => `<option value="${o.id}" ${o.id === c.p ? 'selected' : ''}>${'· '.repeat(o.depth)}${esc(o.name)}</option>`).join('')}</select></label>
-      <label class="fld" for="f_w"><span>Peso</span><input id="f_w" inputmode="decimal" value="${esc(c.w || '1')}"></label>
-      <label class="fld" for="f_kind"><span>Tipo</span><select id="f_kind"><option value="num" ${c.kind !== 'qual' ? 'selected' : ''}>Cuantitativo</option><option value="qual" ${c.kind === 'qual' ? 'selected' : ''}>Cualitativo (escala)</option></select></label>
-      <label class="fld onlynum" for="f_dir" ${c.kind === 'qual' ? 'hidden' : ''}><span>Sentido</span><select id="f_dir"><option value="max" ${c.dir !== 'min' ? 'selected' : ''}>Más es mejor</option><option value="min" ${c.dir === 'min' ? 'selected' : ''}>Menos es mejor</option></select></label>
-      <label class="fld onlynum" for="f_unit" ${c.kind === 'qual' ? 'hidden' : ''}><span>Unidad</span><input id="f_unit" value="${esc(c.unit)}" placeholder="kg, h, ARS…"></label>
-    </div>
-    <label class="fld onlyqual" for="f_scale" ${c.kind === 'qual' ? '' : 'hidden'}><span>Escala, de peor a mejor (separada por comas)</span><input id="f_scale" value="${esc(c.scale)}" placeholder="Mala, Regular, Buena, Excelente"></label>
-    <p class="hint">Si este criterio tiene subcriterios, su tipo se ignora y se calcula como promedio ponderado de ellos.</p>`, () => {
-    const name = v('f_name'); if (!name){ toast('Poné un nombre al criterio.'); return false }
-    const kind = v('f_kind'); if (kind === 'qual' && scaleOf({scale:v('f_scale')}).length < 2){ toast('La escala necesita al menos dos niveles.'); return false }
-    const p = v('f_parent'); let ord = c.ord;
-    if (!id || p !== c.p) ord = String(Math.max(0, ...crits(g).filter(x => (x.p || '') === p && x.id !== id).map(x => +x.ord || 0)) + 1);
-    const rec = {...c, t:'crit', g, p, name, kind, w:v('f_w') || '1', ord};
-    if (kind === 'qual'){ rec.scale = v('f_scale'); delete rec.dir; delete rec.unit } else { rec.dir = v('f_dir'); rec.unit = v('f_unit'); delete rec.scale }
-    put(id || uid('c'), rec);
+/* ---------- editor de escala: niveles de mejor a peor, numerados y reordenables ---------- */
+const SCALE_PRESETS = [
+  ['Excelente, Muy buena, Buena, Regular, Mala', 'Excelente → Mala'],
+  ['Alta, Media, Baja', 'Alta → Baja'],
+  ['Mucho, Algo, Poco, Nada', 'Mucho → Nada'],
+  ['Sí, No', 'Sí → No']
+];
+let SE = null;   // estado del editor abierto
+function scUsed(D, cid, g){
+  const u = {}; if (!cid) return u;
+  items(g, D).forEach(it => { const v = it['v.' + cid]; if (v) u[v] = (u[v] || 0) + 1 }); return u;
+}
+function scaleEditorHtml(levels, used, copy){
+  SE = {rows:levels.map(l => ({orig:l, label:l})), used:used || {}, removed:{}, copy:copy || []};
+  return `<div class="sced" id="sced"></div>`;
+}
+function scRender(focus){
+  const box = document.getElementById('sced'); if (!box || !SE) return;
+  const levelsNow = SE.rows.map(r => r.label.trim()).filter(Boolean);
+  const rem = Object.keys(SE.removed);
+  box.innerHTML = `
+    <div class="sc-head"><span>Niveles, de mejor a peor</span><span class="hint">Arrastrá desde ⠿ o usá las flechas (Alt+↑/↓)</span></div>
+    <ol class="sc-list" id="sc_list">${SE.rows.map((r, i) => `<li class="sc-row" data-i="${i}">
+      <button type="button" class="sc-h" data-sc="handle" aria-label="Arrastrar ${esc(r.label)}">⠿</button>
+      <span class="sc-n">${i + 1}</span>
+      <input class="sc-in" id="sc_in_${i}" data-i="${i}" value="${esc(r.label)}" aria-label="Nivel ${i + 1}">
+      ${r.orig && SE.used[r.orig] ? `<span class="sc-u" title="Ítems con este valor">${SE.used[r.orig]} ítem${SE.used[r.orig] > 1 ? 's' : ''}</span>` : ''}
+      <button type="button" class="sc-b" data-sc="up" data-i="${i}" aria-label="Subir" ${i === 0 ? 'disabled' : ''}>↑</button>
+      <button type="button" class="sc-b" data-sc="down" data-i="${i}" aria-label="Bajar" ${i === SE.rows.length - 1 ? 'disabled' : ''}>↓</button>
+      <button type="button" class="sc-b" data-sc="del" data-i="${i}" aria-label="Quitar ${esc(r.label)}">✕</button></li>`).join('')}</ol>
+    <div class="sc-add"><input id="sc_new" placeholder="Agregar nivel…" title="Podés pegar varios separados por comas o líneas"><button type="button" class="btn sm" data-sc="add">Agregar</button></div>
+    <div class="row"><button type="button" class="btn sm ghost" data-sc="invert" ${SE.rows.length < 2 ? 'disabled' : ''}>Invertir orden</button>
+      <label class="sc-pre" for="sc_preset"><select id="sc_preset"><option value="">Usar una escala frecuente…</option>${SCALE_PRESETS.map(p => `<option value="${esc(p[0])}">${esc(p[1])}</option>`).join('')}</select></label>
+      ${SE.copy.length ? `<label class="sc-pre" for="sc_copy"><select id="sc_copy"><option value="">Copiar escala de otro criterio…</option>${SE.copy.map(c => `<option value="${esc(c[0])}">${esc(c[1])}</option>`).join('')}</select></label>` : ''}</div>
+    ${rem.length ? `<div class="sc-rem"><strong>Niveles quitados que tienen ítems cargados</strong>${rem.map(o => `<label class="fld" for="sc_rm_${esc(o).replace(/\W/g, '_')}"><span>«${esc(o)}» (${SE.used[o]} ítem${SE.used[o] > 1 ? 's' : ''}) pasa a</span>
+      <select id="sc_rm_${esc(o).replace(/\W/g, '_')}" data-rm="${esc(o)}"><option value="">Quedar sin valor</option>${levelsNow.map(l => `<option ${SE.removed[o] === l ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>`).join('')}</div>` : ''}`;
+  if (focus) { const el = document.getElementById(focus); if (el) el.focus() }
+}
+function scMove(i, j, focusSel){
+  if (j < 0 || j >= SE.rows.length) return;
+  const [r] = SE.rows.splice(i, 1); SE.rows.splice(j, 0, r); scRender(focusSel ? focusSel(j) : null);
+}
+function scAddText(txt){
+  txt.split(/[,\n;]+/).map(x => x.trim()).filter(Boolean).forEach(l => {
+    if (SE.rows.some(r => r.label.trim().toLowerCase() === l.toLowerCase())) return;
+    const back = Object.keys(SE.removed).find(o => o.toLowerCase() === l.toLowerCase());
+    if (back){ delete SE.removed[back]; SE.rows.push({orig:back, label:back}) } else SE.rows.push({orig:'', label:l});
   });
 }
+/** Devuelve {labels, renames, removed} o un texto de error. */
+function scResult(){
+  const labels = SE.rows.map(r => r.label.trim()).filter(Boolean);
+  if (labels.length < 2) return 'La escala necesita al menos dos niveles.';
+  if (labels.some(l => l.includes(','))) return 'Un nivel no puede contener comas: se usan para separar niveles en la planilla.';
+  if (new Set(labels.map(l => l.toLowerCase())).size !== labels.length) return 'Hay niveles repetidos.';
+  const renames = {}; SE.rows.forEach(r => { if (r.orig && r.label.trim() && r.label.trim() !== r.orig) renames[r.orig] = r.label.trim() });
+  SE.rows.forEach(r => { if (r.orig && !r.label.trim() && SE.used[r.orig]) SE.removed[r.orig] = SE.removed[r.orig] || '' });
+  const removed = {...SE.removed}; Object.keys(removed).forEach(o => { if (removed[o] && !labels.includes(removed[o])) removed[o] = '' });
+  return {labels, renames, removed};
+}
+/** Aplica renombres y bajas de niveles a los valores ya cargados en los ítems del grupo. */
+function scApplyToItems(st, D, cid, g, res){
+  items(g, D).forEach(it => {
+    const f = 'v.' + cid, val = it[f]; if (!val) return;
+    let nv = val;
+    if (res.renames[val]) nv = res.renames[val];
+    else if (val in res.removed) nv = res.removed[val];
+    if (nv === val) return;
+    const rec = {...D[it.id]}; if (nv) rec[f] = nv; else delete rec[f]; st.write(it.id, rec);
+  });
+}
+/* eventos del editor */
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-sc]'); if (!b || !SE || !b.closest('#sced')) return;
+  const i = +b.dataset.i, a = b.dataset.sc;
+  if (a === 'up') scMove(i, i - 1, j => 'sc_in_' + j);
+  else if (a === 'down') scMove(i, i + 1, j => 'sc_in_' + j);
+  else if (a === 'del'){ const r = SE.rows[i]; if (r.orig && SE.used[r.orig]) SE.removed[r.orig] = ''; SE.rows.splice(i, 1); scRender() }
+  else if (a === 'invert'){ SE.rows.reverse(); scRender() }
+  else if (a === 'add'){ const inp = document.getElementById('sc_new'); scAddText(inp.value); scRender('sc_new') }
+});
+document.addEventListener('input', e => { const t = e.target; if (t.classList && t.classList.contains('sc-in') && SE){ SE.rows[+t.dataset.i].label = t.value }
+  if (t.id === 'f_cat_q'){ const q = t.value.trim().toLowerCase(); document.querySelectorAll('.catrow').forEach(r => r.hidden = !!q && !r.dataset.n.includes(q)) } });
+document.addEventListener('change', e => {
+  const t = e.target; if (!SE) return;
+  if (t.id === 'sc_copy' && t.value){ const c = SE.copy.find(x => x[0] === t.value); if (c){ SE.rows.forEach(r => { if (r.orig && SE.used[r.orig]) SE.removed[r.orig] = '' }); SE.rows = []; scAddText(c[2]); scRender() } }
+  else if (t.id === 'sc_preset' && t.value){ SE.rows.forEach(r => { if (r.orig && SE.used[r.orig]) SE.removed[r.orig] = '' }); SE.rows = []; scAddText(t.value); scRender() }
+  else if (t.dataset && t.dataset.rm !== undefined && t.closest('#sced')) SE.removed[t.dataset.rm] = t.value;
+});
+document.addEventListener('keydown', e => {
+  const t = e.target; if (!SE || !t.closest || !t.closest('#sced')) return;
+  if (t.id === 'sc_new' && e.key === 'Enter'){ e.preventDefault(); scAddText(t.value); scRender('sc_new'); return }
+  const row = t.closest('.sc-row'); if (!row) return;
+  if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')){
+    e.preventDefault(); const i = +row.dataset.i, j = i + (e.key === 'ArrowUp' ? -1 : 1);
+    scMove(i, j, k => t.classList.contains('sc-h') ? null : 'sc_in_' + k);
+    if (t.classList.contains('sc-h')){ const h = document.querySelector(`.sc-row[data-i="${Math.max(0, Math.min(j, SE.rows.length - 1))}"] .sc-h`); if (h) h.focus() }
+  } else if (t.classList.contains('sc-in') && e.key === 'Enter'){ e.preventDefault(); const n = document.getElementById('sc_in_' + (+row.dataset.i + 1)) || document.getElementById('sc_new'); n.focus() }
+});
+/* arrastrar y soltar (mouse y dedo) */
+document.addEventListener('pointerdown', e => {
+  const h = e.target.closest('.sc-h'); if (!h || !SE) return;
+  e.preventDefault();
+  const row = h.closest('.sc-row'), list = row.parentNode, pid = e.pointerId; row.classList.add('dragging');
+  const move = ev => {
+    if (ev.pointerId !== pid) return; ev.preventDefault();
+    const rows = [...list.children].filter(r => r !== row);
+    const after = rows.find(r => { const b = r.getBoundingClientRect(); return ev.clientY < b.top + b.height / 2 });
+    if (after) list.insertBefore(row, after); else list.appendChild(row);
+    [...list.children].forEach((r, k) => r.querySelector('.sc-n').textContent = k + 1);
+  };
+  const up = ev => {
+    if (ev.pointerId !== pid) return;
+    document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); document.removeEventListener('pointercancel', up);
+    const order = [...list.children].map(r => +r.dataset.i); SE.rows = order.map(k => SE.rows[k]); scRender();
+  };
+  document.addEventListener('pointermove', move, {passive:false}); document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up);
+});
+
 
 /* ---------- acciones ---------- */
 const ACT = {
@@ -1172,6 +1492,13 @@ const ACT = {
   planAdd(){ const el = document.querySelector('.newrow .pc'); if (el){ el.focus(); el.scrollIntoView({block:'nearest'}) } },
   planDel(el){ const sk = el.dataset.sk, t = el.dataset.t, id = el.dataset.id, D = STORE[sk].get();
     confirmDel(delText(D, t, id), () => { if (sk === 'app' && !canEdit()) return; cascadeDel(sk, t, id); if (sk === 'app') fixUi(); STORE[sk].after(); render() }) },
+  pickScale(el){ const sk = el.dataset.sk, st = STORE[sk], D = st.get(), id = el.dataset.id, rec = D[id];
+    if (!rec || (sk === 'app' && !canEdit())) return;
+    const gs = groupsOfRoot(id, D).map(x => D[x].name);
+    modal('Escala de «' + (rec.name || '') + '»', (gs.length > 1 ? `<div class="sharewarn"><strong>Criterio compartido.</strong> El cambio se aplica en todos los grupos donde se usa: ${esc(gs.join(', '))}.</div>` : '') + scaleEditorHtml(levelsOf(rec), scUsedRoot(D, id), scaleCopyList(D, id)), () => {
+      const res = scResult(); if (typeof res === 'string'){ toast(res); return false }
+      usesOf(id, D).forEach(u => scApplyToItems(st, D, u.id, u.g, res)); st.write(id, {...rec, scale:res.labels.join(', ')}); st.after(); SE = null; render() });
+    scRender() },
   pickMulti(el){ const sk = el.dataset.sk, st = STORE[sk], D = st.get(), id = el.dataset.id, f = el.dataset.f, rec = D[id];
     if (!rec || (sk === 'app' && !canEdit())) return;
     const its = items(rec.g, D), sel = String(rec[f] || '').split(',');
@@ -1188,6 +1515,7 @@ const ACT = {
   newItem(){ itemForm() }, editItem(el){ itemForm(el.dataset.id) },
   delItem(el){ const id = el.dataset.id; confirmDel(delText(S.app, 'item', id), () => { if (!canEdit()) return; cascadeDel('app', 'item', id); commit() }) },
   newCrit(el){ critForm(null, el.dataset.parent) }, editCrit(el){ critForm(el.dataset.id) },
+  fromCatalog(){ catalogForm() }, replicate(el){ replicateForm(el.dataset.id) }, independize(el){ independizeForm(el.dataset.id) }, linkRoot(el){ linkRootForm(el.dataset.id) },
   delCrit(el){ const id = el.dataset.id; confirmDel(delText(S.app, 'crit', id), () => { if (!canEdit()) return; cascadeDel('app', 'crit', id); commit() }) },
   moveCrit(el){
     if (!canEdit()) return; const c = S.app[el.dataset.id]; const sib = crits(S.ui.g).filter(x => (x.p || '') === (c.p || '')).sort((a, b) => (+a.ord || 0) - (+b.ord || 0));
@@ -1232,7 +1560,7 @@ const ACT = {
     S.online = true; S.ui.view = 'group'; S.ui.g = g; S.ui.tab = 'cmp'; save(); sync(false);
   },
   resetDemo(){ modal('Restablecer datos de ejemplo', '<p>Se reemplazan la Sheet simulada y la copia local por los datos de ejemplo. Se pierde lo cargado en el prototipo.</p>', () => {
-    SIM = {records:seed()}; simBump('Planilla'); S.ver = ''; S.app = clone(SIM.records); S.base = clone(SIM.records); S.conflicts = []; S.choice = {}; S.log = []; S.online = true; S.mode = 'app';
+    SIM = {records:seed(), sd:true, rt:true}; simBump('Planilla'); S.ver = ''; S.app = clone(SIM.records); S.base = clone(SIM.records); S.conflicts = []; S.choice = {}; S.log = []; S.online = true; S.mode = 'app';
     log('Datos de ejemplo restablecidos.'); fixUi(); save(); render() }, 'Restablecer', true) }
 };
 
@@ -1244,7 +1572,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('change', e => {
   const t = e.target;
-  if (t.id === 'f_kind'){ const q = t.value === 'qual'; document.querySelectorAll('.onlynum').forEach(x => x.hidden = q); document.querySelectorAll('.onlyqual').forEach(x => x.hidden = !q) }
+  if (t.id === 'f_kind') toggleKind(t.value);
   else if (t.id === 'f_concl'){ const n = curInst(); if (n) put(n.id, {...S.app[n.id], concl:t.value.trim()}) }
   else if (t.id === 'f_auto'){ S.auto = t.value; save(); planPoll(true) }
   else if (t.classList.contains('pc')) planChange(t);
