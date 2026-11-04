@@ -156,6 +156,8 @@ textarea{resize:vertical}
 .dialog footer{border-top:1px solid var(--line);justify-content:flex-end}
 .dbody{padding:18px 20px;overflow:auto;display:flex;flex-direction:column;gap:14px}
 .fld{display:flex;flex-direction:column;gap:5px;font-size:.88rem;font-weight:500}
+.dupwarn{background:color-mix(in srgb, var(--warn) 12%, var(--surface));border:1px solid color-mix(in srgb, var(--warn) 45%, var(--line));border-radius:8px;padding:8px 10px;font-size:.86rem;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.gnhint{font-weight:400;font-size:.78rem;color:var(--muted)}.gnhint .val{margin-left:4px}.gnhint.over{color:var(--dis)}
 .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 .hint{font-size:.82rem;color:var(--muted)}
 .checks{display:flex;flex-direction:column;gap:6px}
@@ -471,6 +473,12 @@ tr.rowdrag{outline:2px dashed var(--accent);outline-offset:-2px}
 .osec{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:4px}
 .otbl{width:100%;min-width:0}
 .gitem.dragging{opacity:.6;outline:2px dashed var(--accent);outline-offset:-2px}
+.cmp thead th{transform:translateY(var(--hy,0px));position:relative;z-index:3;background:var(--surface)}
+.cmp thead th.sticky{position:sticky;z-index:4}
+.cmp.pinned thead th{box-shadow:0 6px 8px -6px rgb(0 0 0 / .25)}
+.mchk label{align-items:flex-start!important}
+.mchk input{margin-top:3px}
+.mchk .muted{font-size:.8rem}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.88rem;z-index:70;max-width:calc(100% - 32px)}
 
 @media (max-width:860px){
@@ -545,7 +553,7 @@ tr.rowdrag{outline:2px dashed var(--accent);outline-offset:-2px}
   {"f":"name","h":"Nombre","type":"text","req":1,"wide":1},
   {"f":"desc","h":"Descripción","type":"text","wide":1},
   {"f":"kind","h":"Tipo","type":"enum","opts":[["num","Cuantitativo"],["qual","Cualitativo"],["agg","Agrupador"],["auto","Calculado (texto)"]]},
-  {"f":"metric","h":"Métrica","type":"enum","opts":[["words","Palabras"],["chars","Caracteres con espacios"],["charsns","Caracteres sin espacios"],["sentences","Oraciones"],["paras","Párrafos"],["wps","Palabras por oración"],["inflesz","Legibilidad (INFLESZ)"],["longsent","Oraciones largas"],["repeats","Repeticiones cercanas"],["fillers","Muletillas"],["variety","Variedad de vocabulario"]]},
+  {"f":"metric","h":"Métrica","type":"enum","opts":[["words","Palabras"],["chars","Caracteres con espacios"],["charsns","Caracteres sin espacios"],["sentences","Oraciones"],["paras","Párrafos"],["wps","Palabras por oración"],["inflesz","Legibilidad (INFLESZ)"],["longsent","Oraciones largas"],["repeats","Repeticiones cercanas"],["fillers","Muletillas"],["variety","Variedad de vocabulario"],["readtime","Tiempo de lectura estimado"],["maxsent","Oración más larga"],["commas","Comas por oración"],["sim","Similitud con la referencia"]]},
   {"f":"dir","h":"Sentido","type":"enum","opts":[["max","Más es mejor"],["min","Menos es mejor"]]},
   {"f":"unit","h":"Unidad","type":"text"},
   {"f":"scale","h":"Escala","type":"scale","wide":1},
@@ -575,6 +583,7 @@ tr.rowdrag{outline:2px dashed var(--accent);outline-offset:-2px}
   {"f":"items","h":"Ítems","type":"multi","ref":"item","scope":"g","wide":1},
   {"f":"ord","h":"Orden","type":"num"},
   {"f":"set","h":"Conjunto","type":"ref","ref":"set","scope":"g"},
+  {"f":"ref","h":"Texto de referencia","type":"ref","ref":"item","scope":"g"},
   {"f":"ai","h":"Evaluación IA","type":"text","wide":1},
   {"f":"concl","h":"Conclusión","type":"text","wide":1},
   {"f":"_o","h":"Ajustes","type":"overrides"}]},
@@ -587,7 +596,7 @@ tr.rowdrag{outline:2px dashed var(--accent);outline-offset:-2px}
 const SCHEMA = JSON.parse(document.getElementById('ci-schema').textContent);
 /** Fecha y hora de esta versión de la app (se completa sola al generar los archivos). */
 const APP_NAME = 'COMPAREIt(em)';
-const APP_BUILD = '04/11/2026 18:32';
+const APP_BUILD = '04/11/2026 19:08';
 const $ = s => document.querySelector(s);
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
@@ -745,7 +754,7 @@ function fmt(c, raw){
   if (raw === '' || raw == null) return '—';
   if (c.kind === 'qual') return offOf(c).includes(raw) ? raw + ' (desestimado)' : raw;
   const n = parseFloat(String(raw).replace(',', '.'));
-  if (c.kind === 'auto' && !isNaN(n)) return c.metric === 'variety' ? fmtN(n) + ' %' : c.metric === 'inflesz' ? fmtN(n) + ' · ' + inflLabel(n) : fmtN(n) + ' ' + ((METRICS[c.metric] || {}).unit || '');
+  if (c.kind === 'auto' && !isNaN(n)) return c.metric === 'variety' || c.metric === 'sim' ? fmtN(n) + ' %' : c.metric === 'readtime' ? fmtMin(n) : c.metric === 'inflesz' ? fmtN(n) + ' · ' + inflLabel(n) : fmtN(n) + ' ' + ((METRICS[c.metric] || {}).unit || '');
   if (isNaN(n)) return raw;
   const s = n.toLocaleString('es-AR', {maximumFractionDigits:2});
   if (c.unit === 'ARS') return '$ ' + s;
@@ -759,13 +768,13 @@ function critHint(c){
 
 /* ---------- motor de evaluación ---------- */
 function evaluate(g, its, inst, excl = new Set()){
-  const list = treeFor(g, inst && inst.set);
+  const list = treeFor(g, inst && inst.set), ctx = {inst, its};
   const off = new Set(); list.forEach(c => { if (excl.has(c.id) || c.setOff || (c.p && off.has(c.p))) off.add(c.id) }); const W = Object.fromEntries(list.map(c => [c.id, +c.w || 1]));
   const res = {};
   list.filter(c => c.leaf).forEach(c => {
     const sc = {};
     its.forEach(it => {
-      const raw = c.kind === 'auto' ? autoVal(c, it) : (it['v.' + c.id] ?? ''); let s = null;
+      const raw = c.kind === 'auto' ? autoVal(c, it, ctx) : (it['v.' + c.id] ?? ''); let s = null;
       if (c.kind === 'qual'){ const o = scaleOf(c); const i = o.indexOf(raw); if (i >= 0) s = o.length > 1 ? i / (o.length - 1) : 1 }
       else { const n = parseFloat(String(raw).replace(',', '.')); if (!isNaN(n)) s = n }
       sc[it.id] = s;
@@ -784,7 +793,7 @@ function evaluate(g, its, inst, excl = new Set()){
       if (s == null) mark = 'na'; else if (allEq || vals.length < 2) mark = 'eq'; else if (s === hi) mark = 'adv'; else if (s === lo) mark = 'dis'; else mark = 'mid';
       const ov = inst && inst['o.' + it.id + '.' + c.id]; let manual = false;
       if (ov){ manual = true; mark = ov; s = ov === 'adv' ? 1 : ov === 'dis' ? 0 : 0.5 }
-      res[c.id][it.id] = {score:s, mark, manual, raw:c.kind === 'auto' ? autoVal(c, it) : (it['v.' + c.id] ?? '')};
+      res[c.id][it.id] = {score:s, mark, manual, raw:c.kind === 'auto' ? autoVal(c, it, ctx) : (it['v.' + c.id] ?? '')};
     });
   });
   const avg = (ids, itId) => { let sw = 0, ws = 0; ids.forEach(k => { if (off.has(k)) return; const s = res[k]?.[itId]?.score; if (s != null){ sw += s * W[k]; ws += W[k] } }); return ws ? sw / ws : null };
@@ -1044,7 +1053,7 @@ function renderMain(){
   else if (!S.ui.g || !S.app[S.ui.g]){ m.innerHTML = empty('No hay grupos todavía', 'Un grupo reúne ítems de la misma naturaleza (por ejemplo, notebooks) y se guarda como una pestaña de la Google Sheet.', 'newGroup', 'Crear grupo'); }
   else m.innerHTML = viewGroup({...S.app[S.ui.g], id:S.ui.g});
   if (S.lay.collapsed) m.insertAdjacentHTML('afterbegin', `<div class="sidebar-off"><button class="btn sm" data-act="sideExpand" title="Volver a mostrar la barra lateral con su ancho fijado">» Mostrar barra lateral</button>${S.layUndo.length ? '<button class="btn sm ghost" data-act="layUndo">↶ Deshacer</button>' : ''}</div>`);
-  sizeCols();
+  sizeCols(); pinHead();
   if (S.drawer) renderDrawer();
 }
 
@@ -1235,6 +1244,7 @@ function planCheck(t, D, id, rec, f, val, col){
   if (!col) return null;
   if (col.req && !val) return `«${col.h}» no puede quedar vacío.`;
   if (col.type === 'num' && val && isNaN(Number(val.replace(',', '.')))) return `«${col.h}» tiene que ser un número.`;
+  if (t === 'group' && f === 'name' && val.length > GN_MAX) return `El nombre del grupo es el nombre de la pestaña de la Sheet: no debe superar los ${GN_MAX} caracteres (tiene ${val.length}).`;
   if (t === 'group' && f === 'name' && groups(D).some(x => x.id !== id && (x.name || '').toLowerCase() === val.toLowerCase())) return 'Ya hay un grupo con ese nombre: serían la misma pestaña de la Sheet.';
   if (t === 'crit' && f === 'p' && val && (val === id || descendants(id, rec.g, D).includes(val))) return 'Un criterio no puede depender de sí mismo ni de sus subcriterios.';
   if (t === 'crit' && f === 'p' && val && D[val] && D[val].g !== rec.g) return 'El criterio padre tiene que ser del mismo grupo.';
@@ -1370,9 +1380,14 @@ const METRICS = {
   longsent: {label:'Oraciones largas (más de 30 palabras)', unit:'oraciones', dir:'min', w:'1'},
   repeats:  {label:'Repeticiones cercanas', unit:'repeticiones', dir:'min', w:'1'},
   fillers:  {label:'Muletillas', unit:'apariciones', dir:'min', w:'1'},
-  variety:  {label:'Variedad de vocabulario', unit:'% palabras distintas', dir:'max', w:'1'}
+  variety:  {label:'Variedad de vocabulario', unit:'% palabras distintas', dir:'max', w:'1'},
+  readtime: {label:'Tiempo de lectura estimado', unit:'min', dir:'min'},
+  maxsent:  {label:'Oración más larga', unit:'palabras', dir:'min', w:'1'},
+  commas:   {label:'Comas por oración', unit:'comas/oración', dir:'min'},
+  sim:      {label:'Similitud con la referencia', unit:'% igual', dir:'max', inst:1}
 };
-const DEFAULT_METRICS = ['words', 'wps', 'inflesz', 'longsent', 'repeats', 'fillers', 'variety'];
+const DEFAULT_METRICS = ['words', 'chars', 'charsns', 'wps', 'inflesz', 'longsent', 'repeats', 'fillers', 'variety', 'readtime', 'maxsent', 'commas', 'sim'];
+const METRIC_HELP = {readtime:'a unas 230 palabras por minuto', maxsent:'palabras de la oración más extensa', commas:'promedio de comas por oración', sim:'% de palabras iguales al texto de referencia de la instancia (100 % = sin cambios)', words:'cantidad total de palabras', chars:'incluye espacios y saltos de línea', charsns:'sin espacios, tabulaciones ni saltos de línea', sentences:'cantidad de oraciones', paras:'bloques separados por una línea en blanco', wps:'promedio de palabras por oración', inflesz:'escala de legibilidad para español', longsent:'oraciones de más de 30 palabras', repeats:'misma palabra repetida a poca distancia', fillers:'expresiones de relleno («básicamente», «a nivel de»…)', variety:'porcentaje de palabras distintas'};
 const FILLERS = ['básicamente', 'realmente', 'simplemente', 'obviamente', 'literalmente', 'digamos', 'o sea', 'en este sentido', 'de alguna manera', 'de alguna forma',
   'a nivel de', 'en lo que respecta a', 'cabe destacar', 'cabe mencionar', 'es importante destacar', 'es importante mencionar', 'por así decirlo', 'a la hora de',
   'en el día de hoy', 'hoy en día', 'sin lugar a dudas', 'en definitiva', 'de hecho', 'en realidad', 'por lo tanto'];
@@ -1414,23 +1429,58 @@ function metricsOf(t){
     inflesz:wc ? +(206.835 - 62.3 * (syl / wc) - wc / sc).toFixed(1) : 0,
     longsent:sents.filter(s => (s.match(WORD_RE) || []).length > 30).length,
     repeats:repeatHits(t).length, fillers:fillerHits(t).length,
-    variety:wc ? +(100 * new Set(words.map(w => w.toLowerCase())).size / wc).toFixed(1) : 0
+    variety:wc ? +(100 * new Set(words.map(w => w.toLowerCase())).size / wc).toFixed(1) : 0,
+    readtime:+(wc / 230).toFixed(1),
+    maxsent:sents.reduce((a, x) => Math.max(a, (x.match(WORD_RE) || []).length), 0),
+    commas:sc ? +((t.match(/,/g) || []).length / sc).toFixed(1) : 0
   };
   if (MCACHE.size > 200) MCACHE.clear(); MCACHE.set(t, m); return m;
 }
 function inflLabel(p){ return p < 40 ? 'muy difícil' : p < 55 ? 'algo difícil' : p < 65 ? 'normal' : p < 80 ? 'bastante fácil' : 'muy fácil' }
 const fmtN = n => Number(n).toLocaleString('es-AR', {maximumFractionDigits:1});
-function autoVal(c, it){ if (!METRICS[c.metric] || !it) return ''; return String(metricsOf(it.txt)[c.metric]) }
+/** minutos de lectura: «menos de 1 min», «2,5 min» */
+const fmtMin = n => n > 0 && n < 1 ? 'menos de 1 min' : fmtN(n) + ' min';
+function autoVal(c, it, ctx){
+  if (!METRICS[c.metric] || !it) return '';
+  if (c.metric === 'sim'){ const r = ctx && refOf(ctx.inst, ctx.its); return r ? String(simOf(r.txt, it.txt)) : '' }
+  return String(metricsOf(it.txt)[c.metric]);
+}
+/** Texto de referencia de una instancia: el elegido, o el primero de la instancia. */
+function refOf(inst, its){ if (!its || !its.length) return null; return its.find(x => inst && x.id === inst.ref) || its[0] }
+const SCACHE = new Map();
+/** Similitud (%) entre dos textos: palabras iguales × 2 / (palabras de A + palabras de B). */
+function simOf(A, B){
+  A = A || ''; B = B || ''; if (A === B) return 100; const k = A + '\u0000' + B; if (SCACHE.has(k)) return SCACHE.get(k);
+  let ops = diffTexts(A, B, 'word'); if (!ops) ops = diffTexts(A, B, 'sent');
+  const eq = ops.filter(o => o.t === 'eq').reduce((s, o) => s + wcount(o.s), 0), wa = wcount(A), wb = wcount(B);
+  const r = wa + wb ? +(200 * eq / (wa + wb)).toFixed(1) : 100;
+  if (SCACHE.size > 300) SCACHE.clear(); SCACHE.set(k, r); return r;
+}
 
 /** Agrega las métricas por defecto como criterios del grupo (reutiliza los del catálogo si ya existen). */
-function addTextMetrics(g){
+function addTextMetrics(g, list = DEFAULT_METRICS){
   const have = new Set(crits(g).map(c => c.metric).filter(Boolean));
-  DEFAULT_METRICS.forEach(mk => {
+  list.forEach(mk => {
     if (have.has(mk)) return; const M = METRICS[mk];
     let r = roots().find(x => x.kind === 'auto' && x.metric === mk);
     let rid = r && r.id; if (!rid){ rid = uid('r'); setRec(rid, {t:'root', kind:'auto', metric:mk, name:uniqueRootName(M.label), dir:M.dir}) }
     setRec(uid('c'), {t:'crit', g, root:rid, w:M.w || '1', ord:String(nextOrd(S.app, g, ''))});
   });
+}
+
+function metricChecks(g, prefix){
+  const have = new Set(g ? crits(g).map(c => c.metric).filter(Boolean) : []);
+  return `<div class="checks mchk">${Object.entries(METRICS).map(([mk, M]) => `<label><input type="checkbox" id="${prefix}${mk}" ${have.has(mk) ? 'checked disabled' : DEFAULT_METRICS.includes(mk) ? 'checked' : ''}>
+    <span><strong>${esc(M.label)}</strong> <span class="muted">· ${M.dir === 'min' ? 'menos es mejor' : 'más es mejor'} · ${esc(METRIC_HELP[mk] || '')}${have.has(mk) ? ' · ya está en el grupo' : ''}</span></span></label>`).join('')}</div>`;
+}
+function metricsForm(){
+  const g = S.ui.g;
+  modal('Agregar métricas de texto', `<p class="hint">Cada métrica se agrega como criterio calculado del grupo: su valor sale del texto de cada ítem. Después podés ajustar su peso, su sentido o excluirla en un conjunto.</p>${metricChecks(g, 'f_mt_')}`, () => {
+    const pick = Object.keys(METRICS).filter(mk => { const e = document.getElementById('f_mt_' + mk); return e && e.checked && !e.disabled });
+    if (!pick.length){ toast('No marcaste métricas nuevas.'); return false }
+    if (!canEdit()) return;
+    addTextMetrics(g, pick); commit(); toast(pick.length === 1 ? 'Métrica agregada.' : pick.length + ' métricas agregadas.');
+  }, 'Agregar');
 }
 
 /* resaltado de ayudas de escritura */
@@ -1488,10 +1538,16 @@ function cmpModeBar(){
     <button class="btn sm" data-act="aiOpen">Consigna para Claude</button></div>`;
 }
 function metricsTable(its){
-  const ms = its.map(it => metricsOf(it.txt));
-  const rows = Object.entries(METRICS).map(([k, M]) => `<tr><th>${esc(M.label)}</th>${ms.map(m => `<td class="val">${fmtN(m[k])}${k === 'inflesz' && m.words ? ` <span class="muted">${inflLabel(m[k])}</span>` : ''}${k === 'variety' ? '%' : ''}</td>`).join('')}</tr>`).join('');
+  const ms = its.map(it => metricsOf(it.txt)), inst = curInst(), ref = refOf(inst, its);
+  const cell = (k, m, it) => {
+    if (k === 'sim') return ref ? (it.id === ref.id ? '<span class="muted">referencia</span>' : fmtN(simOf(ref.txt, it.txt)) + '%') : '—';
+    if (k === 'readtime') return fmtMin(m[k]);
+    return fmtN(m[k]) + (k === 'inflesz' && m.words ? ` <span class="muted">${inflLabel(m[k])}</span>` : '') + (k === 'variety' ? '%' : '');
+  };
+  const rows = Object.entries(METRICS).map(([k, M]) => `<tr><th>${esc(M.label)}</th>${ms.map((m, x) => `<td class="val">${cell(k, m, its[x])}</td>`).join('')}</tr>`).join('');
+  const refSel = inst && its.length > 1 ? `<label class="fld refsel" for="f_ref"><span>Texto de referencia (para «Similitud»)</span><select id="f_ref" ${canEdit() ? '' : 'disabled'}>${its.map(it => `<option value="${it.id}" ${ref && it.id === ref.id ? 'selected' : ''}>${esc(it.name)}</option>`).join('')}</select></label>` : '';
   return `<div class="scroll"><table class="tbl mtbl"><thead><tr><th>Métrica</th>${its.map(it => `<th>${esc(it.name)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
-    <p class="hint">Caracteres «sin espacios» excluye espacios, tabulaciones y saltos de línea; acentos y emojis cuentan como un carácter. Los conteos pueden diferir levemente de otros editores. Legibilidad: escala INFLESZ para español (menos de 40 muy difícil · 55 a 65 normal · más de 80 muy fácil).</p>`;
+    ${refSel}<p class="hint">Caracteres «sin espacios» excluye espacios, tabulaciones y saltos de línea; acentos y emojis cuentan como un carácter. Los conteos pueden diferir levemente de otros editores. Legibilidad: escala INFLESZ para español (menos de 40 muy difícil · 55 a 65 normal · más de 80 muy fácil). Tiempo de lectura: a unas 230 palabras por minuto. Similitud: % de palabras iguales al texto de referencia (100 % = sin cambios; 100 − similitud = % de cambio).</p>`;
 }
 function viewTexts(its){
   const aids = S.ui.aids || {long:true, rep:true, fill:true};
@@ -1505,7 +1561,7 @@ function viewTexts(its){
 }
 function viewDiff(its){
   const d = S.ui.diff || {}, ids = its.map(x => x.id);
-  const a = ids.includes(d.a) ? d.a : ids[0], b = ids.includes(d.b) && d.b !== a ? d.b : ids.find(x => x !== a);
+  const r0 = refOf(curInst(), its), a = ids.includes(d.a) ? d.a : (r0 ? r0.id : ids[0]), b = ids.includes(d.b) && d.b !== a ? d.b : ids.find(x => x !== a);
   const mode = d.mode || 'side', gran = d.gran || 'word';
   if (!b) return '<p class="hint">Agregá al menos dos textos a la instancia para ver diferencias.</p>';
   const A = S.app[a].txt || '', B = S.app[b].txt || '';
@@ -1608,7 +1664,13 @@ function aiCard(inst){
 }
 
 /* ---------- Réplicas, exportación e importación ---------- */
-function uniqueGroupName(n){ let x = n, i = 2; while (groups().some(g => (g.name || '').toLowerCase() === x.toLowerCase())) x = n + ' ' + (i++); return x }
+const GN_MAX = 100;   // Google Sheets no admite nombres de pestaña de más de 100 caracteres
+function uniqueGroupName(n){ const cut = (b, suf) => b.slice(0, GN_MAX - suf.length).trimEnd() + suf; let x = cut(n, ''), i = 2; while (groups().some(g => (g.name || '').toLowerCase() === x.toLowerCase())) x = cut(n, ' ' + (i++)); return x }
+/** Leyenda y contador para campos que se usan como nombre de pestaña de la Sheet. */
+const gnHint = id => `<small class="gnhint" id="${id}_gn">No debe superar los ${GN_MAX} caracteres (límite de Google Sheets para el nombre de la pestaña; con más, no se puede sincronizar). <span class="val" data-gncnt="${id}"></span></small>`;
+const gnTooLong = name => name.length > GN_MAX ? `El nombre tiene ${name.length} caracteres: no debe superar los ${GN_MAX} (límite de Google Sheets para el nombre de la pestaña).` : '';
+function gnCount(inp){ const c = document.querySelector(`[data-gncnt="${inp.id}"]`); if (!c) return; const n = inp.value.length; c.textContent = n + ' / ' + GN_MAX; c.closest('.gnhint').classList.toggle('over', n > GN_MAX) }
+document.addEventListener('input', e => { if (e.target.id && document.querySelector(`[data-gncnt="${e.target.id}"]`)) gnCount(e.target); if (e.target.id === 'f_name'){ const w = document.getElementById('f_dup_warn'); if (w) w.hidden = true } });
 const stripU = r => { const o = {...r}; delete o.u; return o };
 /** Paquete autocontenido de un grupo (todas sus instancias) o de algunas instancias. */
 function makeBundle(gid, only){
@@ -1675,8 +1737,9 @@ function replGroupForm(){
   const g = S.app[S.ui.g]; if (!g) return;
   modal('Replicar grupo', `
     <p class="hint">Crea un grupo nuevo e independiente con copias de sus ítems, criterios del grupo, conjuntos e instancias, y su propia pestaña en la Sheet. Lo que cambies en la copia no afecta a «${esc(g.name)}». Los criterios del catálogo se siguen compartiendo entre ambos grupos.</p>
-    <label class="fld" for="f_name"><span>Nombre del grupo nuevo</span><input id="f_name" value="${esc(uniqueGroupName(g.name + ' (copia)'))}"></label>`, () => {
+    <label class="fld" for="f_name"><span>Nombre del grupo nuevo</span><input id="f_name" maxlength="${GN_MAX}" value="${esc(uniqueGroupName(g.name + ' (copia)'))}">${gnHint('f_name')}</label>`, () => {
     const name = v('f_name'); if (!name){ toast('Poné un nombre.'); return false }
+    if (gnTooLong(name)){ toast(gnTooLong(name)); return false }
     if (groups().some(x => (x.name || '').toLowerCase() === name.toLowerCase())){ toast('Ya hay un grupo con ese nombre: serían la misma pestaña.'); return false }
     if (!canEdit()) return;
     const res = cloneBundle(makeBundle(S.ui.g, null), {name, rootMode:'keep'});
@@ -1707,13 +1770,14 @@ function importForm(){
     <label class="fld" for="f_imp_file"><span>Archivo exportado desde CompareIt (.json)</span><input type="file" id="f_imp_file" accept=".json,application/json"></label>
     <label class="fld" for="f_imp_txt"><span>…o pegá el texto exportado</span><textarea id="f_imp_txt" rows="5" placeholder='{"format":"compareit", …}'></textarea></label>
     <div id="f_imp_info" class="hint">Se va a crear como un grupo nuevo e independiente.</div>
-    <label class="fld" for="f_imp_name"><span>Nombre del grupo nuevo</span><input id="f_imp_name"></label>
+    <label class="fld" for="f_imp_name"><span>Nombre del grupo nuevo</span><input id="f_imp_name" maxlength="${GN_MAX}">${gnHint('f_imp_name')}</label>
     <div class="checks" id="f_imp_roots" hidden>
       <label><input type="radio" name="f_imp_rm" value="reuse" checked> Reutilizar los criterios del catálogo que tengan el mismo nombre</label>
       <label><input type="radio" name="f_imp_rm" value="new"> Crear todos los criterios como nuevos</label></div>`, () => {
     let B; try{ B = JSON.parse(v('f_imp_txt')) }catch(e){ toast('El texto no es un archivo de CompareIt válido.'); return false }
     const err = checkBundle(B); if (err){ toast(err); return false }
     const name = v('f_imp_name'); if (!name){ toast('Poné un nombre al grupo nuevo.'); return false }
+    if (gnTooLong(name)){ toast(gnTooLong(name)); return false }
     if (groups().some(x => (x.name || '').toLowerCase() === name.toLowerCase())){ toast('Ya hay un grupo con ese nombre: serían la misma pestaña.'); return false }
     if (!canEdit()) return;
     const rm = (document.querySelector('input[name=f_imp_rm]:checked') || {}).value || 'reuse';
@@ -1732,13 +1796,13 @@ function impPreview(){
   info.innerHTML = `<strong>«${esc(B.group.name)}»</strong> · ${B.insts.length} instancia${B.insts.length === 1 ? '' : 's'} · ${B.items.length} ítems · ${B.uses.length} criterios${B.at ? ' · exportado el ' + new Date(B.at).toLocaleString('es-AR') : ''}.`
     + (same.length ? ` ${same.length} criterio${same.length === 1 ? ' ya existe' : 's ya existen'} en tu catálogo con el mismo nombre${diff.length ? `; ${diff.length} con otra definición (${esc(diff.map(r => r.name).join(', '))}): si los reutilizás, se usa la definición de tu catálogo` : ''}.` : '');
   rbox.hidden = !same.length;
-  const nm = document.getElementById('f_imp_name'); if (!nm.value) nm.value = uniqueGroupName(B.group.name + (B.scope === 'inst' && B.insts[0] ? ' · ' + B.insts[0].name : '') + ' (importado)');
+  const nm = document.getElementById('f_imp_name'); if (!nm.value){ nm.value = uniqueGroupName(B.group.name + (B.scope === 'inst' && B.insts[0] ? ' · ' + B.insts[0].name : '') + ' (importado)'); gnCount(nm) }
 }
 
 function viewCritBase(g){
   const list = tree(g.id);
   let h = `<div class="instbar"><p class="muted" style="max-width:72ch">Los criterios vienen del catálogo general y se pueden usar en varios grupos. Nombre, tipo y escala son del criterio; el orden, el peso y de qué criterio depende son propios de cada grupo.</p>
-    <div class="row ed"><button class="btn sm primary" data-act="newCrit" data-parent="">+ Criterio nuevo</button><button class="btn sm" data-act="fromCatalog">+ Desde el catálogo</button></div></div>`;
+    <div class="row ed"><button class="btn sm primary" data-act="newCrit" data-parent="">+ Criterio nuevo</button><button class="btn sm" data-act="fromCatalog">+ Desde el catálogo</button>${isText(g.id) ? '<button class="btn sm" data-act="addMetrics">+ Métricas de texto</button>' : ''}</div></div>`;
   if (!list.length) return h + empty('Sin criterios', 'Creá un criterio o traelo del catálogo para que la app pueda concluir ventajas y desventajas.', 'fromCatalog', 'Elegir del catálogo');
   h += `<div class="clist">${list.map(c => {
     const others = groupsOfRoot(c.root).filter(x => x !== g.id);
@@ -2051,10 +2115,17 @@ function dupItemForm(id){
   const inIns = insts(g).filter(n => instIds(n).includes(id));
   modal('Replicar ítem', `
     <p class="hint">Se crea un ítem nuevo con los mismos valores${it.txt ? ', el mismo texto' : ''} y notas que «${esc(it.name)}», justo debajo. Después podés ajustar lo que cambie.</p>
-    <label class="fld" for="f_name"><span>Nombre del ítem nuevo</span><input id="f_name" value="${esc(uniqueItemName(it.name + ' (copia)'))}"></label>
-    ${inIns.length ? `<div class="checks"><label><input type="checkbox" id="f_dup_ins"> Agregarlo también a las instancias donde está el original (${esc(inIns.map(n => n.name).join(', '))})</label></div>` : ''}
-    <div class="checks"><label><input type="checkbox" id="f_dup_edit" checked> Abrirlo para editar después de crearlo</label></div>`, () => {
+    <label class="fld" for="f_name"><span>Nombre del ítem nuevo</span><input id="f_name" value="${esc(it.name)}"></label>
+    <div id="f_dup_warn" class="dupwarn" role="alert" hidden></div>
+    ${inIns.length ? `<div class="checks"><label><input type="checkbox" id="f_dup_ins" checked> Agregarlo también a las instancias donde está el original (${esc(inIns.map(n => n.name).join(', '))})</label></div>` : ''}
+    <div class="checks"><label><input type="checkbox" id="f_dup_edit"> Abrirlo para editar después de crearlo</label></div>`, () => {
     const name = v('f_name'); if (!name){ toast('Poné un nombre.'); return false }
+    if (items(g).some(x => (x.name || '').trim().toLowerCase() === name.toLowerCase())){
+      const alt = uniqueItemName(name + ' (copia)'), w = document.getElementById('f_dup_warn');
+      w.innerHTML = `Ya hay un ítem llamado «${esc(name)}» en este grupo. Cambiá el nombre para que se distinga, o guardalo con «(copia)» al final.
+        <button type="button" class="btn sm" data-act="dupAsCopy" data-n="${esc(alt)}">Guardar como «${esc(alt)}»</button>`;
+      w.hidden = false; document.getElementById('f_name').focus(); return false;
+    }
     if (!canEdit()) return;
     const nid = uid('i'), r = stripU(it); r.name = name; setRec(nid, r);
     const ids = items(g).map(x => x.id).filter(x => x !== nid); ids.splice(ids.indexOf(id) + 1, 0, nid);
@@ -2194,7 +2265,18 @@ function endRz(e){
   if (r.type === 'side') layChange({side:r.val}); else layChange({col:r.val});
 }
 document.addEventListener('pointerup', endRz); document.addEventListener('pointercancel', endRz);
-let rsT = null; addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(() => { topH(); sizeCols() }, 120) });
+let rsT = null; addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(() => { topH(); sizeCols(); pinHead() }, 120) });
+/* encabezado de la tabla de comparación fijo mientras la tabla está a la vista; se suelta al pasar la última fila */
+function pinHead(){
+  const t = document.querySelector('table.cmp'); if (!t || !t.tHead) return;
+  const bar = document.querySelector('.top'), strip = document.querySelector('.sidebar-off');
+  let top = bar ? bar.getBoundingClientRect().bottom : 0;
+  if (strip){ const r = strip.getBoundingClientRect(); if (r.top <= top + 1) top = Math.max(top, r.bottom) }
+  const r = t.getBoundingClientRect(), hh = t.tHead.getBoundingClientRect().height;
+  const off = Math.min(Math.max(0, top - r.top), Math.max(0, r.height - hh));   // fijo mientras se ve la tabla; se suelta con el final de la última fila
+  t.style.setProperty('--hy', off + 'px'); t.classList.toggle('pinned', off > 0);
+}
+let phRaf = 0; addEventListener('scroll', () => { if (!phRaf) phRaf = requestAnimationFrame(() => { phRaf = 0; pinHead() }) }, {passive:true});
 const LAY_ACT = {
   sideCollapse(){ layChange({collapsed:true}) },
   sideExpand(){ layChange({collapsed:false}) },
@@ -2359,6 +2441,7 @@ function modal(title, body, fn, label = 'Guardar', danger = false){
   $('#mTitle').textContent = title; $('#mBody').innerHTML = body;
   const b = $('#mSave'); b.textContent = label; b.className = 'btn ' + (danger ? 'danger' : 'primary'); b.hidden = !fn;
   const c = document.querySelector('#modal footer [data-act=closeModal]'); if (c) c.textContent = fn ? 'Cancelar' : 'Cerrar';
+  $('#mBody').querySelectorAll('[data-gncnt]').forEach(c => { const i = document.getElementById(c.dataset.gncnt); if (i) gnCount(i) });
   onSave = fn; $('#modal').hidden = false; MSNAP = null;
   setTimeout(() => { if (onSave) MSNAP = modalState() }, 0);   // después de que cada formulario termina de armarse
   setTimeout(() => $('#mBody').querySelector('input:not([type=checkbox]),select,textarea')?.focus(), 30);
@@ -2377,15 +2460,16 @@ function confirmDel(text, fn){ modal('Confirmar borrado', `<p>${text}</p><p clas
 function groupForm(id){
   const g = id ? S.app[id] : {};
   modal(id ? 'Editar grupo' : 'Nuevo grupo', `
-    <label class="fld" for="f_name"><span>Nombre (será el nombre de la pestaña)</span><input id="f_name" value="${esc(g.name)}" placeholder="Ej.: Notebooks"></label>
+    <label class="fld" for="f_name"><span>Nombre (será el nombre de la pestaña)</span><input id="f_name" maxlength="${GN_MAX}" value="${esc(g.name)}" placeholder="Ej.: Notebooks">${gnHint('f_name')}</label>
     <label class="fld" for="f_desc"><span>Naturaleza / descripción</span><textarea id="f_desc" rows="3">${esc(g.desc)}</textarea></label>
     <label class="fld" for="f_gkind"><span>Qué se compara</span><select id="f_gkind"><option value="">Ítems con valores (productos, servicios, opciones…)</option><option value="text" ${g.kind === 'text' ? 'selected' : ''}>Textos (versiones de un escrito)</option></select></label>
-    <div class="checks onlytxt" ${g.kind === 'text' ? '' : 'hidden'}><label><input type="checkbox" id="f_gmet" ${id && crits(id).some(c => c.kind === 'auto') ? '' : 'checked'}> Agregar las métricas de texto como criterios (palabras, legibilidad, oraciones largas…)</label></div>`, () => {
+    <div class="fld onlytxt" ${g.kind === 'text' ? '' : 'hidden'}><span>Métricas de texto que se agregan como criterios</span>${metricChecks(id, 'f_gm_')}</div>`, () => {
     const name = v('f_name'); if (!name){ toast('Poné un nombre al grupo.'); return false }
+    if (gnTooLong(name)){ toast(gnTooLong(name)); return false }
     if (groups().some(x => x.name.toLowerCase() === name.toLowerCase() && x.id !== id)){ toast('Ya hay un grupo con ese nombre: serían la misma pestaña.'); return false }
     if (!canEdit()) return;
     const nid = id || uid('g'), rec = {...g, t:'group', name, desc:v('f_desc')}, k = v('f_gkind'); if (k) rec.kind = k; else delete rec.kind;
-    setRec(nid, rec); if (!id) placeOrd(groups().filter(x => !x.arch).map(x => x.id), nid, null, (x, o) => { if (String(S.app[x].ord || '') !== o) setRec(x, {...S.app[x], ord:o}) }); if (k === 'text' && document.getElementById('f_gmet').checked) addTextMetrics(nid);
+    setRec(nid, rec); if (!id) placeOrd(groups().filter(x => !x.arch).map(x => x.id), nid, null, (x, o) => { if (String(S.app[x].ord || '') !== o) setRec(x, {...S.app[x], ord:o}) }); if (k === 'text') addTextMetrics(nid, Object.keys(METRICS).filter(mk => { const e = document.getElementById('f_gm_' + mk); return e && e.checked && !e.disabled }));
     S.ui.g = nid; S.ui.view = 'group'; commit();
   });
 }
@@ -2578,7 +2662,8 @@ const ACT = {
   diffOpt(el){ S.ui.diff = {...(S.ui.diff || {}), [el.dataset.o]:el.dataset.v}; save(); render() },
   diffSwap(){ const a = v('f_da'), b = v('f_db'); S.ui.diff = {...(S.ui.diff || {}), a:b, b:a}; save(); render() },
   editText(el){ textForm(el.dataset.id) },
-  aiOpen(){ aiForm() },
+  aiOpen(){ aiForm() }, addMetrics(){ metricsForm() },
+  dupAsCopy(el){ const f = document.getElementById('f_name'); if (!f) return; f.value = el.dataset.n; $('#mSave').click() },
   orderGroups(){ modal('Ordenar grupos', groupOrderBody(), null) },
   dupItem(el){ dupItemForm(el.dataset.id) }, planDup(el){ planDup(el) },
   replInst(){ replInstForm() }, replGroup(){ replGroupForm() }, exportCmp(){ exportForm() }, importCmp(){ importForm() },
@@ -2708,6 +2793,7 @@ document.addEventListener('change', e => {
     rd.onload = () => { document.getElementById('f_imp_txt').value = rd.result; impPreview() }; rd.onerror = () => toast('No se pudo leer el archivo.'); rd.readAsText(f) }
   else if (t.id === 'f_gkind'){ document.querySelectorAll('.onlytxt').forEach(x => x.hidden = t.value !== 'text') }
   else if (t.classList.contains('aidchk')){ S.ui.aids = {...(S.ui.aids || {long:true, rep:true, fill:true}), [t.dataset.k]:t.checked}; save(); render() }
+  else if (t.id === 'f_ref'){ const n = curInst(); if (n && canEdit()){ setRec(n.id, {...S.app[n.id], ref:t.value}); S.ui.diff = {...(S.ui.diff || {}), a:t.value}; commit(); toast('Texto de referencia actualizado.') } }
   else if (t.id === 'f_da' || t.id === 'f_db'){ S.ui.diff = {...(S.ui.diff || {}), [t.id === 'f_da' ? 'a' : 'b']:t.value}; save(); render() }
   else if (t.classList.contains('sx-on')){ const a = recs('adj').find(x => x.set === t.dataset.set && x.use === t.dataset.c); setAdj(t.dataset.set, t.dataset.c, {on:t.checked ? (a && a.on === 'si' ? 'si' : '') : 'no'}) }
   else if (t.classList.contains('sx-w')){ const val = t.value.trim().replace(',', '.'); if (val && isNaN(+val)){ toast('El peso tiene que ser un número.'); render(); return }
