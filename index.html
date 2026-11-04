@@ -219,6 +219,14 @@ a.gitem{text-decoration:none;color:inherit}
 .ggrid td.nm input{font-weight:500;min-width:180px}
 .ggrid .newrow td{background:var(--sunk)}
 .ggrid .newrow td.nm{background:var(--sunk)}
+.grid select{border:0;border-radius:0;background:transparent;padding:5px 8px;font-family:var(--f-mono);font-size:.82rem;min-width:130px;width:100%;color:var(--ink)}
+.grid select:focus,.mcell:focus-visible{outline:2px solid var(--adv);outline-offset:-2px}
+.grid select:disabled{opacity:1}
+.grid td.num input{text-align:right}
+.grid input[readonly]{cursor:default}
+.mcell{border:0;background:transparent;text-align:left;padding:5px 8px;font-family:var(--f-mono);font-size:.82rem;cursor:pointer;min-width:220px;width:100%;color:var(--ink);white-space:nowrap}
+.mcell:hover:not(:disabled){background:var(--sunk)}
+.grid .newrow td,.grid .newrow th{background:color-mix(in srgb,var(--adv) 6%,var(--sunk))}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.88rem;z-index:70;max-width:calc(100% - 32px)}
 
 @media (max-width:860px){
@@ -273,8 +281,34 @@ a.gitem{text-decoration:none;color:inherit}
 </div>
 <div class="toast" id="toast" hidden></div>
 
+<!-- Esquema de datos compartido con el script de Google (App.gs se genera desde acá). Para una entidad nueva, agregala acá. -->
+<script type="application/json" id="ci-schema">{
+ "group": {"tab":"_Grupos","label":"Grupos","single":"Grupo","newName":"Nuevo grupo","prefix":"g","cols":[
+  {"f":"name","h":"Nombre","type":"text","req":1,"wide":1},
+  {"f":"desc","h":"Descripción","type":"text","wide":1}]},
+ "crit": {"tab":"_Criterios","label":"Criterios","single":"Criterio","newName":"Nuevo criterio","prefix":"c","cols":[
+  {"f":"g","h":"Grupo","type":"ref","ref":"group","req":1},
+  {"f":"p","h":"Padre","type":"ref","ref":"crit","scope":"g"},
+  {"f":"name","h":"Nombre","type":"text","req":1,"wide":1},
+  {"f":"kind","h":"Tipo","type":"enum","opts":[["num","Cuantitativo"],["qual","Cualitativo"]]},
+  {"f":"dir","h":"Sentido","type":"enum","opts":[["max","Más es mejor"],["min","Menos es mejor"]]},
+  {"f":"unit","h":"Unidad","type":"text"},
+  {"f":"scale","h":"Escala","type":"text","wide":1},
+  {"f":"w","h":"Peso","type":"num"},
+  {"f":"ord","h":"Orden","type":"num"}]},
+ "inst": {"tab":"_Instancias","label":"Instancias","single":"Instancia","newName":"Nueva instancia","prefix":"n","cols":[
+  {"f":"g","h":"Grupo","type":"ref","ref":"group","req":1},
+  {"f":"name","h":"Nombre","type":"text","req":1,"wide":1},
+  {"f":"items","h":"Ítems","type":"multi","ref":"item","scope":"g","wide":1},
+  {"f":"concl","h":"Conclusión","type":"text","wide":1},
+  {"f":"_o","h":"Ajustes","type":"overrides"}]},
+ "item": {"tab":"(una pestaña por grupo)","label":"Ítems","single":"Ítem","newName":"Nuevo ítem","prefix":"i","perGroup":1,"cols":[
+  {"f":"name","h":"Nombre","type":"text","req":1,"wide":1},
+  {"f":"notes","h":"Notas","type":"text","wide":1}]}
+}</script>
 <script>
 /* ---------- utilidades ---------- */
+const SCHEMA = JSON.parse(document.getElementById('ci-schema').textContent);
 const $ = s => document.querySelector(s);
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
@@ -367,7 +401,7 @@ function tree(g, src = S.app){
   });
   return walk('', 0);
 }
-function descendants(id, g){ const cs = crits(g); const out = []; const go = p => cs.filter(c => c.p === p).forEach(c => { out.push(c.id); go(c.id) }); go(id); return out }
+function descendants(id, g, src = S.app){ const cs = crits(g, src); const out = []; const go = p => cs.filter(c => c.p === p).forEach(c => { out.push(c.id); go(c.id) }); go(id); return out }
 
 function fmt(c, raw){
   if (raw === '' || raw == null) return '—';
@@ -592,9 +626,11 @@ function renderSide(){
     <div class="side-h"><span class="eyebrow">Grupos</span><button class="btn sm ghost ed" data-act="newGroup">+ Grupo</button></div>
     <nav class="glist">${gs.map(g => `<button class="gitem ${S.ui.view === 'group' && S.ui.g === g.id ? 'on' : ''}" data-act="pickGroup" data-id="${g.id}">
       <span class="gname">${esc(g.name)}</span><span class="gmeta">${items(g.id).length} ítems · ${insts(g.id).length} instancias</span></button>`).join('')}</nav>
+    <div class="side-h"><span class="eyebrow">Vistas</span></div>
+    <button class="gitem ${S.ui.view === 'plan' ? 'on' : ''}" data-act="openPlan"><span class="gname">Planilla</span><span class="gmeta">Todas las entidades en grilla</span></button>
     <div class="side-h"><span class="eyebrow">Fuente de datos</span></div>
     ${REAL ? (S.sheet ? `<a class="gitem sheetbtn" href="${esc(S.sheet.url)}" target="_blank" rel="noopener"><span class="gname">Abrir planilla ↗</span><span class="gmeta">${esc(S.sheet.name)}</span></a>` : `<div class="gitem"><span class="gname">Google Sheet</span><span class="gmeta">${S.err ? 'Error: ver panel de sincronización' : 'Conectando…'}</span></div>`)
-    : `<button class="gitem sheetbtn ${S.ui.view === 'sheet' ? 'on' : ''}" data-act="openSheet"><span class="gname">Google Sheet</span><span class="gmeta">Simulación editable</span></button>
+    : `<button class="gitem sheetbtn ${S.ui.view === 'sheet' ? 'on' : ''}" data-act="openSheet"><span class="gname">Sheet simulada</span><span class="gmeta">Prueba de sincronización</span></button>
     <button class="gitem" data-act="openSync"><span class="gname">Conectar a mi Sheet</span><span class="gmeta">Usar la planilla real</span></button>`}`;
 }
 
@@ -610,7 +646,8 @@ function render(){
 function renderMain(){
   renderStatus(); renderSide();
   const m = $('#main');
-  if (S.ui.view === 'sheet' && !REAL){ m.innerHTML = viewSheet(); }
+  if (S.ui.view === 'plan'){ m.innerHTML = viewPlan('app'); }
+  else if (S.ui.view === 'sheet' && !REAL){ m.innerHTML = viewPlan('sim'); }
   else if (!S.ui.g || !S.app[S.ui.g]){ m.innerHTML = empty('No hay grupos todavía', 'Un grupo reúne ítems de la misma naturaleza (por ejemplo, notebooks) y se guarda como una pestaña de la Google Sheet.', 'newGroup', 'Crear grupo'); }
   else m.innerHTML = viewGroup({...S.app[S.ui.g], id:S.ui.g});
   if (S.drawer) renderDrawer();
@@ -622,7 +659,7 @@ function viewGroup(g){
   <header class="gh"><div class="gh-t"><span class="eyebrow">Grupo · pestaña «${esc(g.name)}»</span><h1>${esc(g.name)}</h1>${g.desc ? `<p class="lead">${esc(g.desc)}</p>` : ''}</div>
     <div class="gh-a ed"><button class="btn sm" data-act="editGroup">Editar grupo</button><button class="btn sm ghost" data-act="delGroup">Borrar</button></div></header>
   <div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${S.ui.tab === k}" class="tab ${S.ui.tab === k ? 'on' : ''}" data-act="tab" data-k="${k}">${l}</button>`).join('')}</div>
-  ${S.ui.tab === 'items' ? viewItems(g) : S.ui.tab === 'grid' ? viewGrid(g) : S.ui.tab === 'crit' ? viewCrit(g) : viewCmp(g)}`;
+  ${S.ui.tab === 'items' ? viewItems(g) : S.ui.tab === 'crit' ? viewCrit(g) : viewCmp(g)}`;
 }
 
 const MK = {adv:'▲ Ventaja', dis:'▼ Desventaja', eq:'= Similar'};
@@ -682,23 +719,179 @@ function autoConclusion(its, ev, leaves){
   return t;
 }
 
-const gcId = (id, f) => 'gr_' + id + '_' + f.replace(/\./g, '-');
-function viewGrid(g){
-  const its = items(g.id), leaves = tree(g.id).filter(c => c.leaf), ro = !canEdit();
-  const cols = [{f:'name', label:'Nombre', wide:1}, ...leaves.map(c => ({f:'v.' + c.id, label:c.name + (c.unit ? ' (' + c.unit + ')' : ''), c})), {f:'notes', label:'Notas', wide:1}];
-  const cell = (id, it, col, i) => {
-    const val = it ? (it[col.f] ?? '') : ''; const cls = (col.wide ? 'wide ' : '') + (i === 0 ? 'nm' : '');
-    const common = `class="gc" id="${gcId(id, col.f)}" data-id="${id}" data-f="${col.f}" aria-label="${esc(col.label)}${it ? ', ' + esc(it.name) : ', fila nueva'}"`;
-    if (col.c && col.c.kind === 'qual'){ const o = scaleOf(col.c);
-      return `<td class="${cls}"><select ${common} ${ro ? 'disabled' : ''}><option value=""></option>${o.map(x => `<option ${x === val ? 'selected' : ''}>${esc(x)}</option>`).join('')}${val && !o.includes(val) ? `<option selected>${esc(val)}</option>` : ''}</select></td>` }
-    return `<td class="${cls}"><input ${common} value="${esc(val)}" ${col.c ? 'inputmode="decimal" style="text-align:right"' : ''} ${ro ? 'readonly' : ''} ${!it && i === 0 ? 'placeholder="Escribí un nombre para agregar…"' : ''}></td>`;
-  };
-  return `<div class="instbar"><p class="muted" style="max-width:75ch">${ro ? 'Vista de solo lectura: en el modo «Cargar en la Sheet» se edita en la Google Sheet.' : 'Editá como en una planilla: cada cambio se guarda al salir de la celda (Tab o Enter) y se sincroniza con la Sheet. La última fila agrega un ítem nuevo.'}</p></div>
-  ${!leaves.length ? '<p class="hint">El grupo no tiene criterios: definilos en la pestaña Criterios para tener columnas de valores.</p>' : ''}
-  <div class="scroll"><table class="grid ggrid"><thead><tr>${cols.map(c => `<th class="ch">${esc(c.label)}${c.c ? `<span class="cw">${c.c.kind === 'qual' ? 'escala' : c.c.dir === 'min' ? 'menos es mejor' : 'más es mejor'}</span>` : ''}</th>`).join('')}<th class="ch ed"></th></tr></thead><tbody>
-    ${its.map(it => `<tr>${cols.map((c, i) => cell(it.id, it, c, i)).join('')}<td class="ed"><button class="x" data-act="delItem" data-id="${it.id}" aria-label="Borrar ${esc(it.name)}">×</button></td></tr>`).join('')}
-    ${ro ? '' : `<tr class="newrow">${cols.map((c, i) => cell('new', null, c, i)).join('')}<td></td></tr>`}
-  </tbody></table></div>`;
+/* ---------- Planilla: grilla editable para todas las entidades del esquema ---------- */
+const STORE = {
+  app: { get: () => S.app, write(id, rec){ setRec(id, rec) }, del(id){ rmRec(id) }, after(){ save(); renderStatus(); renderSide(); scheduleSync() } },
+  sim: { get: () => SIM.records, write(id, rec){ const r = {...rec, u:now()}; delete r.id; SIM.records[id] = r }, del(id){ delete SIM.records[id] }, after(){ LS.set('ci_sim', SIM) } }
+};
+const pcId = (sk, id, f) => 'pc_' + sk + '_' + id + '_' + f.replace(/\./g, '-');
+const colLetter = i => { let s = ''; i++; while (i > 0){ const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26) } return s };
+const fmtTs = iso => iso ? new Date(iso).toLocaleString('es-AR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : '';
+
+function planTabs(D){
+  return [...groups(D).map(g => ({key:g.id, name:g.name, t:'item'})),
+    ...Object.keys(SCHEMA).filter(t => !SCHEMA[t].perGroup).map(t => ({key:t, name:SCHEMA[t].tab, t}))];
+}
+function planCols(t, key, D){
+  const s = SCHEMA[t]; if (!s) return [];
+  if (!s.perGroup) return s.cols;
+  const leaves = tree(key, D).filter(c => c.leaf);
+  return [s.cols[0], ...leaves.map(c => c.kind === 'qual'
+    ? {f:'v.' + c.id, h:c.name, type:'enum', opts:scaleOf(c).map(o => [o, o])}
+    : {f:'v.' + c.id, h:c.name + (c.unit ? ' (' + c.unit + ')' : ''), type:'num'}), ...s.cols.slice(1)];
+}
+function planRows(t, key, D){
+  if (SCHEMA[t].perGroup) return items(key, D);
+  const gname = id => (D[id] || {}).name || '';
+  if (t === 'crit'){
+    const list = groups(D).flatMap(g => tree(g.id, D)); const seen = new Set(list.map(c => c.id));
+    return list.concat(recs('crit', D).filter(c => !seen.has(c.id)));
+  }
+  return recs(t, D).sort((a, b) => (gname(a.g) + '\u0000' + (a.name || '')).localeCompare(gname(b.g) + '\u0000' + (b.name || ''), 'es'));
+}
+function refOptions(col, rec, D, id){
+  if (col.ref === 'group') return groups(D).map(g => [g.id, g.name]);
+  if (col.ref === 'crit'){
+    const g = rec.g || (D[S.ui.g] ? S.ui.g : (groups(D)[0] || {}).id);
+    const ban = id && id !== 'new' ? [id, ...descendants(id, g, D)] : [];
+    return tree(g, D).filter(c => !ban.includes(c.id)).map(c => [c.id, '· '.repeat(c.depth) + c.name]);
+  }
+  return recs(col.ref, D).filter(r => !col.scope || r[col.scope] === rec[col.scope]).map(r => [r.id, r.name || r.id]);
+}
+function planCell(sk, t, key, D, rec, id, col, ro){
+  const val = rec ? String(rec[col.f] ?? '') : '';
+  const pid = pcId(sk, id, col.f);
+  const data = `id="${pid}" class="pc" data-sk="${sk}" data-t="${t}" data-key="${key}" data-id="${id}" data-f="${col.f}" aria-label="${esc(col.h)}${rec ? ', ' + esc(rec.name || '') : ', fila nueva'}"`;
+  if (col.type === 'enum' || col.type === 'ref'){
+    const opts = col.type === 'enum' ? col.opts : refOptions(col, rec || {}, D, id);
+    const known = opts.some(o => o[0] === val);
+    return `<td><select ${data} ${ro ? 'disabled' : ''}><option value=""></option>${opts.map(o => `<option value="${esc(o[0])}" ${o[0] === val ? 'selected' : ''}>${esc(o[1])}</option>`).join('')}${val && !known ? `<option value="${esc(val)}" selected>${esc(val)} (no existe)</option>` : ''}</select></td>`;
+  }
+  if (col.type === 'multi'){
+    if (!rec) return '<td><div class="ro-c">—</div></td>';
+    const names = val.split(',').filter(x => x && D[x]).map(x => D[x].name);
+    return `<td class="wide"><button type="button" class="mcell" id="${pid}" data-act="pickMulti" data-sk="${sk}" data-id="${id}" data-f="${col.f}" ${ro ? 'disabled' : ''}>${names.length ? esc(names.join(', ')) : '<span class="muted">Elegir…</span>'}</button></td>`;
+  }
+  if (col.type === 'overrides'){
+    const n = rec ? Object.keys(rec).filter(k => k.startsWith('o.')).length : 0;
+    return `<td><div class="ro-c">${rec ? n + (n === 1 ? ' ajuste' : ' ajustes') : ''}</div></td>`;
+  }
+  return `<td class="${col.wide ? 'wide' : ''} ${col.type === 'num' ? 'num' : ''}"><input ${data} value="${esc(val)}" ${col.type === 'num' ? 'inputmode="decimal"' : ''} ${ro ? 'readonly' : ''} ${!rec && col.f === 'name' ? 'placeholder="Escribí para agregar…"' : ''}></td>`;
+}
+
+function viewPlan(sk){
+  const D = STORE[sk].get(), tabs = planTabs(D), uk = sk === 'app' ? 'planTab' : 'sheetTab';
+  if (!tabs.find(x => x.key === S.ui[uk])) S.ui[uk] = tabs[0] ? tabs[0].key : 'group';
+  const tab = tabs.find(x => x.key === S.ui[uk]) || {key:'group', t:'group', name:SCHEMA.group.tab};
+  const ro = sk === 'app' && !canEdit();
+  const cols = planCols(tab.t, tab.key, D), rows = planRows(tab.t, tab.key, D);
+  const ncol = cols.length + 2;
+  const grid = `<table class="grid"><thead><tr><th class="rh"></th>${Array.from({length:ncol}, (_, i) => `<th class="ch">${colLetter(i)}</th>`).join('')}<th class="ch"></th></tr></thead><tbody>
+    <tr class="hdr"><th class="rh">1</th><td><div class="ro-c">ID</div></td>${cols.map(c => `<td><div class="ro-c">${esc(c.h)}</div></td>`).join('')}<td><div class="ro-c">Actualizado</div></td><td></td></tr>
+    ${rows.map((r, i) => `<tr><th class="rh">${i + 2}</th><td><div class="ro-c">${esc(r.id)}</div></td>${cols.map(c => planCell(sk, tab.t, tab.key, D, r, r.id, c, ro)).join('')}<td><div class="ro-c">${fmtTs(r.u)}</div></td>
+      <td>${ro ? '' : `<button class="x" data-act="planDel" data-sk="${sk}" data-t="${tab.t}" data-id="${r.id}" aria-label="Borrar fila ${i + 2}">×</button>`}</td></tr>`).join('')}
+    ${ro ? '' : `<tr class="newrow"><th class="rh">${rows.length + 2}</th><td><div class="ro-c">nuevo</div></td>${cols.map(c => planCell(sk, tab.t, tab.key, D, null, 'new', c, false)).join('')}<td></td><td></td></tr>`}
+  </tbody></table>`;
+  const isApp = sk === 'app';
+  const title = isApp ? (S.sheet ? S.sheet.name : REAL ? 'Google Sheet' : 'Datos de la app') : 'Sheet simulada';
+  return `<header class="gh"><div class="gh-t"><span class="eyebrow">${isApp ? 'Vista' : 'Herramienta de prueba'}</span><h1>${isApp ? 'Planilla' : 'Sheet simulada'}</h1>
+      <p class="lead">${isApp ? 'Todos los datos de la app con las mismas pestañas que tu Google Sheet: una por grupo con sus ítems, y _Grupos, _Criterios e _Instancias. Cada cambio se guarda al salir de la celda y se sincroniza.' : 'Imita la Google Sheet para probar la sincronización sin conexión real. Lo que edites acá lo toma la app en la próxima sincronización, como si lo hubieras cambiado en la Sheet.'}</p></div></header>
+    ${ro ? '<div class="banner"><strong>Modo «Cargar en la Sheet».</strong>&nbsp;La planilla es de solo lectura; editá en la Google Sheet.</div>' : ''}
+    <div class="gs"><div class="gs-bar"><span class="gs-title"><i></i>${esc(title)}</span>
+      ${isApp ? (S.sheet ? `<a class="btn sm" href="${esc(S.sheet.url)}" target="_blank" rel="noopener">Abrir en Google Sheets ↗</a>` : '') : `<label class="switch"><input type="checkbox" id="f_online" ${S.online ? 'checked' : ''}> Conexión con la app</label>`}
+      ${ro ? '' : '<button class="btn sm" data-act="planAdd">+ Fila</button>'}<button class="btn sm primary" data-act="syncNow">Sincronizar ahora</button></div>
+      <div class="scroll" style="border:0;border-radius:0">${grid}</div>
+      <div class="gs-tabs">${tabs.map(x => `<button class="${x.key === tab.key ? 'on' : ''}" data-act="planTab" data-sk="${sk}" data-k="${x.key}">${esc(x.name)}</button>`).join('')}</div></div>
+    <p class="hint">Tab o Enter guardan la celda; Enter baja a la fila siguiente. Grupo y Padre se eligen por nombre; los ítems de una instancia se eligen tocando su celda.</p>`;
+}
+
+/* ---------- validación y alta desde la Planilla ---------- */
+function nextOrd(D, g, p){ return Math.max(0, ...recs('crit', D).filter(c => c.g === g && (c.p || '') === (p || '')).map(c => +c.ord || 0)) + 1 }
+function planCheck(t, D, id, rec, f, val, col){
+  if (!col) return null;
+  if (col.req && !val) return `«${col.h}» no puede quedar vacío.`;
+  if (col.type === 'num' && val && isNaN(Number(val.replace(',', '.')))) return `«${col.h}» tiene que ser un número.`;
+  if (t === 'group' && f === 'name' && groups(D).some(x => x.id !== id && (x.name || '').toLowerCase() === val.toLowerCase())) return 'Ya hay un grupo con ese nombre: serían la misma pestaña de la Sheet.';
+  if (t === 'crit' && f === 'p' && val && (val === id || descendants(id, rec.g, D).includes(val))) return 'Un criterio no puede depender de sí mismo ni de sus subcriterios.';
+  if (t === 'crit' && f === 'p' && val && D[val] && D[val].g !== rec.g) return 'El criterio padre tiene que ser del mismo grupo.';
+  if (t === 'crit' && f === 'scale' && rec.kind === 'qual' && scaleOf({scale:val}).length < 2) return 'La escala necesita al menos dos niveles separados por comas.';
+  return null;
+}
+function planApply(t, D, id, rec, f, val){
+  const extra = [], old = String(rec[f] ?? '');
+  if (val) rec[f] = val; else delete rec[f];
+  if (t === 'crit' && f === 'kind'){
+    if (val === 'qual' && scaleOf(rec).length < 2){ rec.scale = 'Bajo, Medio, Alto'; toast('Se cargó una escala de ejemplo: ajustala en la columna Escala.') }
+    if (val !== 'qual' && !rec.dir) rec.dir = 'max';
+  }
+  if (t === 'crit' && f === 'p') rec.ord = String(nextOrd(D, rec.g, val));
+  if (t === 'crit' && f === 'g' && old && old !== val){
+    rec.p = ''; rec.ord = String(nextOrd(D, val, ''));
+    descendants(id, old, D).forEach(k => extra.push([k, {...D[k], g:val}]));
+  }
+  if (t === 'inst' && f === 'g' && old && old !== val){
+    delete rec.items; Object.keys(rec).filter(k => k.startsWith('o.')).forEach(k => delete rec[k]);
+    toast('La instancia cambió de grupo: elegí de nuevo sus ítems.');
+  }
+  return extra;
+}
+function planNew(t, key, D, f, val){
+  const s = SCHEMA[t], rec = {t};
+  if (s.perGroup) rec.g = key;
+  else if (s.cols.some(c => c.f === 'g')){
+    const g = f === 'g' ? val : (D[S.ui.g] ? S.ui.g : (groups(D)[0] || {}).id);
+    if (!g) return 'Primero creá un grupo en la pestaña _Grupos.'; rec.g = g;
+  }
+  if (f !== 'name'){ let n = s.newName, i = 2; if (t === 'group') while (groups(D).some(x => (x.name || '').toLowerCase() === n.toLowerCase())) n = s.newName + ' ' + (i++); rec.name = n }
+  if (t === 'crit'){ rec.kind = 'num'; rec.dir = 'max'; rec.w = '1'; rec.p = ''; rec.ord = String(nextOrd(D, rec.g, '')) }
+  return {id:uid(s.prefix), rec};
+}
+function planChange(el){
+  const sk = el.dataset.sk, st = STORE[sk]; if (!st || (sk === 'app' && !canEdit())) return;
+  const D = st.get(), t = el.dataset.t, key = el.dataset.key, id = el.dataset.id, f = el.dataset.f, val = el.value.trim();
+  const col = planCols(t, key, D).find(c => c.f === f);
+  let rid = id, rec;
+  if (id === 'new'){
+    if (!val) return;
+    const n = planNew(t, key, D, f, val); if (typeof n === 'string'){ toast(n); el.value = ''; return }
+    rid = n.id; rec = n.rec;
+  } else { if (!D[id]) return; rec = {...D[id]}; if (String(rec[f] ?? '') === val) return }
+  const err = planCheck(t, D, rid, rec, f, val, col);
+  if (err){ toast(err); el.value = id === 'new' ? '' : String(D[id][f] ?? ''); return }
+  const extra = planApply(t, D, rid, rec, f, val);
+  st.write(rid, rec); extra.forEach(([k, r]) => st.write(k, r)); st.after();
+  setTimeout(() => { const a = document.activeElement;
+    if (id === 'new') S.focusNext = a && a.dataset && a.dataset.id === 'new' ? pcId(sk, rid, a.dataset.f) : pcId(sk, rid, f);
+    render() }, 0);
+}
+
+/* ---------- borrado con arrastre (sirve para la app y para la Planilla) ---------- */
+function delText(D, t, id){
+  const r = D[id] || {}, nm = esc(r.name || id);
+  if (t === 'group') return `Se borrará el grupo «${nm}» con sus ítems, criterios e instancias.`;
+  if (t === 'crit'){ const n = descendants(id, r.g, D).length; return `Se borrará el criterio «${nm}»${n ? ' y sus ' + n + ' subcriterios' : ''}, junto con los valores cargados.` }
+  if (t === 'item') return `Se borrará el ítem «${nm}» y se quitará de sus instancias.`;
+  if (t === 'inst') return `Se borrará la instancia «${nm}». Los ítems no se borran.`;
+  return `Se borrará «${nm}».`;
+}
+function cascadeDel(sk, t, id){
+  const st = STORE[sk], D = st.get(), r = D[id]; if (!r) return;
+  if (t === 'group') Object.keys(D).filter(k => D[k].g === id).forEach(k => st.del(k));
+  if (t === 'crit'){
+    const gone = [id, ...descendants(id, r.g, D)]; gone.forEach(k => st.del(k));
+    Object.keys(D).filter(k => D[k].g === r.g).forEach(k => { const rec = {...D[k]}; let ch = false;
+      Object.keys(rec).forEach(f => { if (gone.some(c => f === 'v.' + c || (f.startsWith('o.') && f.endsWith('.' + c)))){ delete rec[f]; ch = true } });
+      if (ch) st.write(k, rec) });
+  }
+  if (t === 'item') Object.keys(D).filter(k => D[k].t === 'inst').forEach(k => { const rec = {...D[k]}; let ch = false;
+    Object.keys(rec).filter(f => f.startsWith('o.' + id + '.')).forEach(f => { delete rec[f]; ch = true }); if (ch) st.write(k, rec) });
+  st.del(id);
+  // referencias genéricas según el esquema (sirve también para entidades nuevas)
+  Object.keys(D).forEach(k => { const r2 = D[k], sc = SCHEMA[r2.t]; if (!sc) return; let rec = null;
+    sc.cols.forEach(c => { if (c.ref !== t || !r2[c.f]) return; const v = String(r2[c.f]);
+      if (c.type === 'multi'){ const l = v.split(',').filter(x => x && x !== id).join(','); if (l !== v){ rec = rec || {...r2}; if (l) rec[c.f] = l; else delete rec[c.f] } }
+      else if (v === id){ rec = rec || {...r2}; delete rec[c.f] } });
+    if (rec) st.write(k, rec) });
 }
 
 function viewItems(g){
@@ -729,37 +922,6 @@ function viewCrit(g){
 }
 
 /* ---------- vista: Google Sheet simulada ---------- */
-const SYS = {
-  _Grupos: {t:'group', cols:[['name','Nombre'], ['desc','Descripción', 1]]},
-  _Criterios: {t:'crit', cols:[['g','Grupo'], ['p','Padre'], ['name','Nombre'], ['kind','Tipo'], ['dir','Sentido'], ['unit','Unidad'], ['scale','Escala', 1], ['w','Peso'], ['ord','Orden']]},
-  _Instancias: {t:'inst', cols:[['g','Grupo'], ['name','Nombre'], ['items','Ítems', 1], ['concl','Conclusión', 1]]}
-};
-function sheetTabs(){ return [...groups(SIM.records).map(g => ({key:g.id, name:g.name})), ...Object.keys(SYS).map(k => ({key:k, name:k}))] }
-function viewSheet(){
-  const tabs = sheetTabs(); if (!tabs.find(t => t.key === S.ui.sheetTab)) S.ui.sheetTab = tabs[0]?.key || '_Grupos';
-  const key = S.ui.sheetTab; let cols, rows;
-  if (SYS[key]){ cols = SYS[key].cols; rows = recs(SYS[key].t, SIM.records) }
-  else { const leaves = tree(key, SIM.records).filter(c => c.leaf);
-    cols = [['name','Nombre', 1], ...leaves.map(c => ['v.' + c.id, c.name + (c.unit ? ' (' + c.unit + ')' : '')]), ['notes','Notas', 1]];
-    rows = items(key, SIM.records) }
-  const L = i => String.fromCharCode(65 + i);
-  const all = [['id','ID'], ...cols, ['u','Actualizado']];
-  const grid = `<table class="grid"><thead><tr><th class="rh"></th>${all.map((c, i) => `<th class="ch">${L(i)}</th>`).join('')}<th class="ch"></th></tr></thead><tbody>
-    <tr class="hdr"><th class="rh">1</th>${all.map(c => `<td><div class="ro-c">${esc(c[1])}</div></td>`).join('')}<td></td></tr>
-    ${rows.map((r, i) => `<tr><th class="rh">${i + 2}</th><td><div class="ro-c">${esc(r.id)}</div></td>
-      ${cols.map(c => `<td class="${c[2] ? 'wide' : ''}"><input class="sc" data-id="${r.id}" data-f="${c[0]}" value="${esc(r[c[0]] ?? '')}" aria-label="${esc(c[1])}, fila ${i + 2}"></td>`).join('')}
-      <td><div class="ro-c">${hhmm(r.u)}</div></td><td><button class="x" data-act="sheetDel" data-id="${r.id}" aria-label="Eliminar fila">×</button></td></tr>`).join('')}
-  </tbody></table>`;
-  return `<header class="gh"><div class="gh-t"><span class="eyebrow">Fuente de datos</span><h1>Google Sheet</h1>
-      <p class="lead">Simulación de la planilla para probar la sincronización: cada grupo es una pestaña y los criterios e instancias viven en pestañas de sistema. Lo que edites acá lo verá la app en la próxima sincronización.</p></div></header>
-    <div class="gs"><div class="gs-bar"><span class="gs-title"><i></i>CompareIt · datos</span>
-      <label class="switch"><input type="checkbox" id="f_online" ${S.online ? 'checked' : ''}> Conexión con la app</label>
-      <button class="btn sm" data-act="sheetAdd">+ Fila</button><button class="btn sm primary" data-act="syncNow">Sincronizar ahora</button></div>
-      <div class="scroll" style="border:0;border-radius:0">${grid}</div>
-      <div class="gs-tabs">${tabs.map(t => `<button class="${t.key === key ? 'on' : ''}" data-act="sheetTab" data-k="${t.key}">${esc(t.name)}</button>`).join('')}</div></div>
-    <p class="hint">Probá: cortá la conexión, cambiá el mismo dato acá y en la app, y volvé a conectar. O usá «Crear conflicto de ejemplo» en el panel de sincronización.</p>`;
-}
-
 /* ---------- panel de sincronización ---------- */
 function openSync(){ S.drawer = true; $('#drawer').hidden = false; renderDrawer() }
 function renderDrawer(){
@@ -902,25 +1064,29 @@ const ACT = {
   syncNow(){ sync(false) },
   pickGroup(el){ S.ui.view = 'group'; S.ui.g = el.dataset.id; save(); render() },
   openSheet(){ S.ui.view = 'sheet'; save(); render() },
-  tab(el){ S.ui.tab = el.dataset.k; save(); render() },
+  tab(el){ if (el.dataset.k === 'grid'){ S.ui.view = 'plan'; S.ui.planTab = S.ui.g; save(); render(); return } S.ui.tab = el.dataset.k; save(); render() },
+  openPlan(){ S.ui.view = 'plan'; save(); render() },
+  planTab(el){ S.ui[el.dataset.sk === 'app' ? 'planTab' : 'sheetTab'] = el.dataset.k; save(); render() },
+  planAdd(){ const el = document.querySelector('.newrow .pc'); if (el){ el.focus(); el.scrollIntoView({block:'nearest'}) } },
+  planDel(el){ const sk = el.dataset.sk, t = el.dataset.t, id = el.dataset.id, D = STORE[sk].get();
+    confirmDel(delText(D, t, id), () => { if (sk === 'app' && !canEdit()) return; cascadeDel(sk, t, id); if (sk === 'app') fixUi(); STORE[sk].after(); render() }) },
+  pickMulti(el){ const sk = el.dataset.sk, st = STORE[sk], D = st.get(), id = el.dataset.id, f = el.dataset.f, rec = D[id];
+    if (!rec || (sk === 'app' && !canEdit())) return;
+    const its = items(rec.g, D), sel = String(rec[f] || '').split(',');
+    modal('Ítems de «' + (rec.name || '') + '»', its.length ? `<div class="checks">${its.map(it => `<label><input type="checkbox" id="f_pm_${it.id}" ${sel.includes(it.id) ? 'checked' : ''}> ${esc(it.name)}</label>`).join('')}</div>` : '<p class="hint">El grupo de esta instancia todavía no tiene ítems.</p>', () => {
+      const ch = its.filter(it => document.getElementById('f_pm_' + it.id).checked).map(it => it.id); const r = {...rec, [f]:ch.join(',')};
+      Object.keys(r).filter(k => k.startsWith('o.') && !ch.includes(k.split('.')[1])).forEach(k => delete r[k]);
+      if (!r[f]) delete r[f]; st.write(id, r); st.after(); render() }) },
   goCrit(){ S.ui.tab = 'crit'; render() },
   newGroup(){ groupForm() }, editGroup(){ groupForm(S.ui.g) },
-  delGroup(){ const g = S.ui.g; confirmDel(`Se borrará el grupo «${esc(S.app[g].name)}» con sus ítems, criterios e instancias.`, () => {
-    if (!canEdit()) return; Object.keys(S.app).filter(k => k === g || S.app[k].g === g).forEach(rmRec); S.ui.g = ''; fixUi(); commit() }) },
+  delGroup(){ const g = S.ui.g; confirmDel(delText(S.app, 'group', g), () => { if (!canEdit()) return; cascadeDel('app', 'group', g); S.ui.g = ''; fixUi(); commit() }) },
   pickInst(el){ S.ui.inst[S.ui.g] = el.dataset.id; save(); render() },
   newInst(){ instForm() }, editInst(){ instForm(curInst()?.id) },
-  delInst(){ const n = curInst(); confirmDel(`Se borrará la instancia «${esc(n.name)}». Los ítems no se borran.`, () => { if (!canEdit()) return; rmRec(n.id); commit() }) },
+  delInst(){ const n = curInst(); confirmDel(delText(S.app, 'inst', n.id), () => { if (!canEdit()) return; cascadeDel('app', 'inst', n.id); commit() }) },
   newItem(){ itemForm() }, editItem(el){ itemForm(el.dataset.id) },
-  delItem(el){ const id = el.dataset.id; confirmDel(`Se borrará el ítem «${esc(S.app[id].name)}» y se quitará de sus instancias.`, () => {
-    if (!canEdit()) return; rmRec(id); insts(S.ui.g).forEach(n => { const l = instIds(n); {
-      const rec = {...S.app[n.id], items:l.filter(x => x !== id).join(',')}; Object.keys(rec).filter(f => f.startsWith('o.' + id + '.')).forEach(f => delete rec[f]);
-      if (!same(rec, S.app[n.id])) setRec(n.id, rec) } }); commit() }) },
+  delItem(el){ const id = el.dataset.id; confirmDel(delText(S.app, 'item', id), () => { if (!canEdit()) return; cascadeDel('app', 'item', id); commit() }) },
   newCrit(el){ critForm(null, el.dataset.parent) }, editCrit(el){ critForm(el.dataset.id) },
-  delCrit(el){ const id = el.dataset.id, g = S.ui.g, ds = descendants(id, g);
-    confirmDel(`Se borrará el criterio «${esc(S.app[id].name)}»${ds.length ? ' y sus ' + ds.length + ' subcriterios' : ''}, junto con los valores cargados.`, () => {
-      if (!canEdit()) return; const gone = [id, ...ds]; gone.forEach(rmRec);
-      [...items(g), ...insts(g)].forEach(r => { const rec = {...S.app[r.id]}; Object.keys(rec).filter(f => gone.some(c => f === 'v.' + c || f.endsWith('.' + c))).forEach(f => delete rec[f]); if (!same(rec, S.app[r.id])) setRec(r.id, rec) });
-      commit() }) },
+  delCrit(el){ const id = el.dataset.id; confirmDel(delText(S.app, 'crit', id), () => { if (!canEdit()) return; cascadeDel('app', 'crit', id); commit() }) },
   moveCrit(el){
     if (!canEdit()) return; const c = S.app[el.dataset.id]; const sib = crits(S.ui.g).filter(x => (x.p || '') === (c.p || '')).sort((a, b) => (+a.ord || 0) - (+b.ord || 0));
     const i = sib.findIndex(x => x.id === el.dataset.id), j = i + (+el.dataset.d); if (j < 0 || j >= sib.length) return;
@@ -965,16 +1131,7 @@ const ACT = {
   },
   resetDemo(){ modal('Restablecer datos de ejemplo', '<p>Se reemplazan la Sheet simulada y la copia local por los datos de ejemplo. Se pierde lo cargado en el prototipo.</p>', () => {
     SIM = {records:seed()}; S.app = clone(SIM.records); S.base = clone(SIM.records); S.conflicts = []; S.choice = {}; S.log = []; S.online = true; S.mode = 'app';
-    log('Datos de ejemplo restablecidos.'); fixUi(); save(); render() }, 'Restablecer', true) },
-  sheetTab(el){ S.ui.sheetTab = el.dataset.k; save(); render() },
-  sheetAdd(){
-    const key = S.ui.sheetTab, id = uid(SYS[key] ? {group:'g', crit:'c', inst:'n'}[SYS[key].t] : 'i');
-    const rec = SYS[key] ? {t:SYS[key].t, name:'Nuevo'} : {t:'item', g:key, name:'Nuevo ítem'};
-    if (rec.t === 'crit' || rec.t === 'inst') rec.g = groups(SIM.records)[0]?.id || '';
-    if (rec.t === 'crit'){ rec.kind = 'num'; rec.dir = 'max'; rec.w = '1'; rec.ord = '99'; rec.p = '' }
-    SIM.records[id] = {...rec, u:now()}; LS.set('ci_sim', SIM); render(); toast('Fila agregada en la Sheet.');
-  },
-  sheetDel(el){ delete SIM.records[el.dataset.id]; LS.set('ci_sim', SIM); render(); toast('Fila eliminada en la Sheet.') }
+    log('Datos de ejemplo restablecidos.'); fixUi(); save(); render() }, 'Restablecer', true) }
 };
 
 document.addEventListener('click', e => {
@@ -987,32 +1144,14 @@ document.addEventListener('change', e => {
   const t = e.target;
   if (t.id === 'f_kind'){ const q = t.value === 'qual'; document.querySelectorAll('.onlynum').forEach(x => x.hidden = q); document.querySelectorAll('.onlyqual').forEach(x => x.hidden = !q) }
   else if (t.id === 'f_concl'){ const n = curInst(); if (n) put(n.id, {...S.app[n.id], concl:t.value.trim()}) }
-  else if (t.classList.contains('gc')){
-    if (!canEdit()) return;
-    const id = t.dataset.id, f = t.dataset.f, val = t.value.trim(), g = S.ui.g;
-    if (id === 'new'){
-      if (!val) return;
-      const nid = uid('i'); const rec = {t:'item', g, name:f === 'name' ? val : 'Nuevo ítem'}; if (f !== 'name') rec[f] = val;
-      setRec(nid, rec); save(); scheduleSync();
-      setTimeout(() => { const a = document.activeElement;
-        S.focusNext = a && a.dataset && a.dataset.id === 'new' ? gcId(nid, a.dataset.f) : gcId(nid, f); render() }, 0);
-      return;
-    }
-    const rec = {...S.app[id]}; if (!rec.t) return;
-    if (f === 'name' && !val){ toast('El nombre no puede quedar vacío.'); t.value = rec.name || ''; return }
-    if ((rec[f] ?? '') === val) return;
-    if (val) rec[f] = val; else delete rec[f];
-    setRec(id, rec); save(); renderStatus(); renderSide(); scheduleSync();
-  }
+  else if (t.classList.contains('pc')) planChange(t);
   else if (t.id === 'f_online' || t.id === 'f_online2'){ S.online = t.checked; log(t.checked ? 'Conexión restablecida.' : 'Conexión cortada (simulación): los cambios quedan en la copia local.'); save(); if (t.checked) sync(false); else render() }
-  else if (t.classList.contains('sc')){ const r = SIM.records[t.dataset.id]; if (!r) return; const val = t.value.trim();
-    if (val) r[t.dataset.f] = val; else delete r[t.dataset.f]; r.u = now(); LS.set('ci_sim', SIM); toast('Guardado en la Sheet. La app lo toma en la próxima sincronización.'); }
   else if (t.type === 'radio' && t.dataset.k){ (S.choice[t.dataset.k] ||= {})[t.dataset.f] = t.value }
 });
 document.addEventListener('keydown', e => {
   const t = e.target;
-  if (e.key === 'Enter' && t.classList && t.classList.contains('gc') && t.tagName === 'INPUT'){
-    e.preventDefault(); const list = [...document.querySelectorAll('.gc[data-f="' + t.dataset.f + '"]')];
+  if (e.key === 'Enter' && t.classList && t.classList.contains('pc') && t.tagName === 'INPUT'){
+    e.preventDefault(); const list = [...document.querySelectorAll('.pc[data-f="' + t.dataset.f + '"]')];
     const next = list[list.indexOf(t) + 1]; if (next) next.focus(); else t.blur(); return;
   } if (e.key === 'Escape'){ if (!$('#modal').hidden) closeModal(); else if (!$('#menu').hidden) $('#menu').hidden = true; else if (S.drawer) ACT.closeSync() } });
 
