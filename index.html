@@ -209,6 +209,16 @@ textarea{resize:vertical}
 .srcwarn{border:1px solid color-mix(in srgb,var(--warn) 45%,var(--line));background:color-mix(in srgb,var(--warn) 9%,var(--surface))}
 a.gitem{text-decoration:none;color:inherit}
 .srcbadge{font-family:var(--f-body);font-size:.66rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.ggrid{min-width:max-content}
+.ggrid .ch{text-align:left;padding:6px 8px;height:auto;line-height:1.25}
+.ggrid .ch .cw{text-transform:none;letter-spacing:0;font-weight:400}
+.ggrid select{border:0;border-radius:0;background:transparent;padding:5px 8px;font-family:var(--f-mono);font-size:.82rem;min-width:120px;width:100%}
+.ggrid select:focus{outline:2px solid var(--accent);outline-offset:-2px}
+.ggrid input:focus{outline-color:var(--accent)}
+.ggrid td.nm{position:sticky;left:0;z-index:1;background:var(--surface)}
+.ggrid td.nm input{font-weight:500;min-width:180px}
+.ggrid .newrow td{background:var(--sunk)}
+.ggrid .newrow td.nm{background:var(--sunk)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.88rem;z-index:70;max-width:calc(100% - 32px)}
 
 @media (max-width:860px){
@@ -589,6 +599,15 @@ function renderSide(){
 }
 
 function render(){
+  const a = document.activeElement;
+  const keep = a && a.id && a.closest && a.closest('#main') ? {id:a.id, val:a.value, s:a.selectionStart, e:a.selectionEnd} : null;
+  renderMain();
+  const want = S.focusNext || (keep && keep.id); S.focusNext = null;
+  if (want){ const el = document.getElementById(want);
+    if (el){ if (keep && keep.id === want && el.tagName === 'INPUT' && el.value !== keep.val) el.value = keep.val;
+      el.focus(); try{ if (keep && keep.id === want && keep.s != null) el.setSelectionRange(keep.s, keep.e) }catch(e){} } }
+}
+function renderMain(){
   renderStatus(); renderSide();
   const m = $('#main');
   if (S.ui.view === 'sheet' && !REAL){ m.innerHTML = viewSheet(); }
@@ -598,12 +617,12 @@ function render(){
 }
 
 function viewGroup(g){
-  const tabs = [['cmp', 'Comparar'], ['items', 'Ítems'], ['crit', 'Criterios']];
+  const tabs = [['cmp', 'Comparar'], ['items', 'Ítems'], ['grid', 'Grilla'], ['crit', 'Criterios']];
   return `${S.mode === 'sheet' ? `<div class="banner"><strong>Modo «Cargar en la Sheet».</strong>&nbsp;La app solo muestra los datos; cargá y editá en la Google Sheet. La vista se actualiza cada 15 segundos o con «Sincronizar ahora».</div>` : ''}
   <header class="gh"><div class="gh-t"><span class="eyebrow">Grupo · pestaña «${esc(g.name)}»</span><h1>${esc(g.name)}</h1>${g.desc ? `<p class="lead">${esc(g.desc)}</p>` : ''}</div>
     <div class="gh-a ed"><button class="btn sm" data-act="editGroup">Editar grupo</button><button class="btn sm ghost" data-act="delGroup">Borrar</button></div></header>
   <div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${S.ui.tab === k}" class="tab ${S.ui.tab === k ? 'on' : ''}" data-act="tab" data-k="${k}">${l}</button>`).join('')}</div>
-  ${S.ui.tab === 'items' ? viewItems(g) : S.ui.tab === 'crit' ? viewCrit(g) : viewCmp(g)}`;
+  ${S.ui.tab === 'items' ? viewItems(g) : S.ui.tab === 'grid' ? viewGrid(g) : S.ui.tab === 'crit' ? viewCrit(g) : viewCmp(g)}`;
 }
 
 const MK = {adv:'▲ Ventaja', dis:'▼ Desventaja', eq:'= Similar'};
@@ -661,6 +680,25 @@ function autoConclusion(its, ev, leaves){
   if (wa.length) t += ` Se destaca en ${wa.join(', ')}.`;
   if (wd.length) t += ` Su punto débil: ${wd.join(', ')}.`;
   return t;
+}
+
+const gcId = (id, f) => 'gr_' + id + '_' + f.replace(/\./g, '-');
+function viewGrid(g){
+  const its = items(g.id), leaves = tree(g.id).filter(c => c.leaf), ro = !canEdit();
+  const cols = [{f:'name', label:'Nombre', wide:1}, ...leaves.map(c => ({f:'v.' + c.id, label:c.name + (c.unit ? ' (' + c.unit + ')' : ''), c})), {f:'notes', label:'Notas', wide:1}];
+  const cell = (id, it, col, i) => {
+    const val = it ? (it[col.f] ?? '') : ''; const cls = (col.wide ? 'wide ' : '') + (i === 0 ? 'nm' : '');
+    const common = `class="gc" id="${gcId(id, col.f)}" data-id="${id}" data-f="${col.f}" aria-label="${esc(col.label)}${it ? ', ' + esc(it.name) : ', fila nueva'}"`;
+    if (col.c && col.c.kind === 'qual'){ const o = scaleOf(col.c);
+      return `<td class="${cls}"><select ${common} ${ro ? 'disabled' : ''}><option value=""></option>${o.map(x => `<option ${x === val ? 'selected' : ''}>${esc(x)}</option>`).join('')}${val && !o.includes(val) ? `<option selected>${esc(val)}</option>` : ''}</select></td>` }
+    return `<td class="${cls}"><input ${common} value="${esc(val)}" ${col.c ? 'inputmode="decimal" style="text-align:right"' : ''} ${ro ? 'readonly' : ''} ${!it && i === 0 ? 'placeholder="Escribí un nombre para agregar…"' : ''}></td>`;
+  };
+  return `<div class="instbar"><p class="muted" style="max-width:75ch">${ro ? 'Vista de solo lectura: en el modo «Cargar en la Sheet» se edita en la Google Sheet.' : 'Editá como en una planilla: cada cambio se guarda al salir de la celda (Tab o Enter) y se sincroniza con la Sheet. La última fila agrega un ítem nuevo.'}</p></div>
+  ${!leaves.length ? '<p class="hint">El grupo no tiene criterios: definilos en la pestaña Criterios para tener columnas de valores.</p>' : ''}
+  <div class="scroll"><table class="grid ggrid"><thead><tr>${cols.map(c => `<th class="ch">${esc(c.label)}${c.c ? `<span class="cw">${c.c.kind === 'qual' ? 'escala' : c.c.dir === 'min' ? 'menos es mejor' : 'más es mejor'}</span>` : ''}</th>`).join('')}<th class="ch ed"></th></tr></thead><tbody>
+    ${its.map(it => `<tr>${cols.map((c, i) => cell(it.id, it, c, i)).join('')}<td class="ed"><button class="x" data-act="delItem" data-id="${it.id}" aria-label="Borrar ${esc(it.name)}">×</button></td></tr>`).join('')}
+    ${ro ? '' : `<tr class="newrow">${cols.map((c, i) => cell('new', null, c, i)).join('')}<td></td></tr>`}
+  </tbody></table></div>`;
 }
 
 function viewItems(g){
@@ -949,12 +987,34 @@ document.addEventListener('change', e => {
   const t = e.target;
   if (t.id === 'f_kind'){ const q = t.value === 'qual'; document.querySelectorAll('.onlynum').forEach(x => x.hidden = q); document.querySelectorAll('.onlyqual').forEach(x => x.hidden = !q) }
   else if (t.id === 'f_concl'){ const n = curInst(); if (n) put(n.id, {...S.app[n.id], concl:t.value.trim()}) }
+  else if (t.classList.contains('gc')){
+    if (!canEdit()) return;
+    const id = t.dataset.id, f = t.dataset.f, val = t.value.trim(), g = S.ui.g;
+    if (id === 'new'){
+      if (!val) return;
+      const nid = uid('i'); const rec = {t:'item', g, name:f === 'name' ? val : 'Nuevo ítem'}; if (f !== 'name') rec[f] = val;
+      setRec(nid, rec); save(); scheduleSync();
+      setTimeout(() => { const a = document.activeElement;
+        S.focusNext = a && a.dataset && a.dataset.id === 'new' ? gcId(nid, a.dataset.f) : gcId(nid, f); render() }, 0);
+      return;
+    }
+    const rec = {...S.app[id]}; if (!rec.t) return;
+    if (f === 'name' && !val){ toast('El nombre no puede quedar vacío.'); t.value = rec.name || ''; return }
+    if ((rec[f] ?? '') === val) return;
+    if (val) rec[f] = val; else delete rec[f];
+    setRec(id, rec); save(); renderStatus(); renderSide(); scheduleSync();
+  }
   else if (t.id === 'f_online' || t.id === 'f_online2'){ S.online = t.checked; log(t.checked ? 'Conexión restablecida.' : 'Conexión cortada (simulación): los cambios quedan en la copia local.'); save(); if (t.checked) sync(false); else render() }
   else if (t.classList.contains('sc')){ const r = SIM.records[t.dataset.id]; if (!r) return; const val = t.value.trim();
     if (val) r[t.dataset.f] = val; else delete r[t.dataset.f]; r.u = now(); LS.set('ci_sim', SIM); toast('Guardado en la Sheet. La app lo toma en la próxima sincronización.'); }
   else if (t.type === 'radio' && t.dataset.k){ (S.choice[t.dataset.k] ||= {})[t.dataset.f] = t.value }
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape'){ if (!$('#modal').hidden) closeModal(); else if (!$('#menu').hidden) $('#menu').hidden = true; else if (S.drawer) ACT.closeSync() } });
+document.addEventListener('keydown', e => {
+  const t = e.target;
+  if (e.key === 'Enter' && t.classList && t.classList.contains('gc') && t.tagName === 'INPUT'){
+    e.preventDefault(); const list = [...document.querySelectorAll('.gc[data-f="' + t.dataset.f + '"]')];
+    const next = list[list.indexOf(t) + 1]; if (next) next.focus(); else t.blur(); return;
+  } if (e.key === 'Escape'){ if (!$('#modal').hidden) closeModal(); else if (!$('#menu').hidden) $('#menu').hidden = true; else if (S.drawer) ACT.closeSync() } });
 
 setInterval(() => { if (S.online && !S.syncing && !document.hidden) sync(true) }, 15000);
 fixUi(); render(); sync(true);
