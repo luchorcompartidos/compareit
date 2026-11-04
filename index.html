@@ -79,7 +79,7 @@ body.ro .ed{display:none!important}
 .gh-t{display:flex;flex-direction:column;gap:4px;min-width:0}
 .lead{color:var(--muted);max-width:65ch}
 .gh-a{display:flex;gap:8px}
-.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
 .tab{border:0;background:transparent;padding:9px 14px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;white-space:nowrap}
 .tab.on{color:var(--ink);border-bottom-color:var(--accent)}
 
@@ -203,7 +203,7 @@ textarea{resize:vertical}
 .grid input:focus{outline:2px solid var(--adv);outline-offset:-2px}
 .grid .ro-c{padding:5px 8px;color:var(--muted);white-space:nowrap}
 .grid .wide input{min-width:200px}
-.gs-tabs{display:flex;gap:2px;overflow-x:auto;background:var(--sunk);padding:4px 6px 0}
+.gs-tabs{display:flex;gap:2px;overflow-x:auto;overflow-y:hidden;background:var(--sunk);padding:4px 6px 0}
 .gs-tabs button{border:0;background:transparent;padding:7px 14px;font-size:.82rem;border-radius:6px 6px 0 0;cursor:pointer;color:var(--muted);white-space:nowrap}
 .gs-tabs button.on{background:var(--surface);color:var(--adv);font-weight:600}
 
@@ -441,7 +441,7 @@ th.drop-a{box-shadow:inset -3px 0 0 var(--accent)}
 @media (max-width:860px){ .gfold{border:1px solid var(--line);background:var(--surface);min-height:40px} }
 body.side-off .shell{grid-template-columns:minmax(0,1fr)}
 body.side-off .side{display:none}
-.sidebar-off{display:flex;gap:8px;flex-wrap:wrap}
+.sidebar-off{display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--top-h,58px));z-index:25;background:var(--bg);padding-block:8px;margin-block:-8px;box-shadow:0 1px 0 var(--line)}
 .siderz{position:absolute;top:0;bottom:0;right:-17px;width:10px;cursor:col-resize;touch-action:none;border-radius:4px}
 .siderz:hover,body.resizing .siderz{background:color-mix(in srgb,var(--accent) 25%,transparent)}
 .sidecol{min-width:32px;justify-content:center}
@@ -462,7 +462,7 @@ body.resizing{cursor:col-resize;user-select:none}
 
 @media (max-width:860px){
   .shell{grid-template-columns:minmax(0,1fr);gap:16px;padding-block:14px 40px}
-  .side{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:4px}
+  .side{flex-direction:row;overflow-x:auto;overflow-y:hidden;gap:6px;padding-bottom:4px}
   .side-h{margin:0}
   .side-h .eyebrow{display:none}
   .glist{flex-direction:row;gap:6px}
@@ -565,7 +565,7 @@ body.resizing{cursor:col-resize;user-select:none}
 const SCHEMA = JSON.parse(document.getElementById('ci-schema').textContent);
 /** Fecha y hora de esta versión de la app (se completa sola al generar los archivos). */
 const APP_NAME = 'COMPAREIt(em)';
-const APP_BUILD = '04/11/2026 17:36';
+const APP_BUILD = '04/11/2026 18:01';
 const $ = s => document.querySelector(s);
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
@@ -2015,8 +2015,9 @@ const layBase = () => ({...LAY_CODE, ...(layDef() || {})});
 S.lay = {...layBase(), ...(laySaved() || {})}; S.layUndo = [];
 const layKey = l => JSON.stringify({side:l.side, collapsed:!!l.collapsed, col:l.col || 0});
 const desk = () => innerWidth > 860;
+function topH(){ const t = document.querySelector('.top'); if (t) document.documentElement.style.setProperty('--top-h', t.offsetHeight + 'px') }
 function applySide(){
-  document.documentElement.style.setProperty('--side-w', S.lay.side + 'px');
+  document.documentElement.style.setProperty('--side-w', S.lay.side + 'px'); topH();
   document.body.classList.toggle('side-off', !!S.lay.collapsed);
 }
 function layChange(patch){
@@ -2026,10 +2027,12 @@ function layChange(patch){
   S.lay = next; applySide(); render();
 }
 /* columnas de ítems: todas del mismo ancho; en computadora siempre entran al menos 4 sin desplazarse */
-function colBounds(box, sw){
-  const avail = Math.max(0, box.clientWidth - sw - 2);
+/* En computadora: con 4 o más ítems siempre entran 4; con 2 o 3 se reparten el ancho disponible;
+   con uno solo, mide lo mismo que en el caso de 2. A mano se puede achicar o ensanchar dentro de esos topes. */
+function colBounds(box, sw, n){
+  const avail = Math.max(0, box.clientWidth - sw - 4 - 2 * Math.max(n, 1));   // margen para los bordes de las celdas
   const min = desk() ? 120 : 104;
-  const max = desk() ? Math.floor(avail / 4) : avail;
+  const max = desk() ? Math.floor(avail / Math.min(Math.max(n, 2), 4)) : avail;
   return {min, max:Math.max(min, max)};
 }
 function applyColW(t, sw, n, w){
@@ -2044,8 +2047,9 @@ function sizeCols(){
   t.classList.remove('fixed'); const cg = t.querySelector('colgroup'); if (cg) cg.remove(); t.style.width = '';
   const st = t.querySelector('thead th.sticky');
   const sw = Math.min(Math.max(st.offsetWidth, desk() ? 170 : 118), desk() ? 240 : 132);
-  const b = colBounds(box, sw);
-  let w = S.lay.col || Math.round(ths.reduce((a, th) => a + th.offsetWidth, 0) / ths.length);
+  const b = colBounds(box, sw, ths.length);
+  const auto = desk() && ths.length < 4 ? b.max : Math.round(ths.reduce((a, th) => a + th.offsetWidth, 0) / ths.length);
+  let w = S.lay.col || auto;
   w = Math.min(Math.max(w, b.min), b.max);
   S.colG = {t, sw, n:ths.length, w, b}; applyColW(t, sw, ths.length, w);
 }
@@ -2079,7 +2083,7 @@ function endRz(e){
   if (r.type === 'side') layChange({side:r.val}); else layChange({col:r.val});
 }
 document.addEventListener('pointerup', endRz); document.addEventListener('pointercancel', endRz);
-let rsT = null; addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(sizeCols, 120) });
+let rsT = null; addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(() => { topH(); sizeCols() }, 120) });
 const LAY_ACT = {
   sideCollapse(){ layChange({collapsed:true}) },
   sideExpand(){ layChange({collapsed:false}) },
