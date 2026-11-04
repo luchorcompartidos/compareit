@@ -593,7 +593,7 @@ function render(){
   const m = $('#main');
   if (S.ui.view === 'sheet' && !REAL){ m.innerHTML = viewSheet(); }
   else if (!S.ui.g || !S.app[S.ui.g]){ m.innerHTML = empty('No hay grupos todavía', 'Un grupo reúne ítems de la misma naturaleza (por ejemplo, notebooks) y se guarda como una pestaña de la Google Sheet.', 'newGroup', 'Crear grupo'); }
-  else m.innerHTML = viewGroup(S.app[S.ui.g]);
+  else m.innerHTML = viewGroup({...S.app[S.ui.g], id:S.ui.g});
   if (S.drawer) renderDrawer();
 }
 
