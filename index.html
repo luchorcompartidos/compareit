@@ -341,10 +341,10 @@ function log(m){ S.log.unshift({t:now(), m}); S.log = S.log.slice(0, 14) }
 
 /* ---------- acceso a datos ---------- */
 const recs = (t, src = S.app) => Object.entries(src).filter(([, r]) => r.t === t).map(([id, r]) => ({...r, id}));
-const groups = (src = S.app) => recs('group', src).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+const groups = (src = S.app) => recs('group', src).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es'));
 const crits = (g, src = S.app) => recs('crit', src).filter(c => c.g === g);
-const items = (g, src = S.app) => recs('item', src).filter(i => i.g === g).sort((a, b) => a.name.localeCompare(b.name, 'es'));
-const insts = (g, src = S.app) => recs('inst', src).filter(i => i.g === g).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+const items = (g, src = S.app) => recs('item', src).filter(i => i.g === g).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es'));
+const insts = (g, src = S.app) => recs('inst', src).filter(i => i.g === g).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es'));
 const instIds = n => (n.items || '').split(',').map(x => x.trim()).filter(x => x && S.app[x]);
 const scaleOf = c => (c.scale || '').split(',').map(x => x.trim()).filter(Boolean);
 
