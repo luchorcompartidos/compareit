@@ -227,6 +227,12 @@ a.gitem{text-decoration:none;color:inherit}
 .mcell{border:0;background:transparent;text-align:left;padding:5px 8px;font-family:var(--f-mono);font-size:.82rem;cursor:pointer;min-width:220px;width:100%;color:var(--ink);white-space:nowrap}
 .mcell:hover:not(:disabled){background:var(--sunk)}
 .grid .newrow td,.grid .newrow th{background:color-mix(in srgb,var(--adv) 6%,var(--sunk))}
+.crl{display:flex;align-items:flex-start;gap:8px;cursor:pointer}
+.crl input{width:auto;margin:3px 0 0;flex:none;accent-color:var(--accent)}
+.crl input:disabled{cursor:not-allowed}
+.cmp tr.off > *{color:var(--muted)}
+.cmp tr.off .cn{text-decoration:line-through;font-weight:500}
+.cmp tr.off td .val{opacity:.55}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.88rem;z-index:70;max-width:calc(100% - 32px)}
 
 @media (max-width:860px){
@@ -418,8 +424,9 @@ function critHint(c){
 }
 
 /* ---------- motor de evaluación ---------- */
-function evaluate(g, its, inst){
-  const list = tree(g); const W = Object.fromEntries(list.map(c => [c.id, +c.w || 1]));
+function evaluate(g, its, inst, excl = new Set()){
+  const list = tree(g);
+  const off = new Set(); list.forEach(c => { if (excl.has(c.id) || (c.p && off.has(c.p))) off.add(c.id) }); const W = Object.fromEntries(list.map(c => [c.id, +c.w || 1]));
   const res = {};
   list.filter(c => c.leaf).forEach(c => {
     const sc = {};
@@ -446,11 +453,11 @@ function evaluate(g, its, inst){
       res[c.id][it.id] = {score:s, mark, manual, raw:it['v.' + c.id] ?? ''};
     });
   });
-  const avg = (ids, itId) => { let sw = 0, ws = 0; ids.forEach(k => { const s = res[k]?.[itId]?.score; if (s != null){ sw += s * W[k]; ws += W[k] } }); return ws ? sw / ws : null };
+  const avg = (ids, itId) => { let sw = 0, ws = 0; ids.forEach(k => { if (off.has(k)) return; const s = res[k]?.[itId]?.score; if (s != null){ sw += s * W[k]; ws += W[k] } }); return ws ? sw / ws : null };
   [...list].reverse().forEach(c => { if (c.leaf) return; res[c.id] = {}; its.forEach(it => res[c.id][it.id] = {score:avg(c.kids, it.id)}) });
   const roots = list.filter(c => c.depth === 0).map(c => c.id);
   const total = {}; its.forEach(it => total[it.id] = avg(roots, it.id));
-  return {list, res, total};
+  return {list, res, total, off};
 }
 
 /* ---------- escritura local ---------- */
@@ -669,8 +676,10 @@ function viewCmp(g){
     <button class="btn sm ed" data-act="newInst">+ Instancia</button></div>`;
   if (!cur) return h + empty('Todavía no hay instancias en este grupo', 'Una instancia elige qué ítems del grupo comparar. Un mismo ítem puede estar en varias instancias.', 'newInst', 'Crear instancia');
   const its = instIds(cur).map(id => ({...S.app[id], id}));
-  const ev = evaluate(g.id, its, cur); const leaves = ev.list.filter(c => c.leaf);
-  h += `<div class="insthead"><div><h2>${esc(cur.name)}</h2><p class="muted">${its.length} ítems · ${leaves.length} criterios${canEdit() ? ' · tocá una celda para forzar ventaja o desventaja' : ''}</p></div>
+  const excl = new Set((S.ui.excl || {})[cur.id] || []);
+  const ev = evaluate(g.id, its, cur, excl); const leaves = ev.list.filter(c => c.leaf && !ev.off.has(c.id));
+  const nOff = ev.list.filter(c => excl.has(c.id)).length;
+  h += `<div class="insthead"><div><h2>${esc(cur.name)}</h2><p class="muted">${its.length} ítems · ${leaves.length} criterios evaluados${nOff ? ` · ${nOff} desestimado${nOff > 1 ? 's' : ''} <button class="btn sm ghost" data-act="inclAll">Incluir todos</button>` : ''}</p><p class="hint">Desmarcá un criterio para dejarlo afuera de la comparación${canEdit() ? '; tocá una celda para forzar ventaja o desventaja' : ''}.</p></div>
     <div class="row ed"><button class="btn sm" data-act="editInst">Editar instancia</button><button class="btn sm ghost" data-act="delInst">Borrar</button></div></div>`;
   if (!its.length) return h + empty('La instancia no tiene ítems', 'Editá la instancia para elegir qué ítems comparar.', 'editInst', 'Elegir ítems');
   if (!ev.list.length) return h + empty('El grupo no tiene criterios', 'Los criterios definen cómo se evalúan los ítems y de ellos salen las ventajas y desventajas.', 'goCrit', 'Definir criterios');
@@ -681,10 +690,12 @@ function viewCmp(g){
       <div class="ith"><span class="rank ${rank(it.id) === 1 ? 'r1' : ''}">${rank(it.id)}º</span>${esc(it.name)}</div>
       <div class="tot"><span class="val">${p ?? '—'}</span><span class="muted">/100</span></div><div class="bar"><i style="width:${p ?? 0}%"></i></div></th>` }).join('')}</tr>`;
   const rows = ev.list.map(c => {
-    const pad = `style="padding-left:${14 + c.depth * 18}px"`;
-    if (!c.leaf) return `<tr class="par"><th class="sticky" ${pad}><span class="cn">${esc(c.name)}</span><span class="cw">agrupa ${c.kids.length} · peso ${c.w || 1}</span></th>${its.map(it => { const p = pct(ev.res[c.id][it.id].score);
+    const pad = `style="padding-left:${10 + c.depth * 18}px"`, off = ev.off.has(c.id), byParent = off && !excl.has(c.id);
+    const chk = `<input type="checkbox" class="cx" id="cx_${c.id}" data-c="${c.id}" ${off ? '' : 'checked'} ${byParent ? 'disabled title="Desestimado junto con su criterio agrupador"' : ''} aria-label="Incluir ${esc(c.name)} en la comparación">`;
+    if (off) return `<tr class="${c.leaf ? '' : 'par '}off"><th class="sticky" ${pad}><label class="crl">${chk}<span><span class="cn">${esc(c.name)}</span><span class="cw">desestimado</span></span></label></th>${its.map(it => `<td>${c.leaf ? `<span class="val">${esc(fmt(c, ev.res[c.id][it.id].raw))}</span>` : ''}</td>`).join('')}</tr>`;
+    if (!c.leaf) return `<tr class="par"><th class="sticky" ${pad}><label class="crl">${chk}<span><span class="cn">${esc(c.name)}</span><span class="cw">agrupa ${c.kids.length} · peso ${c.w || 1}</span></span></label></th>${its.map(it => { const p = pct(ev.res[c.id][it.id].score);
       return `<td>${p == null ? '<span class="muted">—</span>' : `<div class="mini"><div class="bar"><i style="width:${p}%"></i></div><span class="val">${p}</span></div>`}</td>` }).join('')}</tr>`;
-    return `<tr><th class="sticky" ${pad}><span class="cn">${esc(c.name)}</span><span class="cw">${critHint(c)} · peso ${c.w || 1}</span></th>${its.map(it => { const r = ev.res[c.id][it.id];
+    return `<tr><th class="sticky" ${pad}><label class="crl">${chk}<span><span class="cn">${esc(c.name)}</span><span class="cw">${critHint(c)} · peso ${c.w || 1}</span></span></label></th>${its.map(it => { const r = ev.res[c.id][it.id];
       return `<td class="cell m-${r.mark}" data-act="cell" data-it="${it.id}" data-c="${c.id}"><span class="val">${esc(fmt(c, r.raw))}</span>${MK[r.mark] ? `<span class="mk">${MK[r.mark]}${r.manual ? ' ✎' : ''}</span>` : ''}</td>` }).join('')}</tr>`;
   }).join('');
   h += `<div class="scroll"><table class="cmp"><thead>${head}</thead><tbody>${rows}</tbody></table></div>`;
@@ -1065,6 +1076,7 @@ const ACT = {
   pickGroup(el){ S.ui.view = 'group'; S.ui.g = el.dataset.id; save(); render() },
   openSheet(){ S.ui.view = 'sheet'; save(); render() },
   tab(el){ if (el.dataset.k === 'grid'){ S.ui.view = 'plan'; S.ui.planTab = S.ui.g; save(); render(); return } S.ui.tab = el.dataset.k; save(); render() },
+  inclAll(){ const n = curInst(); if (n && S.ui.excl) delete S.ui.excl[n.id]; save(); render() },
   openPlan(){ S.ui.view = 'plan'; save(); render() },
   planTab(el){ S.ui[el.dataset.sk === 'app' ? 'planTab' : 'sheetTab'] = el.dataset.k; save(); render() },
   planAdd(){ const el = document.querySelector('.newrow .pc'); if (el){ el.focus(); el.scrollIntoView({block:'nearest'}) } },
@@ -1145,6 +1157,9 @@ document.addEventListener('change', e => {
   if (t.id === 'f_kind'){ const q = t.value === 'qual'; document.querySelectorAll('.onlynum').forEach(x => x.hidden = q); document.querySelectorAll('.onlyqual').forEach(x => x.hidden = !q) }
   else if (t.id === 'f_concl'){ const n = curInst(); if (n) put(n.id, {...S.app[n.id], concl:t.value.trim()}) }
   else if (t.classList.contains('pc')) planChange(t);
+  else if (t.classList.contains('cx')){ const n = curInst(); if (!n) return; S.ui.excl = S.ui.excl || {};
+    const set = new Set(S.ui.excl[n.id] || []); if (t.checked) set.delete(t.dataset.c); else set.add(t.dataset.c);
+    if (set.size) S.ui.excl[n.id] = [...set]; else delete S.ui.excl[n.id]; save(); render() }
   else if (t.id === 'f_online' || t.id === 'f_online2'){ S.online = t.checked; log(t.checked ? 'Conexión restablecida.' : 'Conexión cortada (simulación): los cambios quedan en la copia local.'); save(); if (t.checked) sync(false); else render() }
   else if (t.type === 'radio' && t.dataset.k){ (S.choice[t.dataset.k] ||= {})[t.dataset.f] = t.value }
 });
