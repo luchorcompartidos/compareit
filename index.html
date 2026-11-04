@@ -1,3 +1,6 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
 <title>CompareIt</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -194,6 +197,7 @@ textarea{resize:vertical}
 .grid th,.grid td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:0;height:30px}
 .grid .ch,.grid .rh{background:var(--sunk);color:var(--muted);font-weight:500;text-align:center;font-size:.74rem;padding:0 8px}
 .grid .rh{width:40px}
+.grid .hdr .ro-c{white-space:normal;min-width:90px;line-height:1.25}
 .grid .hdr td{background:color-mix(in srgb,var(--adv) 10%,var(--surface));font-weight:500}
 .grid input{border:0;border-radius:0;background:transparent;padding:5px 8px;font-family:var(--f-mono);font-size:.82rem;min-width:90px;width:100%}
 .grid input:focus{outline:2px solid var(--adv);outline-offset:-2px}
@@ -233,6 +237,53 @@ a.gitem{text-decoration:none;color:inherit}
 .cmp tr.off > *{color:var(--muted)}
 .cmp tr.off .cn{text-decoration:line-through;font-weight:500}
 .cmp tr.off td .val{opacity:.55}
+.swipe{display:none}
+@media (max-width:860px){
+  .top-in{flex-wrap:nowrap;gap:8px;padding-block:8px}
+  .brand{font-size:1.1rem;gap:6px;min-width:0}
+  .brand svg{width:22px;height:22px}
+  .srcbadge{font-size:.6rem;padding:2px 6px}
+  .seg button{padding:7px 10px;min-height:36px}
+  .chip-sync{padding:8px 10px;min-height:36px;font-size:.8rem;flex:none}
+  .tab{min-height:44px;padding:10px 12px}
+  .btn{min-height:40px}
+  .btn.sm{min-height:36px;padding:6px 11px}
+  .ichip{min-height:36px}
+  .gitem{min-height:40px}
+  .gh h1{font-size:1.45rem}
+  .lead{font-size:.9rem}
+  .swipe{display:block;font-size:.8rem;color:var(--muted);margin:0 0 -8px}
+  .cmp .sticky{min-width:118px;max-width:128px;padding:8px 8px}
+  .cmp thead th{min-width:108px;max-width:140px;padding:8px}
+  .cmp td{padding:8px}
+  .cmp .cn{font-size:.86rem;line-height:1.25}
+  .cmp .cw{font-size:.7rem}
+  .ith{font-size:.86rem;align-items:flex-start;flex-direction:column;gap:4px}
+  .tot .val{font-size:1.2rem}
+  .cmp td.cell .val{font-size:.8rem;display:block}
+  .cmp td.cell .mk{display:inline-block;margin:4px 0 0;font-size:.72rem;padding:1px 7px}
+  .mkt{display:none}
+  .crl input{width:18px;height:18px}
+  .card{padding:12px 14px}
+  .crow{gap:8px;padding:10px 12px}
+  .crow .cname{min-width:0;flex-basis:100%}
+  .crow .acts{justify-content:flex-start;flex-wrap:wrap}
+  .overlay{align-items:flex-end;padding:0}
+  .dialog{width:100%;max-height:92vh;border-radius:16px 16px 0 0}
+  .dialog footer{padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+  .dialog footer .btn{flex:1;justify-content:center}
+  .dbody input,.dbody select,.dbody textarea,#f_concl{font-size:16px}
+  .drawer{width:100%;border-left:0}
+  .gs-bar{gap:8px}
+  .gs-bar .gs-title{flex-basis:100%}
+  .grid input,.grid select,.mcell{min-height:40px}
+  .grid .wide input{min-width:170px}
+}
+@media (max-width:480px){
+  .st-ok #syncTxt{display:none}
+  .st-ok .dot{width:11px;height:11px}
+  .side .side-h:first-child .btn{padding:6px 10px}
+}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.88rem;z-index:70;max-width:calc(100% - 32px)}
 
 @media (max-width:860px){
@@ -368,11 +419,14 @@ function seed(){
 /* ---------- estado ---------- */
 let SIM = LS.get('ci_sim', null);
 if (!SIM) SIM = {records: seed()};
+function simBump(from){ SIM.ver = Date.now().toString(36) + Math.random().toString(36).slice(2, 6); SIM.verAt = now(); SIM.verFrom = from; LS.set('ci_sim', SIM) }
+if (!SIM.ver) simBump('Planilla');
 const S = {
   app: LS.get('ci_app', null), base: LS.get('ci_base', null),
   mode: LS.get('ci_mode', 'app'), online: LS.get('ci_online', true), reach: true,
   ui: LS.get('ci_ui', {view:'group', g:'', tab:'cmp', inst:{}, sheetTab:''}),
   conflicts: [], choice: {}, log: LS.get('ci_log', []), last: LS.get('ci_last', ''),
+  ver: LS.get('ci_ver', ''), verInfo: LS.get('ci_verinfo', null), auto: LS.get('ci_auto', 'normal'), lastCheck: '', checks: 0, pulls: 0,
   syncing: false, drawer: false
 };
 if (!S.app){ const init = REAL ? {} : SIM.records; S.app = clone(init); S.base = clone(init); }
@@ -385,7 +439,7 @@ function errText(e){
 }
 function save(){
   LS.set('ci_app', S.app); LS.set('ci_base', S.base); LS.set('ci_mode', S.mode); LS.set('ci_online', S.online);
-  LS.set('ci_ui', S.ui); LS.set('ci_log', S.log); LS.set('ci_last', S.last); LS.set('ci_sim', SIM);
+  LS.set('ci_ui', S.ui); LS.set('ci_log', S.log); LS.set('ci_last', S.last); LS.set('ci_sim', SIM); LS.set('ci_ver', S.ver); LS.set('ci_verinfo', S.verInfo); LS.set('ci_auto', S.auto);
 }
 function log(m){ S.log.unshift({t:now(), m}); S.log = S.log.slice(0, 14) }
 
@@ -469,19 +523,20 @@ function put(id, rec){ if (!canEdit()) return toast('Modo «Cargar en la Sheet»
 
 /* ---------- adaptadores a la fuente de datos ---------- */
 const Sim = {
+  async ver(){ await wait(80); if (!S.online) throw new Error('offline'); return {v:SIM.ver, at:SIM.verAt, from:SIM.verFrom} },
   async pull(){ await wait(220); if (!S.online) throw new Error('offline'); return clone(SIM.records) },
-  async push(up, dels){ await wait(220); if (!S.online) throw new Error('offline');
-    Object.entries(up).forEach(([k, r]) => SIM.records[k] = clone(r)); dels.forEach(d => delete SIM.records[d.id]); LS.set('ci_sim', SIM) }
+  async push(up, dels, base){ await wait(220); if (!S.online) throw new Error('offline'); const stale = !!base && base !== SIM.ver;
+    Object.entries(up).forEach(([k, r]) => SIM.records[k] = clone(r)); dels.forEach(d => delete SIM.records[d.id]); simBump('Web'); return {v:SIM.ver, stale} }
 };
 const gcall = (fn, ...a) => new Promise((ok, ko) => google.script.run.withSuccessHandler(ok).withFailureHandler(ko)[fn](...a));
-const Gas = { pull: () => gcall('getAll'), push: (up, dels) => gcall('putChanges', up, dels) };
+const Gas = { ver: () => gcall('getVersion'), pull: () => gcall('getAll'), push: (up, dels, base) => gcall('putChanges', up, dels, base || '') };
 async function apiCall(cfg, action, extra){
   const r = await fetch(cfg.url, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify({action, key:cfg.key, ...extra})});
   if (!r.ok) throw new Error('La aplicación web respondió con error HTTP ' + r.status + '.');
   let j; try{ j = await r.json() }catch(e){ throw new Error('La URL no devolvió datos de CompareIt. Usá la URL que termina en /exec y publicá una nueva versión con acceso «Cualquier usuario».') }
   if (!j.ok) throw new Error(j.error); return j.data;
 }
-const Api = { pull: () => apiCall(API, 'getAll'), push: (up, dels) => apiCall(API, 'putChanges', {up, dels}) };
+const Api = { ver: () => apiCall(API, 'getVersion'), pull: () => apiCall(API, 'getAll'), push: (up, dels, base) => apiCall(API, 'putChanges', {up, dels, baseVer:base || ''}) };
 const adapter = MODE === 'gas' ? Gas : MODE === 'api' ? Api : Sim;
 
 /* ---------- sincronización con fusión a 3 vías ---------- */
@@ -503,12 +558,34 @@ function pendingKeys(){
   return [...ks].filter(k => !same(S.app[k], S.base[k]));
 }
 let syncTimer = null;
-function scheduleSync(){ clearTimeout(syncTimer); if (S.online && S.mode === 'app') syncTimer = setTimeout(() => sync(true), 700); else renderStatus() }
+function scheduleSync(){ clearTimeout(syncTimer); if (S.online && S.mode === 'app') syncTimer = setTimeout(() => sync(true).then(() => planPoll(true)), 700); else renderStatus() }
 
-async function sync(quiet){
-  if (S.syncing) return; S.syncing = true; renderStatus();
+/* ---------- verificación automática adaptable ---------- */
+const AUTO = {normal:{base:60, max:300, label:'Normal: cada 1 a 5 min'}, ahorro:{base:180, max:900, label:'Ahorro de datos: cada 3 a 15 min'}, manual:{label:'Solo manual'}};
+let pollT = null, pollDelay = 0, nextAt = 0;
+function saver(){ const c = navigator.connection; return !!(c && (c.saveData || /2g$/.test(c.effectiveType || ''))) }
+function effAuto(){ return S.auto === 'normal' && saver() ? 'ahorro' : S.auto }
+function planPoll(reset){
+  clearTimeout(pollT); nextAt = 0;
+  const a = effAuto();
+  if (a === 'manual' || !S.online || document.hidden || (MODE !== 'sim' && navigator.onLine === false)){ if (S.drawer) renderDrawer(); return }
+  const cfg = AUTO[a], base = S.mode === 'sheet' ? Math.round(cfg.base / 2) : cfg.base;
+  pollDelay = reset || !pollDelay ? base : Math.min(pollDelay * 2, cfg.max);
+  nextAt = Date.now() + pollDelay * 1000;
+  pollT = setTimeout(async () => { const ch = await sync(true); planPoll(ch) }, pollDelay * 1000);
+  if (S.drawer) renderDrawer();
+}
+
+async function sync(quiet, force){
+  if (S.syncing) return false; S.syncing = true; renderStatus();
+  let changed = false, stale = false;
   try{
-    const remote = await adapter.pull(); S.reach = true;
+    const vi = await adapter.ver(); S.reach = true; S.checks++; S.lastCheck = now();
+    const prevVer = S.ver; S.verInfo = vi;
+    const needPush = S.mode === 'app' && pendingKeys().some(k => !S.conflicts.some(c => c.k === k));
+    if (!force && !needPush && prevVer && vi.v === prevVer){ S.err = ''; S.syncing = false; save(); renderStatus(); if (S.drawer) renderDrawer(); return false }
+    changed = vi.v !== prevVer;
+    const remote = await adapter.pull(); S.pulls++;
     const app = S.app, base = S.base || {};
     const keys = new Set([...Object.keys(app), ...Object.keys(base), ...Object.keys(remote)]);
     const up = {}, dels = [], nApp = {}, nBase = {}, conflicts = []; let pulled = 0, pushed = 0;
@@ -537,7 +614,12 @@ async function sync(quiet){
       if (!same(out, r)){ up[k] = out; pushed++ }
       if (!same(out, a)) pulled++;
     }
-    if (Object.keys(up).length || dels.length) await adapter.push(up, dels);
+    let newVer = vi.v;
+    if (Object.keys(up).length || dels.length){
+      const res = await adapter.push(up, dels, vi.v); changed = true;
+      if (res && res.v){ stale = !!res.stale; newVer = stale ? res.v + '*' : res.v }   // con '*' la próxima verificación vuelve a descargar
+    }
+    S.ver = newVer;
     S.app = nApp; S.base = nBase; S.conflicts = conflicts; S.last = now();
     if (!quiet || pulled || pushed || conflicts.length)
       log(`Sincronizado: ${pushed} enviados a la Sheet, ${pulled} recibidos${conflicts.length ? ', ' + conflicts.length + ' en conflicto' : ''}.`);
@@ -550,6 +632,8 @@ async function sync(quiet){
   }
   if (S.reach) S.err = '';
   S.syncing = false; fixUi(); save(); render();
+  if (stale) setTimeout(() => sync(true), 800);
+  return changed;
 }
 
 function suggest(c){ return (c.a?.u || '') >= (c.r?.u || '') ? 'a' : 'r' }
@@ -576,7 +660,7 @@ async function resolve(keys){
     }
     S.conflicts = S.conflicts.filter(x => x.k !== k); delete S.choice[k];
   });
-  try{ await adapter.push(up, dels); log(`Aprobaste ${keys.length} resolución(es) de conflicto; se aplicaron en la app y en la Sheet.`) }
+  try{ const res = await adapter.push(up, dels, S.ver); if (res && res.v) S.ver = res.stale ? res.v + '*' : res.v; log(`Aprobaste ${keys.length} resolución(es) de conflicto; se aplicaron en la app y en la Sheet.`) }
   catch(e){ S.err = errText(e); log('No se pudo escribir en la Sheet (' + S.err + '); la resolución queda pendiente de envío.') }
   fixUi(); save(); render();
 }
@@ -621,7 +705,7 @@ function renderStatus(){
   else if (conf){ cls = 'st-conf'; txt = conf + (conf === 1 ? ' conflicto' : ' conflictos') }
   else if (!S.online || !S.reach){ cls = REAL ? 'st-conf' : 'st-off'; txt = (REAL ? 'Error de conexión' : 'Sin conexión') + (pend ? ' · ' + pend + ' pend.' : '') }
   else if (pend){ cls = 'st-pend'; txt = pend + ' pendientes' }
-  $('#syncChip').className = 'chip-sync ' + cls; $('#syncTxt').textContent = txt;
+  $('#syncChip').className = 'chip-sync ' + cls; $('#syncTxt').textContent = txt; $('#syncChip').setAttribute('aria-label', 'Sincronización: ' + txt);
   $('#m_app').classList.toggle('on', S.mode === 'app'); $('#m_sheet').classList.toggle('on', S.mode === 'sheet');
   document.body.classList.toggle('ro', S.mode === 'sheet');
   $('#srcBadge').textContent = REAL ? 'Sheet real' : 'Simulación';
@@ -662,14 +746,14 @@ function renderMain(){
 
 function viewGroup(g){
   const tabs = [['cmp', 'Comparar'], ['items', 'Ítems'], ['grid', 'Grilla'], ['crit', 'Criterios']];
-  return `${S.mode === 'sheet' ? `<div class="banner"><strong>Modo «Cargar en la Sheet».</strong>&nbsp;La app solo muestra los datos; cargá y editá en la Google Sheet. La vista se actualiza cada 15 segundos o con «Sincronizar ahora».</div>` : ''}
+  return `${S.mode === 'sheet' ? `<div class="banner"><strong>Modo «Cargar en la Sheet».</strong>&nbsp;La app solo muestra los datos; cargá y editá en la Google Sheet. La vista se actualiza sola cuando la Sheet cambia, o con «Sincronizar ahora».</div>` : ''}
   <header class="gh"><div class="gh-t"><span class="eyebrow">Grupo · pestaña «${esc(g.name)}»</span><h1>${esc(g.name)}</h1>${g.desc ? `<p class="lead">${esc(g.desc)}</p>` : ''}</div>
     <div class="gh-a ed"><button class="btn sm" data-act="editGroup">Editar grupo</button><button class="btn sm ghost" data-act="delGroup">Borrar</button></div></header>
   <div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${S.ui.tab === k}" class="tab ${S.ui.tab === k ? 'on' : ''}" data-act="tab" data-k="${k}">${l}</button>`).join('')}</div>
   ${S.ui.tab === 'items' ? viewItems(g) : S.ui.tab === 'crit' ? viewCrit(g) : viewCmp(g)}`;
 }
 
-const MK = {adv:'▲ Ventaja', dis:'▼ Desventaja', eq:'= Similar'};
+const MK = {adv:'▲<span class="mkt"> Ventaja</span>', dis:'▼<span class="mkt"> Desventaja</span>', eq:'=<span class="mkt"> Similar</span>'};
 function viewCmp(g){
   const ins = insts(g.id), cur = curInst();
   let h = `<div class="instbar"><div class="instlist">${ins.map(n => `<button class="ichip ${cur && n.id === cur.id ? 'on' : ''}" data-act="pickInst" data-id="${n.id}">${esc(n.name)}<span>${instIds(n).length}</span></button>`).join('')}</div>
@@ -698,7 +782,7 @@ function viewCmp(g){
     return `<tr><th class="sticky" ${pad}><label class="crl">${chk}<span><span class="cn">${esc(c.name)}</span><span class="cw">${critHint(c)} · peso ${c.w || 1}</span></span></label></th>${its.map(it => { const r = ev.res[c.id][it.id];
       return `<td class="cell m-${r.mark}" data-act="cell" data-it="${it.id}" data-c="${c.id}"><span class="val">${esc(fmt(c, r.raw))}</span>${MK[r.mark] ? `<span class="mk">${MK[r.mark]}${r.manual ? ' ✎' : ''}</span>` : ''}</td>` }).join('')}</tr>`;
   }).join('');
-  h += `<div class="scroll"><table class="cmp"><thead>${head}</thead><tbody>${rows}</tbody></table></div>`;
+  h += `${its.length > 2 ? '<p class="swipe">Deslizá la tabla para ver todos los ítems →</p>' : ''}<div class="scroll"><table class="cmp"><thead>${head}</thead><tbody>${rows}</tbody></table></div>`;
 
   const marks = (it, m) => leaves.filter(c => ev.res[c.id][it.id].mark === m).map(c => c.name);
   const sims = leaves.filter(c => its.length > 1 && its.every(it => ev.res[c.id][it.id].mark === 'eq'));
@@ -733,7 +817,7 @@ function autoConclusion(its, ev, leaves){
 /* ---------- Planilla: grilla editable para todas las entidades del esquema ---------- */
 const STORE = {
   app: { get: () => S.app, write(id, rec){ setRec(id, rec) }, del(id){ rmRec(id) }, after(){ save(); renderStatus(); renderSide(); scheduleSync() } },
-  sim: { get: () => SIM.records, write(id, rec){ const r = {...rec, u:now()}; delete r.id; SIM.records[id] = r }, del(id){ delete SIM.records[id] }, after(){ LS.set('ci_sim', SIM) } }
+  sim: { get: () => SIM.records, write(id, rec){ const r = {...rec, u:now()}; delete r.id; SIM.records[id] = r }, del(id){ delete SIM.records[id] }, after(){ simBump('Planilla') } }
 };
 const pcId = (sk, id, f) => 'pc_' + sk + '_' + id + '_' + f.replace(/\./g, '-');
 const colLetter = i => { let s = ''; i++; while (i > 0){ const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26) } return s };
@@ -973,9 +1057,15 @@ function renderDrawer(){
     <section class="dr-sec"><span class="eyebrow">Estado</span>
       <p>${S.syncing ? 'Sincronizando…' : !S.online || !S.reach ? 'Sin conexión: trabajás sobre la copia local y los cambios quedan en cola.' : 'Conectado con la Google Sheet.'}</p>
       ${S.err ? `<div class="errbox"><strong>Error real devuelto:</strong><code>${esc(S.err)}</code></div>` : ''}
+      <p class="muted">Última verificación: ${hhmm(S.lastCheck)} · próxima: ${nextAt ? hhmm(new Date(nextAt).toISOString()) : (effAuto() === 'manual' ? 'solo manual' : 'en pausa')}${S.verInfo && S.verInfo.from ? ` · último cambio en la fuente: ${esc(S.verInfo.from)}, ${hhmm(S.verInfo.at)}` : ''}</p>
+      <p class="muted">En esta sesión: ${S.checks} verificaciones livianas y ${S.pulls} descargas completas.</p>
       <p class="muted">Última sincronización: ${hhmm(S.last)} · modo ${S.mode === 'app' ? '«Editar en la app» (bidireccional)' : '«Cargar en la Sheet» (la app solo lee)'}</p>
       <div class="row"><button class="btn sm primary" data-act="syncNow">Sincronizar ahora</button>
       ${REAL ? '' : `<label class="switch"><input type="checkbox" id="f_online2" ${S.online ? 'checked' : ''}> Conexión con la Sheet (simulada)</label>`}</div></section>
+    <section class="dr-sec"><span class="eyebrow">Actualización automática</span>
+      <label class="fld" for="f_auto"><span>Frecuencia de verificación</span><select id="f_auto">${Object.entries(AUTO).map(([k, a]) => `<option value="${k}" ${S.auto === k ? 'selected' : ''}>${a.label}</option>`).join('')}</select></label>
+      ${S.auto === 'normal' && saver() ? '<p class="hint">Chrome indica ahorro de datos o conexión lenta: se usa el modo Ahorro.</p>' : ''}
+      <p class="hint">Siempre se verifica al abrir la app y al volver a ella, y tus cambios se envían al instante. Cuando no hay cambios, los intervalos se alargan solos.</p></section>
     <section class="dr-sec"><span class="eyebrow">Conflictos para tu aprobación · ${S.conflicts.length}</span>
       ${S.conflicts.length ? `${S.conflicts.length > 1 ? '<div class="row"><button class="btn sm" data-act="resolveAll">Aprobar todo con lo elegido</button></div>' : ''}${confHtml}` : '<p class="muted">No hay conflictos.</p>'}</section>
     <section class="dr-sec"><span class="eyebrow">Cambios locales sin enviar · ${pk.length}</span>
@@ -1069,10 +1159,10 @@ const ACT = {
     if (m === 'sheet' && (pendingKeys().length || S.conflicts.length))
       return modal('Hay cambios sin sincronizar', `<p>Para pasar a «Cargar en la Sheet» primero tienen que subirse ${pendingKeys().length} cambios locales${S.conflicts.length ? ' y resolverse ' + S.conflicts.length + ' conflictos' : ''}. Si no, la Sheet los pisaría.</p>`, () => { closeModal(); sync(false); return false }, 'Sincronizar ahora');
     S.mode = m; log(m === 'sheet' ? 'Modo «Cargar en la Sheet» activado: la app pasa a solo lectura.' : 'Modo «Editar en la app» activado: sincronización bidireccional.');
-    save(); render(); sync(true);
+    save(); render(); sync(true, true).then(() => planPoll(true));
   },
   openSync, closeSync(){ S.drawer = false; $('#drawer').hidden = true },
-  syncNow(){ sync(false) },
+  syncNow(){ sync(false, true).then(() => planPoll(true)) },
   pickGroup(el){ S.ui.view = 'group'; S.ui.g = el.dataset.id; save(); render() },
   openSheet(){ S.ui.view = 'sheet'; save(); render() },
   tab(el){ if (el.dataset.k === 'grid'){ S.ui.view = 'plan'; S.ui.planTab = S.ui.g; save(); render(); return } S.ui.tab = el.dataset.k; save(); render() },
@@ -1123,13 +1213,13 @@ const ACT = {
     try{
       const info = await apiCall(cfg, 'getInfo');
       if (upload){ S.base = {} } else { S.app = {}; S.base = {} }
-      S.conflicts = []; S.online = true; S.mode = 'app'; S.last = '';
+      S.conflicts = []; S.online = true; S.mode = 'app'; S.last = ''; S.ver = '';
       log('Conectada a la planilla «' + info.name + '».'); save(); LS.set('ci_api', cfg); location.reload();
     }catch(e){ el.disabled = false; el.textContent = 'Probar y conectar'; S.err = errText(e); renderDrawer() }
   },
   apiDisconnect(){ modal('Desconectar la planilla', '<p>La app vuelve a la simulación con los datos de ejemplo. Tu Google Sheet no se modifica.</p>', () => {
     try{ localStorage.removeItem('ci_api') }catch(e){}
-    S.app = clone(SIM.records); S.base = clone(SIM.records); S.conflicts = []; save(); location.reload() }, 'Desconectar') },
+    S.app = clone(SIM.records); S.base = clone(SIM.records); S.conflicts = []; S.ver = ''; save(); location.reload() }, 'Desconectar') },
   resolveOne(el){ resolve([el.dataset.k]) }, resolveAll(){ resolve(S.conflicts.map(c => c.k)) },
   demoConflict(){
     const g = S.ui.g && S.app[S.ui.g] ? S.ui.g : groups()[0]?.id; const it = items(g)[0]; const c = tree(g).find(x => x.leaf && x.kind !== 'qual');
@@ -1137,12 +1227,12 @@ const ACT = {
     const base = parseFloat(it['v.' + c.id] || '100') || 100;
     if (S.mode !== 'app'){ S.mode = 'app' }
     setRec(it.id, {...S.app[it.id], ['v.' + c.id]:String(Math.round(base * 1.1))});
-    SIM.records[it.id] = {...SIM.records[it.id], ['v.' + c.id]:String(Math.round(base * 0.9)), u:new Date(Date.now() + 1000).toISOString()};
+    SIM.records[it.id] = {...SIM.records[it.id], ['v.' + c.id]:String(Math.round(base * 0.9)), u:new Date(Date.now() + 1000).toISOString()}; simBump('Planilla');
     log(`Ejemplo: «${it.name} / ${c.name}» se cambió a la vez en la app y en la Sheet.`);
     S.online = true; S.ui.view = 'group'; S.ui.g = g; S.ui.tab = 'cmp'; save(); sync(false);
   },
   resetDemo(){ modal('Restablecer datos de ejemplo', '<p>Se reemplazan la Sheet simulada y la copia local por los datos de ejemplo. Se pierde lo cargado en el prototipo.</p>', () => {
-    SIM = {records:seed()}; S.app = clone(SIM.records); S.base = clone(SIM.records); S.conflicts = []; S.choice = {}; S.log = []; S.online = true; S.mode = 'app';
+    SIM = {records:seed()}; simBump('Planilla'); S.ver = ''; S.app = clone(SIM.records); S.base = clone(SIM.records); S.conflicts = []; S.choice = {}; S.log = []; S.online = true; S.mode = 'app';
     log('Datos de ejemplo restablecidos.'); fixUi(); save(); render() }, 'Restablecer', true) }
 };
 
@@ -1156,11 +1246,12 @@ document.addEventListener('change', e => {
   const t = e.target;
   if (t.id === 'f_kind'){ const q = t.value === 'qual'; document.querySelectorAll('.onlynum').forEach(x => x.hidden = q); document.querySelectorAll('.onlyqual').forEach(x => x.hidden = !q) }
   else if (t.id === 'f_concl'){ const n = curInst(); if (n) put(n.id, {...S.app[n.id], concl:t.value.trim()}) }
+  else if (t.id === 'f_auto'){ S.auto = t.value; save(); planPoll(true) }
   else if (t.classList.contains('pc')) planChange(t);
   else if (t.classList.contains('cx')){ const n = curInst(); if (!n) return; S.ui.excl = S.ui.excl || {};
     const set = new Set(S.ui.excl[n.id] || []); if (t.checked) set.delete(t.dataset.c); else set.add(t.dataset.c);
     if (set.size) S.ui.excl[n.id] = [...set]; else delete S.ui.excl[n.id]; save(); render() }
-  else if (t.id === 'f_online' || t.id === 'f_online2'){ S.online = t.checked; log(t.checked ? 'Conexión restablecida.' : 'Conexión cortada (simulación): los cambios quedan en la copia local.'); save(); if (t.checked) sync(false); else render() }
+  else if (t.id === 'f_online' || t.id === 'f_online2'){ S.online = t.checked; log(t.checked ? 'Conexión restablecida.' : 'Conexión cortada (simulación): los cambios quedan en la copia local.'); save(); if (t.checked) sync(false).then(() => planPoll(true)); else { planPoll(); render() } }
   else if (t.type === 'radio' && t.dataset.k){ (S.choice[t.dataset.k] ||= {})[t.dataset.f] = t.value }
 });
 document.addEventListener('keydown', e => {
@@ -1170,7 +1261,14 @@ document.addEventListener('keydown', e => {
     const next = list[list.indexOf(t) + 1]; if (next) next.focus(); else t.blur(); return;
   } if (e.key === 'Escape'){ if (!$('#modal').hidden) closeModal(); else if (!$('#menu').hidden) $('#menu').hidden = true; else if (S.drawer) ACT.closeSync() } });
 
-setInterval(() => { if (S.online && !S.syncing && !document.hidden) sync(true) }, 15000);
-fixUi(); render(); sync(true);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden){ clearTimeout(pollT); nextAt = 0; return }
+  const since = S.lastCheck ? Date.now() - new Date(S.lastCheck).getTime() : Infinity;
+  if (since > 20000) sync(true).then(ch => planPoll(true)); else planPoll(false);
+});
+addEventListener('online', () => { log('Conexión a internet restablecida.'); sync(true).then(() => planPoll(true)) });
+addEventListener('offline', () => { if (MODE === 'sim') return; clearTimeout(pollT); nextAt = 0; S.reach = false; S.err = 'Sin conexión a internet: los cambios quedan en la copia local.'; render() });
+if (navigator.connection && navigator.connection.addEventListener) navigator.connection.addEventListener('change', () => planPoll(true));
+fixUi(); render(); sync(true).then(() => planPoll(true));
 if (REAL) (MODE === 'gas' ? gcall('getInfo') : apiCall(API, 'getInfo')).then(i => { S.sheet = i; render() }).catch(e => { S.err = errText(e); log('No se pudo leer la planilla: ' + S.err); render() });
 </script>
