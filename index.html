@@ -328,7 +328,7 @@ a.gitem{text-decoration:none;color:inherit}
   .brand{font-size:1.05rem}
   .bname{display:inline}
   .brand .bmeta{display:none}
-  .top-in .hrow2{display:flex;align-items:center;gap:8px;flex-basis:100%;padding-left:30px;min-width:0}
+  .top-in .hrow2{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-basis:100%;min-width:0}
   .hrow2 .aver{white-space:normal;max-width:none;line-height:1.25}
   #syncTxt{display:none}
   #syncShort{display:inline;font-variant-numeric:tabular-nums}
@@ -421,6 +421,24 @@ a.btn{text-decoration:none;color:var(--ink)}
 .logo:active svg{transform:rotate(-12deg)}
 .logo svg{transition:transform .15s}
 @media (prefers-reduced-motion:reduce){.logo svg{transition:none}}
+.isets{display:flex;flex-wrap:wrap;gap:4px 18px}
+.ithandle{border:0;background:transparent;color:var(--muted);cursor:grab;touch-action:none;font-size:1rem;line-height:1;padding:6px 4px;border-radius:6px;min-width:28px;min-height:32px}
+.ithandle:hover{background:var(--sunk);color:var(--ink)}
+th.coldrag{opacity:.55}
+th.drop-b{box-shadow:inset 3px 0 0 var(--accent)}
+th.drop-a{box-shadow:inset -3px 0 0 var(--accent)}
+.gfold{display:flex;align-items:center;gap:6px;border:0;background:transparent;color:var(--muted);font-size:.84rem;font-weight:600;padding:8px 12px;border-radius:var(--r);cursor:pointer;text-align:left;white-space:nowrap}
+.gfold:hover{background:var(--sunk);color:var(--ink)}
+.gitem.garch .gname{color:var(--muted)}
+.hlist{display:flex;flex-direction:column;gap:6px}
+.hrow{display:flex;align-items:center;gap:10px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.hrow.ishid{background:var(--sunk)}
+.hrow.ishid .hname{color:var(--muted)}
+.hname{flex:1;min-width:0;font-weight:600}
+.hst{font-size:.78rem;min-width:52px;text-align:right}
+.eyeb{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;min-width:40px;min-height:40px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.eyeb[aria-pressed="true"]{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+@media (max-width:860px){ .gfold{border:1px solid var(--line);background:var(--surface);min-height:40px} }
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.88rem;z-index:70;max-width:calc(100% - 32px)}
 
 @media (max-width:860px){
@@ -448,7 +466,7 @@ a.btn{text-decoration:none;color:var(--ink)}
     <button data-act="mode" data-m="sheet" id="m_sheet"><span class="long">Cargar en la Sheet</span><span class="short">Sheet</span></button>
   </div>
   <button class="chip-sync" id="syncChip" data-act="openSync"><span class="dot"></span><span id="syncTxt">Sincronizado</span><span id="syncShort"></span></button>
-  <div class="hrow2"><span class="srcbadge" id="srcBadge2"></span><span class="aver" id="appVer2"></span></div>
+  <div class="hrow2"><span class="aver" id="appVer2"></span><span class="srcbadge" id="srcBadge2"></span></div>
 </div></header>
 
 <div class="shell">
@@ -481,7 +499,8 @@ a.btn{text-decoration:none;color:var(--ink)}
  "group": {"tab":"_Grupos","label":"Grupos","single":"Grupo","newName":"Nuevo grupo","prefix":"g","cols":[
   {"f":"name","h":"Nombre","type":"text","req":1,"wide":1},
   {"f":"desc","h":"Descripción","type":"text","wide":1},
-  {"f":"kind","h":"Tipo de grupo","type":"enum","opts":[["text","Textos"]]}]},
+  {"f":"kind","h":"Tipo de grupo","type":"enum","opts":[["text","Textos"]]},
+  {"f":"arch","h":"Archivado","type":"enum","opts":[["si","Sí"]]}]},
  "root": {"tab":"_Criterios","label":"Criterios","single":"Criterio","newName":"Nuevo criterio","prefix":"r","cols":[
   {"f":"name","h":"Nombre","type":"text","req":1,"wide":1},
   {"f":"desc","h":"Descripción","type":"text","wide":1},
@@ -527,7 +546,7 @@ a.btn{text-decoration:none;color:var(--ink)}
 const SCHEMA = JSON.parse(document.getElementById('ci-schema').textContent);
 /** Fecha y hora de esta versión de la app (se completa sola al generar los archivos). */
 const APP_NAME = 'COMPAREIt(em)';
-const APP_BUILD = '04/11/2026 13:39';
+const APP_BUILD = '04/11/2026 16:31';
 const $ = s => document.querySelector(s);
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
@@ -626,6 +645,12 @@ LS.set('ci_sd', true);
 if (!LS.get('ci_rt', false) && hadLocal){ migrateRoots(S.app); migrateRoots(S.base) }
 LS.set('ci_rt', true);
 S.err = ''; S.sheet = REAL ? LS.get('ci_sheet', null) : null; S.retry = 0;
+S.hidden = new Set(LS.get('ci_hidden', [])); S.hidSess = new Set();
+const isHidden = id => S.hidden.has(id);
+const saveHidden = () => LS.set('ci_hidden', [...S.hidden]);
+const activeGroups = () => groups().filter(g => !g.arch && !isHidden(g.id));
+const archGroups = () => groups().filter(g => g.arch && !isHidden(g.id));
+const hiddenGroups = () => groups().filter(g => isHidden(g.id));
 function errText(e){
   const m = e && (e.message || (typeof e === 'string' ? e : '')) || String(e || '');
   if (!REAL && m === 'offline') return 'conexión cortada en la simulación';
@@ -917,9 +942,9 @@ function curInst(){
   return list.find(n => n.id === id) || list[0] || null;
 }
 function fixUi(){
-  const gs = groups();
-  if (!S.app[S.ui.g] && gs.length) S.ui.g = gs[0].id;
-  if (!gs.length) S.ui.g = '';
+  const vis = [...activeGroups(), ...archGroups()];
+  if (!S.app[S.ui.g] || isHidden(S.ui.g)) S.ui.g = vis.length ? vis[0].id : '';
+  [...S.hidden].forEach(id => { if (!S.app[id] && S.base[id] === undefined) S.hidden.delete(id) });
 }
 function toast(m){ const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 3200) }
 function empty(title, text, act, label){
@@ -942,11 +967,14 @@ function renderStatus(){
 }
 
 function renderSide(){
-  const gs = groups();
+  const gs = activeGroups(), ar = archGroups(), nh = hiddenGroups().length, open = !!S.ui.archOpen;
+  const gbtn = g => `<button class="gitem ${S.ui.view === 'group' && S.ui.g === g.id ? 'on' : ''} ${g.arch ? 'garch' : ''}" data-act="pickGroup" data-id="${g.id}">
+      <span class="gname">${esc(g.name)}</span><span class="gmeta">${items(g.id).length} ítems · ${insts(g.id).length} instancias</span></button>`;
   $('#side').innerHTML = `
     <div class="side-h"><span class="eyebrow">Grupos</span><button class="btn sm ghost ed" data-act="newGroup">+ Grupo</button></div>
-    <nav class="glist">${gs.map(g => `<button class="gitem ${S.ui.view === 'group' && S.ui.g === g.id ? 'on' : ''}" data-act="pickGroup" data-id="${g.id}">
-      <span class="gname">${esc(g.name)}</span><span class="gmeta">${items(g.id).length} ítems · ${insts(g.id).length} instancias</span></button>`).join('')}</nav>
+    <nav class="glist">${gs.map(gbtn).join('')}
+      ${ar.length ? `<button class="gfold" data-act="toggleArch" aria-expanded="${open}"><span>${open ? '▾' : '▸'}</span> Archivados (${ar.length})</button>${open ? ar.map(gbtn).join('') : ''}` : ''}
+      ${nh ? `<button class="gfold" data-act="openHidden">${EYE_OFF} Ocultos (${nh})</button>` : ''}</nav>
     <div class="side-h"><span class="eyebrow">Vistas</span></div>
     <button class="gitem ${S.ui.view === 'plan' ? 'on' : ''}" data-act="openPlan"><span class="gname">Planilla</span><span class="gmeta">Todas las entidades en grilla</span></button>
     <button class="gitem ed" data-act="importCmp"><span class="gname">Importar comparación</span><span class="gmeta">Desde un archivo o texto exportado</span></button>
@@ -970,6 +998,7 @@ function renderMain(){
   const m = $('#main');
   if (S.ui.view === 'plan'){ m.innerHTML = viewPlan('app'); }
   else if (S.ui.view === 'sheet' && !REAL){ m.innerHTML = viewPlan('sim'); }
+  else if ((!S.ui.g || !S.app[S.ui.g]) && groups().length){ m.innerHTML = `<div class="empty"><h3>No hay grupos visibles</h3><p>Tenés ${hiddenGroups().length} grupo${hiddenGroups().length === 1 ? '' : 's'} oculto${hiddenGroups().length === 1 ? '' : 's'} en este dispositivo.</p><button class="btn primary" data-act="openHidden">Ver ocultos</button></div>`; }
   else if (!S.ui.g || !S.app[S.ui.g]){ m.innerHTML = empty('No hay grupos todavía', 'Un grupo reúne ítems de la misma naturaleza (por ejemplo, notebooks) y se guarda como una pestaña de la Google Sheet.', 'newGroup', 'Crear grupo'); }
   else m.innerHTML = viewGroup({...S.app[S.ui.g], id:S.ui.g});
   if (S.drawer) renderDrawer();
@@ -977,9 +1006,9 @@ function renderMain(){
 
 function viewGroup(g){
   const tabs = [['cmp', 'Comparar'], ['items', 'Ítems'], ['grid', 'Grilla'], ['crit', 'Criterios']];
-  return `${S.mode === 'sheet' ? `<div class="banner"><strong>Modo «Cargar en la Sheet».</strong>&nbsp;La app solo muestra los datos; cargá y editá en la Google Sheet. La vista se actualiza sola cuando la Sheet cambia, o con «Sincronizar ahora».</div>` : ''}
+  return `${g.arch ? `<div class="banner"><strong>Grupo archivado.</strong>&nbsp;Se puede consultar y editar; no aparece en la lista general de grupos. <button class="btn sm ed" data-act="unarchGroup">Desarchivar</button></div>` : ''}${S.mode === 'sheet' ? `<div class="banner"><strong>Modo «Cargar en la Sheet».</strong>&nbsp;La app solo muestra los datos; cargá y editá en la Google Sheet. La vista se actualiza sola cuando la Sheet cambia, o con «Sincronizar ahora».</div>` : ''}
   <header class="gh"><div class="gh-t"><span class="eyebrow">Grupo · pestaña «${esc(g.name)}»</span><h1>${esc(g.name)}</h1>${g.desc ? `<p class="lead">${esc(g.desc)}</p>` : ''}</div>
-    <div class="gh-a"><button class="btn sm ed" data-act="editGroup">Editar grupo</button><button class="btn sm ed" data-act="replGroup">Replicar grupo</button><button class="btn sm" data-act="exportCmp">Exportar</button><button class="btn sm ghost ed" data-act="delGroup">Borrar</button></div></header>
+    <div class="gh-a"><button class="btn sm ed" data-act="editGroup">Editar grupo</button><button class="btn sm ed" data-act="${g.arch ? 'unarchGroup' : 'archGroup'}">${g.arch ? 'Desarchivar' : 'Archivar'}</button><button class="btn sm" data-act="hideGroup">Ocultar</button><button class="btn sm ed" data-act="replGroup">Replicar grupo</button><button class="btn sm" data-act="exportCmp">Exportar</button><button class="btn sm ghost ed" data-act="delGroup">Borrar</button></div></header>
   <div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${S.ui.tab === k}" class="tab ${S.ui.tab === k ? 'on' : ''}" data-act="tab" data-k="${k}">${l}</button>`).join('')}</div>
   ${S.ui.tab === 'items' ? viewItems(g) : S.ui.tab === 'crit' ? viewCrit(g) : viewCmp(g)}`;
 }
@@ -993,6 +1022,9 @@ function viewCmp(g){
   const its = instIds(cur).map(id => ({...S.app[id], id}));
   const excl = new Set((S.ui.excl || {})[cur.id] || []);
   const ev = evaluate(g.id, its, cur, excl); const leaves = ev.list.filter(c => c.leaf && !ev.off.has(c.id));
+  const isort = (S.ui.isort || {})[cur.id] || '', canMove = canEdit() && !isort && its.length > 1;
+  if (isort === 'score') its.sort((a, b) => (ev.total[b.id] ?? -1) - (ev.total[a.id] ?? -1));
+  const sortSel = its.length > 1 ? `<label class="iset" for="f_isort"><span>Orden de ítems:</span><select id="f_isort"><option value="">Manual</option><option value="score" ${isort === 'score' ? 'selected' : ''}>Por puntaje (mejor primero)</option></select></label>` : '';
   const nOff = ev.list.filter(c => excl.has(c.id)).length, nSet = ev.list.filter(c => c.setOff).length;
   const iset = cur.set && S.app[cur.set] ? cur.set : '', gsets = setsOf(g.id);
   const setSel = `<label class="iset" for="f_iset"><span>Criterios:</span><select id="f_iset" ${canEdit() ? '' : 'disabled'}><option value="">Base</option>${gsets.map(x => `<option value="${x.id}" ${x.id === iset ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>`;
@@ -1001,7 +1033,7 @@ function viewCmp(g){
       <button class="navb" data-act="instStep" data-d="-1" aria-label="Instancia anterior" ${ix <= 0 ? 'disabled' : ''}>‹</button>
       <h2>${esc(cur.name)}</h2>
       <button class="navb" data-act="instStep" data-d="1" aria-label="Instancia siguiente" ${ix >= ins.length - 1 ? 'disabled' : ''}>›</button>
-      <span class="instpos">${ix + 1} de ${ins.length}</span></div><p class="muted">${its.length} ítems · ${leaves.length} criterios evaluados${nSet ? ` · ${nSet} excluido${nSet > 1 ? 's' : ''} por el conjunto` : ''}${nOff ? ` · ${nOff} desestimado${nOff > 1 ? 's' : ''} <button class="btn sm ghost" data-act="inclAll">Incluir todos</button>${canEdit() ? ' <button class="btn sm" data-act="saveAsSet">Guardar como conjunto</button>' : ''}` : ''}</p>${gsets.length || iset ? setSel : ''}<p class="hint">Desmarcá un criterio para dejarlo afuera de la comparación${canEdit() ? '; tocá una celda para forzar ventaja o desventaja' : ''}.<span class="kbd-only"> Con ← → del teclado pasás de una instancia a otra.</span></p></div>
+      <span class="instpos">${ix + 1} de ${ins.length}</span></div><p class="muted">${its.length} ítems · ${leaves.length} criterios evaluados${nSet ? ` · ${nSet} excluido${nSet > 1 ? 's' : ''} por el conjunto` : ''}${nOff ? ` · ${nOff} desestimado${nOff > 1 ? 's' : ''} <button class="btn sm ghost" data-act="inclAll">Incluir todos</button>${canEdit() ? ' <button class="btn sm" data-act="saveAsSet">Guardar como conjunto</button>' : ''}` : ''}</p><div class="isets">${gsets.length || iset ? setSel : ''}${sortSel}</div>${canMove ? '<p class="hint">Arrastrá un ítem desde ⠿ para cambiar su posición<span class=\"kbd-only\"> (o enfocalo y usá Alt + ← →)</span>.</p>' : ''}<p class="hint">Desmarcá un criterio para dejarlo afuera de la comparación${canEdit() ? '; tocá una celda para forzar ventaja o desventaja' : ''}.<span class="kbd-only"> Con ← → del teclado pasás de una instancia a otra.</span></p></div>
     <div class="row"><button class="btn sm ed" data-act="editInst">Editar instancia</button><button class="btn sm ed" data-act="replInst">Replicar</button><button class="btn sm" data-act="exportCmp">Exportar</button><button class="btn sm ghost ed" data-act="delInst">Borrar</button></div></div>`;
   if (!its.length) return h + empty('La instancia no tiene ítems', 'Editá la instancia para elegir qué ítems comparar.', 'editInst', 'Elegir ítems');
   if (isText(g.id)){ h += cmpModeBar(); const cv = S.ui.cview || 'score'; if (cv === 'texts') return h + viewTexts(its); if (cv === 'diff') return h + viewDiff(its) }
@@ -1009,8 +1041,8 @@ function viewCmp(g){
   const pct = x => x == null ? null : Math.round(x * 100);
   const ranked = [...its].sort((a, b) => (ev.total[b.id] ?? -1) - (ev.total[a.id] ?? -1));
   const rank = id => ranked.findIndex(x => x.id === id) + 1;
-  const head = `<tr><th class="sticky"><span class="eyebrow">Criterio</span></th>${its.map(it => { const p = pct(ev.total[it.id]); return `<th>
-      <div class="ith"><span class="rank ${rank(it.id) === 1 ? 'r1' : ''}">${rank(it.id)}º</span>${esc(it.name)}</div>
+  const head = `<tr><th class="sticky"><span class="eyebrow">Criterio</span></th>${its.map(it => { const p = pct(ev.total[it.id]); return `<th data-it="${it.id}">
+      <div class="ith">${canMove ? `<button type="button" class="ithandle" id="ih_${it.id}" data-it="${it.id}" aria-label="Mover ${esc(it.name)}" title="Arrastrar para mover (o Alt + ← →)">⠿</button>` : ''}<span class="rank ${rank(it.id) === 1 ? 'r1' : ''}">${rank(it.id)}º</span>${esc(it.name)}</div>
       <div class="tot"><span class="val">${p ?? '—'}</span><span class="muted">/100</span></div><div class="bar"><i style="width:${p ?? 0}%"></i></div></th>` }).join('')}</tr>`;
   const rows = ev.list.map(c => {
     const pad = `style="padding-left:${10 + c.depth * 18}px"`, off = ev.off.has(c.id), bySet = !!c.setOff, byParent = off && !excl.has(c.id) && !bySet;
@@ -1063,7 +1095,7 @@ const colLetter = i => { let s = ''; i++; while (i > 0){ const m = (i - 1) % 26;
 const fmtTs = iso => iso ? new Date(iso).toLocaleString('es-AR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : '';
 
 function planTabs(D){
-  return [...groups(D).map(g => ({key:g.id, name:g.name, t:'item'})),
+  return [...groups(D).map(g => ({key:g.id, name:g.name + (g.arch ? ' (archivado)' : ''), t:'item'})),
     ...Object.keys(SCHEMA).filter(t => !SCHEMA[t].perGroup).map(t => ({key:t, name:SCHEMA[t].tab, t}))];
 }
 function planCols(t, key, D){
@@ -1556,7 +1588,7 @@ function cloneBundle(B, opt){
     if (opt.rootMode === 'reuse' && same){ rootMap[r.id] = same.id; return }
     const id = uid('r'), rec = {...r}; delete rec.id; rec.t = 'root'; rec.name = uniqueRootName(r.name || 'Criterio'); setRec(id, rec); rootMap[r.id] = id;
   });
-  const gid = uid('g'), grec = {...B.group}; delete grec.id; grec.t = 'group'; grec.name = opt.name; setRec(gid, grec);
+  const gid = uid('g'), grec = {...B.group}; delete grec.id; delete grec.arch; grec.t = 'group'; grec.name = opt.name; setRec(gid, grec);
   B.uses.forEach(u => map[u.id] = uid('c')); B.items.forEach(i => map[i.id] = uid('i')); B.sets.forEach(s => map[s.id] = uid('s'));
   B.uses.forEach(u => { const r = {...u}; delete r.id; r.t = 'crit'; r.g = gid; r.root = rootMap[u.root] || u.root; if (r.p && map[r.p]) r.p = map[r.p]; else delete r.p; setRec(map[u.id], r) });
   B.items.forEach(i => { const r = {}; Object.entries(i).forEach(([k, v]) => { if (k === 'id') return; if (k.startsWith('v.')){ const c = map[k.slice(2)]; if (c) r['v.' + c] = v } else r[k] = v }); r.t = 'item'; r.g = gid; setRec(map[i.id], r) });
@@ -1917,6 +1949,57 @@ function saveAsSetForm(){
   }, 'Guardar');
 }
 
+/* ---------- orden de los ítems dentro de una comparación ---------- */
+function saveItemOrder(ids){
+  const n = curInst(); if (!n || !canEdit()) return;
+  const rest = instIds(n).filter(x => !ids.includes(x)); const val = [...ids, ...rest].join(',');
+  if (val !== (S.app[n.id].items || '')) put(n.id, {...S.app[n.id], items:val}); else render();
+}
+let colDrag = null;
+document.addEventListener('pointerdown', e => {
+  const h = e.target.closest && e.target.closest('.ithandle'); if (!h || e.button > 0) return;
+  e.preventDefault(); const th = h.closest('th'); th.classList.add('coldrag');
+  colDrag = {id:h.dataset.it, pid:e.pointerId, th, box:th.closest('.scroll'), target:null, after:false};
+});
+document.addEventListener('pointermove', e => {
+  const d = colDrag; if (!d || e.pointerId !== d.pid) return; e.preventDefault();
+  const r = d.box.getBoundingClientRect();
+  if (e.clientX > r.right - 40) d.box.scrollLeft += 14; else if (e.clientX < r.left + 140) d.box.scrollLeft -= 14;   // desplaza la tabla al acercarse al borde
+  const el = document.elementFromPoint(e.clientX, Math.min(Math.max(e.clientY, r.top + 4), r.bottom - 4)), th = el && el.closest('th[data-it]');
+  document.querySelectorAll('th.drop-b, th.drop-a').forEach(x => x.classList.remove('drop-b', 'drop-a'));
+  if (!th || th === d.th){ d.target = null; return }
+  const b = th.getBoundingClientRect(); d.after = e.clientX > b.left + b.width / 2; d.target = th.dataset.it;
+  th.classList.add(d.after ? 'drop-a' : 'drop-b');
+}, {passive:false});
+function endColDrag(e){
+  const d = colDrag; if (!d || e.pointerId !== d.pid) return; colDrag = null;
+  d.th.classList.remove('coldrag'); document.querySelectorAll('th.drop-b, th.drop-a').forEach(x => x.classList.remove('drop-b', 'drop-a'));
+  if (!d.target) return;
+  const ids = [...document.querySelectorAll('.cmp th[data-it]')].map(x => x.dataset.it).filter(x => x !== d.id);
+  ids.splice(ids.indexOf(d.target) + (d.after ? 1 : 0), 0, d.id); S.focusNext = 'ih_' + d.id; saveItemOrder(ids);
+}
+document.addEventListener('pointerup', endColDrag); document.addEventListener('pointercancel', endColDrag);
+document.addEventListener('keydown', e => {
+  const t = e.target; if (!e.altKey || !t.classList || !t.classList.contains('ithandle') || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+  e.preventDefault(); e.stopPropagation();
+  const ids = [...document.querySelectorAll('.cmp th[data-it]')].map(x => x.dataset.it), i = ids.indexOf(t.dataset.it), j = i + (e.key === 'ArrowRight' ? 1 : -1);
+  if (j < 0 || j >= ids.length) return; [ids[i], ids[j]] = [ids[j], ids[i]]; S.focusNext = 'ih_' + t.dataset.it; saveItemOrder(ids);
+}, true);
+
+/* ---------- grupos ocultos (por dispositivo) y archivados (sincronizado) ---------- */
+const EYE = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>';
+const EYE_OFF = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M2 12s3.6-7 10-7c2 0 3.7.7 5.1 1.6M22 12s-3.6 7-10 7c-2 0-3.7-.7-5.1-1.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 3l18 18" stroke="currentColor" stroke-width="1.8"/></svg>';
+function hiddenBody(){
+  const list = groups().filter(g => isHidden(g.id) || S.hidSess.has(g.id));
+  if (!list.length) return '<p class="hint">No hay grupos ocultos en este dispositivo.</p>';
+  return `<p class="hint">Los grupos ocultos no se ven en la lista, solo en este dispositivo. Tocá el ojo para mostrarlos u ocultarlos: el cambio se ve al instante.</p>
+    <div class="hlist">${list.map(g => { const h = isHidden(g.id);
+      return `<div class="hrow ${h ? 'ishid' : ''}"><button type="button" class="eyeb" data-act="toggleHide" data-id="${g.id}" aria-pressed="${!h}" aria-label="${h ? 'Mostrar' : 'Ocultar'} ${esc(g.name)}" title="${h ? 'Mostrar' : 'Ocultar'}">${h ? EYE_OFF : EYE}</button>
+        <span class="hname">${esc(g.name)}</span><span class="badge">${g.arch ? 'Archivados' : 'General'}</span><span class="muted hst">${h ? 'Oculto' : 'Visible'}</span></div>` }).join('')}</div>`;
+}
+function openHidden(){ S.hidSess = new Set(); modal('Ocultos (' + hiddenGroups().length + ')', hiddenBody(), null) }
+function setHidden(id, h){ if (h) S.hidden.add(id); else S.hidden.delete(id); saveHidden() }
+
 /* ---------- instancias: navegación y orden ---------- */
 function goInst(id){
   const list = insts(S.ui.g), cur = curInst(); if (!cur || cur.id === id) return;
@@ -1955,6 +2038,7 @@ document.addEventListener('keydown', e => {
   if (S.ui.view !== 'group' || S.ui.tab !== 'cmp' || !$('#modal').hidden || S.drawer || e.ctrlKey || e.metaKey) return;
   if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
   const t = e.target, d = e.key === 'ArrowRight' ? 1 : -1;
+  if (t.classList && t.classList.contains('ithandle')) return;
   if (e.altKey && t.classList && t.classList.contains('ichip')){   // Alt + flechas: mover la instancia enfocada
     e.preventDefault(); const ids = insts(S.ui.g).map(n => n.id), i = ids.indexOf(t.dataset.id), j = i + d;
     if (j < 0 || j >= ids.length) return; [ids[i], ids[j]] = [ids[j], ids[i]]; S.focusNext = 'ich_' + t.dataset.id; saveInstOrder(ids); return;
@@ -2028,6 +2112,7 @@ let onSave = null;
 function modal(title, body, fn, label = 'Guardar', danger = false){
   $('#mTitle').textContent = title; $('#mBody').innerHTML = body;
   const b = $('#mSave'); b.textContent = label; b.className = 'btn ' + (danger ? 'danger' : 'primary'); b.hidden = !fn;
+  const c = document.querySelector('#modal footer [data-act=closeModal]'); if (c) c.textContent = fn ? 'Cancelar' : 'Cerrar';
   onSave = fn; $('#modal').hidden = false;
   setTimeout(() => $('#mBody').querySelector('input:not([type=checkbox]),select,textarea')?.focus(), 30);
 }
@@ -2079,7 +2164,8 @@ function instForm(id){
     <div class="fld"><span>Ítems a comparar</span><div class="checks">${items(g).map(it => `<label><input type="checkbox" id="f_it_${it.id}" ${sel.includes(it.id) ? 'checked' : ''}> ${esc(it.name)}</label>`).join('') || '<p class="hint">El grupo todavía no tiene ítems.</p>'}</div></div>
     <label class="fld" for="f_inst_set"><span>Criterios que usa</span><select id="f_inst_set"><option value="">Base del grupo</option>${setsOf(g).map(x => `<option value="${x.id}" ${x.id === n.set ? 'selected' : ''}>Conjunto «${esc(x.name)}»</option>`).join('')}</select></label>`, () => {
     const name = v('f_name'); if (!name){ toast('Poné un nombre a la instancia.'); return false }
-    const chosen = items(g).filter(it => document.getElementById('f_it_' + it.id).checked).map(it => it.id);
+    const picked = items(g).filter(it => document.getElementById('f_it_' + it.id).checked).map(it => it.id);
+    const chosen = [...sel.filter(x => picked.includes(x)), ...picked.filter(x => !sel.includes(x))];   // respeta el orden actual y agrega los nuevos al final
     const nid = id || uid('n'); const rec = {...n, t:'inst', g, name, items:chosen.join(',')}; const isv = v('f_inst_set'); if (isv) rec.set = isv; else delete rec.set; if (!id) rec.ord = String(Math.max(0, ...insts(g).map(x => +x.ord || 0)) + 1);
     put(nid, rec); S.ui.inst[g] = nid; save(); render();
   });
@@ -2254,6 +2340,15 @@ const ACT = {
     try{ await fetch(location.pathname, {cache:'reload'}) }catch(e){}
     try{ const u = new URL(location.href); u.searchParams.set('v', Date.now()); location.replace(u.toString()) }catch(e){ location.reload() }
   },
+  toggleArch(){ S.ui.archOpen = !S.ui.archOpen; save(); renderSide() },
+  archGroup(){ const g = S.ui.g; put(g, {...S.app[g], arch:'si'}); S.ui.archOpen = true; save(); toast('Grupo archivado: está en «Archivados».'); render() },
+  unarchGroup(){ const g = S.ui.g; const r = {...S.app[g]}; delete r.arch; put(g, r); toast('Grupo desarchivado.') },
+  hideGroup(){ const g = S.ui.g, nm = (S.app[g] || {}).name; setHidden(g, true); fixUi(); render(); toast(`«${nm}» quedó oculto en este dispositivo. Lo ves en «Ocultos».`) },
+  openHidden(){ openHidden() },
+  toggleHide(el){ const id = el.dataset.id; S.hidSess.add(id); setHidden(id, !isHidden(id));
+    $('#mTitle').textContent = 'Ocultos (' + hiddenGroups().length + ')'; $('#mBody').innerHTML = hiddenBody();
+    const b = document.querySelector(`.eyeb[data-id="${id}"]`); if (b) b.focus();
+    fixUi(); renderStatus(); renderSide(); renderMain() },
   inclAll(){ const n = curInst(); if (n && S.ui.excl) delete S.ui.excl[n.id]; save(); render() },
   openPlan(){ S.ui.view = 'plan'; save(); render() },
   planTab(el){ S.ui[el.dataset.sk === 'app' ? 'planTab' : 'sheetTab'] = el.dataset.k; save(); render() },
@@ -2359,6 +2454,7 @@ document.addEventListener('change', e => {
     const a = recs('adj').find(x => x.set === t.dataset.set && x.use === t.dataset.c), pinned = a && a.w && String(a.w) === t.dataset.base;
     setAdj(t.dataset.set, t.dataset.c, {w:!val || (val === t.dataset.base && !pinned) ? '' : val}) }
   else if (t.classList.contains('sx-alt')) setAdj(t.dataset.set, t.dataset.c, {alt:t.value})
+  else if (t.id === 'f_isort'){ const n = curInst(); if (n){ S.ui.isort = {...(S.ui.isort || {}), [n.id]:t.value}; save(); render() } }
   else if (t.id === 'f_iset'){ const n = curInst(); if (n){ const r = {...S.app[n.id]}; if (t.value) r.set = t.value; else delete r.set; put(n.id, r) } }
   else if (t.classList.contains('cx')){ const n = curInst(); if (!n) return; S.ui.excl = S.ui.excl || {};
     const set = new Set(S.ui.excl[n.id] || []); if (t.checked) set.delete(t.dataset.c); else set.add(t.dataset.c);
