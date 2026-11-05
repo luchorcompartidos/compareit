@@ -607,7 +607,7 @@ tr.rowdrag{outline:2px dashed var(--accent);outline-offset:-2px}
 const SCHEMA = JSON.parse(document.getElementById('ci-schema').textContent);
 /** Fecha y hora de esta versión de la app (se completa sola al generar los archivos). */
 const APP_NAME = 'COMPAREIt(em)';
-const APP_BUILD = '04/11/2026 20:53';
+const APP_BUILD = '04/11/2026 21:41';
 const $ = s => document.querySelector(s);
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
@@ -1098,7 +1098,7 @@ function viewCmp(g){
       <button class="navb" data-act="instStep" data-d="-1" aria-label="Instancia anterior" ${ix <= 0 ? 'disabled' : ''}>‹</button>
       <h2>${esc(cur.name)}</h2>
       <button class="navb" data-act="instStep" data-d="1" aria-label="Instancia siguiente" ${ix >= ins.length - 1 ? 'disabled' : ''}>›</button>
-      <span class="instpos">${ix + 1} de ${ins.length}</span></div><p class="muted">${its.length} ítems · ${leaves.length} criterios evaluados${nSet ? ` · ${nSet} excluido${nSet > 1 ? 's' : ''} por el conjunto` : ''}${nOff ? ` · ${nOff} desestimado${nOff > 1 ? 's' : ''} <button class="btn sm ghost" data-act="inclAll">Incluir todos</button>${canEdit() ? ' <button class="btn sm" data-act="saveAsSet">Guardar como conjunto</button>' : ''}` : ''}</p><div class="isets">${gsets.length || iset ? setSel : ''}${sortSel}</div>${canMove ? '<p class="hint">Arrastrá un ítem desde ⠿ para cambiar su posición<span class=\"kbd-only\"> (o enfocalo y usá Alt + ← →)</span>.</p>' : ''}<p class="hint">Desmarcá un criterio para dejarlo afuera de la comparación${canEdit() ? '; tocá una celda para forzar ventaja o desventaja' : ''}.<span class="kbd-only"> Con ← → del teclado pasás de una instancia a otra.</span></p></div>
+      <span class="instpos">${ix + 1} de ${ins.length}</span></div><p class="muted">${its.length} ítems · ${leaves.length} criterios evaluados${nSet ? ` · ${nSet} excluido${nSet > 1 ? 's' : ''} por el conjunto` : ''}${nOff ? ` · ${nOff} desestimado${nOff > 1 ? 's' : ''} <button class="btn sm ghost" data-act="inclAll">Incluir todos</button>${canEdit() ? ' <button class="btn sm" data-act="saveAsSet">Guardar como conjunto</button>' : ''}` : ''}</p><div class="isets">${gsets.length || iset ? setSel : ''}${sortSel}</div>${canMove ? '<p class="hint">Arrastrá un ítem desde ⠿ para cambiar su posición<span class=\"kbd-only\"> (o enfocalo y usá Alt + ← →)</span>.</p>' : ''}<p class="hint">Desmarcá un criterio para dejarlo afuera de la comparación${canEdit() ? '; tocá una celda para forzar ventaja o desventaja' : ''}.<span class="kbd-only"> Con ← → del teclado recorrés las columnas de los ítems (Inicio y Fin van a la primera y a la última); en el borde, otra pulsación pasa a la instancia anterior o siguiente.</span></p></div>
     <div class="row"><button class="btn sm ed" data-act="editInst">Editar instancia</button><button class="btn sm ed" data-act="replInst">Replicar</button><button class="btn sm" data-act="exportCmp">Exportar</button><button class="btn sm ghost ed" data-act="delInst">Borrar</button></div></div>`;
   if (!its.length) return h + empty('La instancia no tiene ítems', 'Editá la instancia para elegir qué ítems comparar.', 'editInst', 'Elegir ítems');
   if (isText(g.id)){ h += cmpModeBar(); const cv = S.ui.cview || 'score'; if (cv === 'texts') return h + viewTexts(its); if (cv === 'diff') return h + viewDiff(its) }
@@ -2512,7 +2512,24 @@ document.addEventListener('keydown', e => {
     if (j < 0 || j >= ids.length) return; [ids[i], ids[j]] = [ids[j], ids[i]]; S.focusNext = 'ich_' + t.dataset.id; saveInstOrder(ids); return;
   }
   if (e.altKey || e.shiftKey || (t.closest && t.closest('input,select,textarea,[contenteditable]'))) return;
-  e.preventDefault(); stepInst(d);
+  e.preventDefault();
+  // primero se recorren las columnas de la tabla; al llegar al borde, una pulsación nueva (no sostenida) cambia de instancia
+  if (cmpScrollStep(d)) return;
+  if (!e.repeat) stepInst(d);
+});
+/** Desplaza la tabla de Comparar una columna. Devuelve false si ya está en el borde en esa dirección. */
+function cmpScrollStep(d){
+  const t = document.querySelector('table.cmp'), box = t && t.closest('.scroll'); if (!box) return false;
+  const max = box.scrollWidth - box.clientWidth; if (max <= 2) return false;
+  if ((d > 0 && box.scrollLeft >= max - 2) || (d < 0 && box.scrollLeft <= 2)) return false;
+  const w = (S.colG && S.colG.w) || 160;
+  box.scrollTo({left:Math.max(0, Math.min(max, box.scrollLeft + d * w)), behavior:'smooth'}); return true;
+}
+document.addEventListener('keydown', e => {   // Inicio / Fin: primera o última columna de la comparación
+  if ((e.key !== 'Home' && e.key !== 'End') || S.ui.view !== 'group' || S.ui.tab !== 'cmp' || !$('#modal').hidden || S.drawer || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.target.closest && e.target.closest('input,select,textarea,[contenteditable]')) return;
+  const t = document.querySelector('table.cmp'), box = t && t.closest('.scroll'); if (!box || box.scrollWidth <= box.clientWidth + 2) return;
+  e.preventDefault(); box.scrollTo({left:e.key === 'Home' ? 0 : box.scrollWidth, behavior:'smooth'});
 });
 
 /* ---------- panel de sincronización ---------- */
