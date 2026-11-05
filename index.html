@@ -157,6 +157,9 @@ textarea{resize:vertical}
 .dbody{padding:18px 20px;overflow:auto;display:flex;flex-direction:column;gap:14px}
 .fld{display:flex;flex-direction:column;gap:5px;font-size:.88rem;font-weight:500}
 .dupwarn{background:color-mix(in srgb, var(--warn) 12%, var(--surface));border:1px solid color-mix(in srgb, var(--warn) 45%, var(--line));border-radius:8px;padding:8px 10px;font-size:.86rem;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.fsec{display:flex;flex-direction:column;gap:6px}.fwide{grid-column:1/-1}
+.cmp tr.asec th,.cmp tr.asec td{background:var(--sunk);padding-top:6px;padding-bottom:6px}.cmp tr.asec .btn{margin-left:6px}
+.aval a{color:var(--accent)}.cmp td.aval{font-size:.9rem}
 .gnhint{font-weight:400;font-size:.78rem;color:var(--muted)}.gnhint .val{margin-left:4px}.gnhint.over{color:var(--dis)}
 .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 .hint{font-size:.82rem;color:var(--muted)}
@@ -565,6 +568,14 @@ tr.rowdrag{outline:2px dashed var(--accent);outline-offset:-2px}
   {"f":"p","h":"Padre","type":"ref","ref":"crit","scope":"g"},
   {"f":"w","h":"Peso","type":"num"},
   {"f":"ord","h":"Orden","type":"num"}]},
+ "attr": {"tab":"_Atributos","label":"Atributos","single":"Atributo","newName":"Nuevo atributo","prefix":"f","cols":[
+  {"f":"g","h":"Grupo","type":"ref","ref":"group","req":1},
+  {"f":"name","h":"Nombre","type":"text","req":1,"wide":1},
+  {"f":"type","h":"Tipo de dato","type":"enum","opts":[["long","Texto largo"],["num","Número"],["date","Fecha"],["url","Enlace"],["opts","Lista de opciones"]]},
+  {"f":"opts","h":"Opciones","type":"text","wide":1},
+  {"f":"ord","h":"Orden","type":"num"},
+  {"f":"arch","h":"Archivado","type":"enum","opts":[["si","Sí"]]},
+  {"f":"vals","h":"Valores guardados","type":"text","hidden":1}]},
  "set": {"tab":"_Conjuntos","label":"Conjuntos","single":"Conjunto de criterios","newName":"Nuevo conjunto","prefix":"s","cols":[
   {"f":"g","h":"Grupo","type":"ref","ref":"group","req":1},
   {"f":"name","h":"Nombre","type":"text","req":1,"wide":1},
@@ -596,7 +607,7 @@ tr.rowdrag{outline:2px dashed var(--accent);outline-offset:-2px}
 const SCHEMA = JSON.parse(document.getElementById('ci-schema').textContent);
 /** Fecha y hora de esta versión de la app (se completa sola al generar los archivos). */
 const APP_NAME = 'COMPAREIt(em)';
-const APP_BUILD = '04/11/2026 19:08';
+const APP_BUILD = '04/11/2026 20:53';
 const $ = s => document.querySelector(s);
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
@@ -922,6 +933,7 @@ async function sync(quiet, force){
     }
     S.ver = newVer;
     S.app = nApp; S.base = nBase; S.conflicts = conflicts; S.last = now();
+    if (S.mode === 'app' && attrSyncFix(app)) setTimeout(() => sync(true, true), 400);   // valores de atributos archivados o restaurados desde la Sheet
     if (!quiet || pulled || pushed || conflicts.length)
       log(`Sincronizado: ${pushed} enviados a la Sheet, ${pulled} recibidos${conflicts.length ? ', ' + conflicts.length + ' en conflicto' : ''}.`);
     if (conflicts.length && !quiet) openSync();
@@ -967,14 +979,14 @@ async function resolve(keys){
 }
 
 /* ---------- etiquetas legibles para conflictos ---------- */
-const TYPE = {group:'Grupo', root:'Criterio', crit:'Uso de criterio', set:'Conjunto de criterios', adj:'Ajuste de conjunto', item:'Ítem', inst:'Instancia'};
+const TYPE = {group:'Grupo', root:'Criterio', crit:'Uso de criterio', set:'Conjunto de criterios', adj:'Ajuste de conjunto', item:'Ítem', inst:'Instancia', attr:'Atributo'};
 const anyRec = id => S.app[id] || S.base[id] || SIM.records[id] || {};
 const nameOf = id => { const r = anyRec(id); return (r.t === 'crit' ? anyRec(r.root).name : r.name) || id };
 function recLabel(r){ if (!r) return ''; const g = r.g ? ' · ' + nameOf(r.g) : ''; const n = r.t === 'crit' ? anyRec(r.root).name : r.t === 'adj' ? nameOf(r.set) + ' / ' + nameOf(r.use) : r.name; return `${TYPE[r.t] || 'Registro'}: ${n || '(sin nombre)'}${g}` }
 function fieldLabel(f){
   const F = {name:'Nombre', desc:'Descripción', notes:'Notas', items:'Ítems', concl:'Conclusión', p:'Criterio padre', root:'Criterio', set:'Conjunto', use:'Criterio', on:'Incluido', alt:'Definición alternativa', kind:'Tipo', dir:'Sentido', unit:'Unidad', scale:'Escala', w:'Peso', ord:'Orden', g:'Grupo', t:'Tipo de registro'};
   if (F[f]) return F[f];
-  if (f.startsWith('v.')) return nameOf(f.slice(2));
+  if (f.startsWith('v.') || f.startsWith('x.')) return nameOf(f.slice(2));
   if (f.startsWith('o.')){ const [, it, c] = f.split('.'); return `Ajuste manual: ${nameOf(it)} / ${nameOf(c)}` }
   return f;
 }
@@ -1058,12 +1070,12 @@ function renderMain(){
 }
 
 function viewGroup(g){
-  const tabs = [['cmp', 'Comparar'], ['items', 'Ítems'], ['grid', 'Grilla'], ['crit', 'Criterios']];
+  const tabs = [['cmp', 'Comparar'], ['items', 'Ítems'], ['attr', 'Atributos'], ['grid', 'Grilla'], ['crit', 'Criterios']];
   return `${g.arch ? `<div class="banner"><strong>Grupo archivado.</strong>&nbsp;Se puede consultar y editar; no aparece en la lista general de grupos. <button class="btn sm ed" data-act="unarchGroup">Desarchivar</button></div>` : ''}${S.mode === 'sheet' ? `<div class="banner"><strong>Modo «Cargar en la Sheet».</strong>&nbsp;La app solo muestra los datos; cargá y editá en la Google Sheet. La vista se actualiza sola cuando la Sheet cambia, o con «Sincronizar ahora».</div>` : ''}
   <header class="gh"><div class="gh-t"><span class="eyebrow">Grupo · pestaña «${esc(g.name)}»</span><h1>${esc(g.name)}</h1>${g.desc ? `<p class="lead">${esc(g.desc)}</p>` : ''}</div>
     <div class="gh-a"><button class="btn sm ed" data-act="editGroup">Editar grupo</button><button class="btn sm ed" data-act="${g.arch ? 'unarchGroup' : 'archGroup'}">${g.arch ? 'Desarchivar' : 'Archivar'}</button><button class="btn sm" data-act="hideGroup">Ocultar</button><button class="btn sm ed" data-act="replGroup">Replicar grupo</button><button class="btn sm" data-act="exportCmp">Exportar</button><button class="btn sm ghost ed" data-act="delGroup">Borrar</button></div></header>
   <div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${S.ui.tab === k}" class="tab ${S.ui.tab === k ? 'on' : ''}" data-act="tab" data-k="${k}">${l}</button>`).join('')}</div>
-  ${S.ui.tab === 'items' ? viewItems(g) : S.ui.tab === 'crit' ? viewCrit(g) : viewCmp(g)}`;
+  ${S.ui.tab === 'items' ? viewItems(g) : S.ui.tab === 'attr' ? viewAttrs(g) : S.ui.tab === 'crit' ? viewCrit(g) : viewCmp(g)}`;
 }
 
 const MK = {adv:'▲<span class="mkt"> Ventaja</span>', dis:'▼<span class="mkt"> Desventaja</span>', eq:'=<span class="mkt"> Similar</span>'};
@@ -1106,7 +1118,11 @@ function viewCmp(g){
     return `<tr><th class="sticky" ${pad}><label class="crl">${chk}<span><span class="cn">${esc(c.name)}</span><span class="cw">${critHint(c)} · peso ${c.w || 1}</span></span></label></th>${its.map(it => { const r = ev.res[c.id][it.id];
       return `<td class="cell m-${r.mark}" data-act="cell" data-it="${it.id}" data-c="${c.id}"><span class="val">${esc(fmt(c, r.raw))}</span>${MK[r.mark] ? `<span class="mk">${MK[r.mark]}${r.manual ? ' ✎' : ''}</span>` : ''}</td>` }).join('')}</tr>`;
   }).join('');
-  h += `${layBar()}${its.length > 2 ? '<p class="swipe">Deslizá la tabla para ver todos los ítems →</p>' : ''}<div class="scroll"><table class="cmp"><thead>${head}</thead><tbody>${rows}</tbody></table></div>`;
+  const ats = attrsOf(g.id), aOn = !S.ui.attrsOff;
+  const arows = !ats.length ? '' : `<tr class="asec"><th class="sticky"><span class="eyebrow">Atributos</span> <button class="btn sm ghost" data-act="toggleAttrs" aria-expanded="${aOn}">${aOn ? 'Ocultar' : 'Mostrar (' + ats.length + ')'}</button></th>${its.map(() => '<td></td>').join('')}</tr>`
+    + (aOn ? ats.map(a => `<tr class="arow"><th class="sticky"><span class="cn">${esc(a.name)}</span><span class="cw">atributo · no suma puntaje</span></th>${its.map(it => `<td class="aval">${fmtAttr(a, it['x.' + a.id])}</td>`).join('')}</tr>`).join('') : '')
+    + `<tr class="asec"><th class="sticky"><span class="eyebrow">Criterios</span></th>${its.map(() => '<td></td>').join('')}</tr>`;
+  h += `${layBar()}${its.length > 2 ? '<p class="swipe">Deslizá la tabla para ver todos los ítems →</p>' : ''}<div class="scroll"><table class="cmp"><thead>${head}</thead><tbody>${arows}${rows}</tbody></table></div>`;
 
   const marks = (it, m) => leaves.filter(c => ev.res[c.id][it.id].mark === m).map(c => c.name);
   const sims = leaves.filter(c => its.length > 1 && its.every(it => ev.res[c.id][it.id].mark === 'eq'));
@@ -1155,7 +1171,8 @@ function planCols(t, key, D){
   const s = SCHEMA[t]; if (!s) return [];
   if (!s.perGroup) return s.cols.filter(c => !c.hidden);
   const leaves = tree(key, D).filter(c => c.leaf && c.kind !== 'auto');
-  return [s.cols[0], ...((D[key] || {}).kind === 'text' ? [{f:'txt', h:'Texto', type:'longtext', wide:1}] : []), ...leaves.map(c => c.kind === 'qual'
+  const acols = attrsOf(key, D).map(a => a.type === 'opts' ? {f:'x.' + a.id, h:a.name, type:'enum', opts:attrOpts(a).map(o => [o, o])} : {f:'x.' + a.id, h:a.name, type:a.type === 'num' ? 'num' : 'text', wide:a.type === 'long' ? 1 : 0});
+  return [s.cols[0], ...((D[key] || {}).kind === 'text' ? [{f:'txt', h:'Texto', type:'longtext', wide:1}] : []), ...acols, ...leaves.map(c => c.kind === 'qual'
     ? {f:'v.' + c.id, h:c.name, type:'enum', opts:[...levelsOf(c).map((o, i) => [o, (i + 1) + '. ' + o]), ...offOf(c).map(o => [o, o + ' (desestimado)'])]}
     : {f:'v.' + c.id, h:c.name + (c.unit ? ' (' + c.unit + ')' : ''), type:'num'}), ...s.cols.slice(1)];
 }
@@ -1249,6 +1266,8 @@ function planCheck(t, D, id, rec, f, val, col){
   if (t === 'crit' && f === 'p' && val && (val === id || descendants(id, rec.g, D).includes(val))) return 'Un criterio no puede depender de sí mismo ni de sus subcriterios.';
   if (t === 'crit' && f === 'p' && val && D[val] && D[val].g !== rec.g) return 'El criterio padre tiene que ser del mismo grupo.';
   if (t === 'root' && f === 'name' && rootTaken(val, D, id)) return 'Ya existe un criterio con ese nombre en el catálogo.';
+  if (t === 'attr' && f === 'name' && recs('attr', D).some(x => x.id !== id && x.g === rec.g && (x.name || '').toLowerCase() === val.toLowerCase())) return 'Ya hay un atributo con ese nombre en ese grupo.';
+  if (t === 'attr' && f === 'name' && /\[(c|f)_[\w-]+\]|\[criterio\]/i.test(val)) return 'El nombre no puede incluir marcas entre corchetes.';
   if (t === 'set' && f === 'name' && setsOf(rec.g, D).some(x => x.id !== id && (x.name || '').toLowerCase() === val.toLowerCase())) return 'Ya hay un conjunto con ese nombre en ese grupo.';
   if (t === 'adj' && (f === 'use' || f === 'set')){ const s2 = f === 'set' ? val : rec.set, u2 = f === 'use' ? val : rec.use;
     if (s2 && u2 && recs('adj', D).some(a => a.id !== id && a.set === s2 && a.use === u2)) return 'Ese criterio ya tiene un ajuste en ese conjunto.' }
@@ -1316,6 +1335,7 @@ function delText(D, t, id){
   if (t === 'item') return `Se borrará el ítem «${nm}» y se quitará de sus instancias.`;
   if (t === 'inst') return `Se borrará la instancia «${nm}». Los ítems no se borran.`;
   if (t === 'set'){ const us = instsUsingSet(id, D).map(n => esc(n.name)); return `Se borrará el conjunto «${nm}» con sus ajustes.${us.length ? ' Las instancias que lo usan (' + us.join(', ') + ') vuelven a la Base.' : ''}` }
+  if (t === 'attr'){ const n = r.arch === 'si' ? 0 : attrUsed({...r, id}, D); return `Se borrará el atributo «${nm}»${n ? ' con los valores cargados en ' + n + ' ítem' + (n === 1 ? '' : 's') : ''} y su columna de la pestaña del grupo. Si solo querés sacarlo de la vista, archivalo.` }
   if (t === 'adj') return 'Se borrará este ajuste: el criterio vuelve a seguir a la Base en ese conjunto.';
   return `Se borrará «${nm}».`;
 }
@@ -1324,6 +1344,7 @@ function cascadeDel(sk, t, id){
   if (t === 'group') Object.keys(D).filter(k => D[k].g === id).forEach(k => st.del(k));
   if (t === 'root') usesOf(id, D).forEach(u => { if (D[u.id]) cascadeDel(sk, 'crit', u.id) });
   if (t === 'set') adjsOf(id, D).forEach(a => st.del(a.id));
+  if (t === 'attr') Object.keys(D).filter(k => D[k].t === 'item' && D[k].g === r.g && D[k]['x.' + id] != null).forEach(k => { const rec = {...D[k]}; delete rec['x.' + id]; st.write(k, rec) });
   if (t === 'crit'){
     const gone = [id, ...descendants(id, r.g, D)]; gone.forEach(k => st.del(k));
     recs('adj', D).filter(a => gone.includes(a.use)).forEach(a => st.del(a.id));
@@ -1344,11 +1365,11 @@ function cascadeDel(sk, t, id){
 
 function viewItems(g){
   if (isText(g.id)) return viewTextItems(g);
-  const its = items(g.id), leaves = tree(g.id).filter(c => c.leaf && c.kind !== 'auto'), ins = insts(g.id);
+  const its = items(g.id), leaves = tree(g.id).filter(c => c.leaf && c.kind !== 'auto'), ins = insts(g.id), ats = attrsOf(g.id);
   let h = `<div class="instbar"><p class="muted">${its.length} ítems en el grupo. Cada ítem es una fila de la pestaña «${esc(g.name)}».${canEdit() && its.length > 1 ? ' Arrastrá desde ⠿ para cambiar el orden<span class="kbd-only"> (o Alt + ↑ ↓)</span>.' : ''}</p><button class="btn sm primary ed" data-act="newItem">+ Ítem</button></div>`;
   if (!its.length) return h + empty('Sin ítems', 'Cargá el primer ítem desde acá o agregá una fila en la Sheet.', 'newItem', 'Agregar ítem');
-  h += `<div class="scroll"><table class="tbl"><thead><tr>${canEdit() ? '<th class="hcol"></th>' : ''}<th>Ítem</th>${leaves.map(c => `<th>${esc(c.name)}</th>`).join('')}<th>Instancias</th><th></th></tr></thead><tbody>
-    ${its.map(it => `<tr>${canEdit() ? `<td class="hcol">${rowHandle(it.id)}</td>` : ''}<td><strong>${esc(it.name)}</strong></td>${leaves.map(c => `<td class="val">${esc(fmt(c, it['v.' + c.id]))}</td>`).join('')}
+  h += `<div class="scroll"><table class="tbl"><thead><tr>${canEdit() ? '<th class="hcol"></th>' : ''}<th>Ítem</th>${ats.map(a => `<th class="ath">${esc(a.name)}</th>`).join('')}${leaves.map(c => `<th>${esc(c.name)}</th>`).join('')}<th>Instancias</th><th></th></tr></thead><tbody>
+    ${its.map(it => `<tr>${canEdit() ? `<td class="hcol">${rowHandle(it.id)}</td>` : ''}<td><strong>${esc(it.name)}</strong></td>${ats.map(a => `<td class="aval">${fmtAttr(a, it['x.' + a.id])}</td>`).join('')}${leaves.map(c => `<td class="val">${esc(fmt(c, it['v.' + c.id]))}</td>`).join('')}
       <td>${ins.filter(n => instIds(n).includes(it.id)).length}</td>
       <td><div class="acts ed"><button class="btn sm" data-act="editItem" data-id="${it.id}">Editar</button><button class="btn sm" data-act="dupItem" data-id="${it.id}">Replicar</button><button class="btn sm ghost" data-act="delItem" data-id="${it.id}">Borrar</button></div></td></tr>`).join('')}
   </tbody></table></div>`;
@@ -1356,17 +1377,132 @@ function viewItems(g){
 }
 
 function viewTextItems(g){
-  const its = items(g.id), ins = insts(g.id);
+  const its = items(g.id), ins = insts(g.id), ats = attrsOf(g.id);
   let h = `<div class="instbar"><p class="muted">${its.length} textos en el grupo. Cada texto es una fila de la pestaña «${esc(g.name)}».${canEdit() && its.length > 1 ? ' Arrastrá desde ⠿ para cambiar el orden<span class="kbd-only"> (o Alt + ↑ ↓)</span>.' : ''}</p><button class="btn sm primary ed" data-act="newItem">+ Texto</button></div>`;
   if (!its.length) return h + empty('Sin textos', 'Cargá el primer texto desde acá o pegalo en la columna «Texto» de la Sheet.', 'newItem', 'Agregar texto');
-  h += `<div class="scroll"><table class="tbl"><thead><tr>${canEdit() ? '<th class="hcol"></th>' : ''}<th>Texto</th><th>Palabras</th><th>Caracteres</th><th>Sin espacios</th><th>Legibilidad</th><th>Instancias</th><th></th></tr></thead><tbody>
+  h += `<div class="scroll"><table class="tbl"><thead><tr>${canEdit() ? '<th class="hcol"></th>' : ''}<th>Texto</th>${ats.map(a => `<th class="ath">${esc(a.name)}</th>`).join('')}<th>Palabras</th><th>Caracteres</th><th>Sin espacios</th><th>Legibilidad</th><th>Instancias</th><th></th></tr></thead><tbody>
     ${its.map(it => { const m = metricsOf(it.txt); return `<tr>${canEdit() ? `<td class="hcol">${rowHandle(it.id)}</td>` : ''}<td><strong>${esc(it.name)}</strong><span class="cw">${esc((it.txt || 'Sin texto').replace(/\s+/g, ' ').slice(0, 70))}${(it.txt || '').length > 70 ? '…' : ''}</span></td>
-      <td class="val">${fmtN(m.words)}</td><td class="val">${fmtN(m.chars)}</td><td class="val">${fmtN(m.charsns)}</td><td class="val">${m.words ? fmtN(m.inflesz) + ' · ' + inflLabel(m.inflesz) : '—'}</td>
+      ${ats.map(a => `<td class="aval">${fmtAttr(a, it['x.' + a.id])}</td>`).join('')}<td class="val">${fmtN(m.words)}</td><td class="val">${fmtN(m.chars)}</td><td class="val">${fmtN(m.charsns)}</td><td class="val">${m.words ? fmtN(m.inflesz) + ' · ' + inflLabel(m.inflesz) : '—'}</td>
       <td>${ins.filter(n => instIds(n).includes(it.id)).length}</td>
       <td><div class="acts ed"><button class="btn sm" data-act="editText" data-id="${it.id}">Texto</button><button class="btn sm" data-act="editItem" data-id="${it.id}">Editar</button><button class="btn sm" data-act="dupItem" data-id="${it.id}">Replicar</button><button class="btn sm ghost" data-act="delItem" data-id="${it.id}">Borrar</button></div></td></tr>` }).join('')}
   </tbody></table></div>`;
   return h;
 }
+/* ---------- Atributos: datos descriptivos de los ítems (no suman puntaje) ---------- */
+const ATYPES = [['', 'Texto'], ['long', 'Texto largo'], ['num', 'Número'], ['date', 'Fecha'], ['url', 'Enlace'], ['opts', 'Lista de opciones']];
+const atypeName = t => (ATYPES.find(x => x[0] === (t || '')) || ATYPES[0])[1];
+/** Atributos de un grupo en su orden manual (por defecto solo los activos). */
+const attrsOf = (g, src = S.app, all = false) => recs('attr', src).filter(a => a.g === g && (all || a.arch !== 'si')).sort((a, b) => ((+a.ord || 1e9) - (+b.ord || 1e9)) || (a.name || '').localeCompare(b.name || '', 'es'));
+const attrOpts = a => String(a.opts || '').split(/[,;\n]/).map(x => x.trim()).filter(Boolean);
+const attrUsed = (a, src = S.app) => items(a.g, src).filter(it => it['x.' + a.id] != null && it['x.' + a.id] !== '').length;
+/** Valor de un atributo listo para mostrar (HTML ya escapado). */
+function fmtAttr(a, val){
+  if (val == null || val === '') return '<span class="muted">—</span>';
+  val = String(val);
+  if (a.type === 'url'){ const href = /^https?:\/\//i.test(val) ? val : 'https://' + val; return `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(val.replace(/^https?:\/\//i, '').replace(/\/$/, ''))}</a>` }
+  if (a.type === 'date'){ const m = val.match(/^(\d{4})-(\d{2})-(\d{2})/); if (m) return esc(`${m[3]}/${m[2]}/${m[1]}`) }
+  if (a.type === 'num'){ const n = parseFloat(val.replace(',', '.')); if (!isNaN(n)) return esc(n.toLocaleString('es-AR', {maximumFractionDigits:2})) }
+  return esc(val);
+}
+/** Campo del formulario del ítem para un atributo. */
+function attrField(a, cur){
+  cur = cur ?? ''; const id = 'f_x_' + a.id, lbl = `<span>${esc(a.name)}</span>`;
+  if (a.type === 'long') return `<label class="fld fwide" for="${id}">${lbl}<textarea id="${id}" rows="2">${esc(cur)}</textarea></label>`;
+  if (a.type === 'opts'){ const o = attrOpts(a);
+    return `<label class="fld" for="${id}">${lbl}<select id="${id}"><option value="">—</option>${o.map(x => `<option value="${esc(x)}" ${x === cur ? 'selected' : ''}>${esc(x)}</option>`).join('')}${cur && !o.includes(cur) ? `<option value="${esc(cur)}" selected>${esc(cur)} (no está en la lista)</option>` : ''}</select></label>` }
+  const ty = a.type === 'num' ? 'text" inputmode="decimal' : a.type === 'date' ? 'date' : a.type === 'url' ? 'url' : 'text';
+  const val = a.type === 'date' ? (String(cur).match(/^\d{4}-\d{2}-\d{2}/) || [cur])[0] : cur;
+  return `<label class="fld" for="${id}">${lbl}<input id="${id}" type="${ty}" value="${esc(val)}" ${a.type === 'url' ? 'placeholder="https://…"' : ''}></label>`;
+}
+function viewAttrs(g){
+  const act = attrsOf(g.id), arch = attrsOf(g.id, S.app, true).filter(a => a.arch === 'si');
+  let h = `<div class="instbar"><p class="muted">Los atributos describen los ítems (marca, color, enlace, fecha…) y no suman puntaje. Cada uno es una columna de la pestaña «${esc(g.name)}»: también podés agregar una columna en la Sheet y, al sincronizar, se convierte en atributo (si querés que sea un criterio, terminá el encabezado con <code>[criterio]</code>).${canEdit() && act.length > 1 ? ' Arrastrá desde ⠿ para cambiar el orden.' : ''}</p><div class="row"><button class="btn sm ed" data-act="copyAttrs" ${groups().some(x => x.id !== g.id && attrsOf(x.id).length) ? '' : 'disabled title="Ningún otro grupo tiene atributos"'}>Copiar de otro grupo</button><button class="btn sm primary ed" data-act="newAttr">+ Atributo</button></div></div>`;
+  if (!act.length && !arch.length) return h + empty('Sin atributos', 'Agregá un atributo desde acá o una columna nueva en la pestaña del grupo en la Sheet.', 'newAttr', 'Agregar atributo');
+  const row = (a, ar) => `<tr>${canEdit() ? `<td class="hcol">${ar ? '' : rowHandle(a.id)}</td>` : ''}<td><strong>${esc(a.name)}</strong>${a.type === 'opts' && attrOpts(a).length ? `<span class="cw">${esc(attrOpts(a).join(' · '))}</span>` : ''}</td><td>${atypeName(a.type)}</td>
+    <td class="val">${ar ? (() => { let n = 0; try{ n = Object.keys(JSON.parse(a.vals || '{}')).length }catch(e){} return n + ' guardados' })() : attrUsed(a) + ' de ' + items(g.id).length}</td>
+    <td><div class="acts ed">${ar ? `<button class="btn sm" data-act="unarchAttr" data-id="${a.id}">Restaurar</button>` : `<button class="btn sm" data-act="editAttr" data-id="${a.id}">Editar</button><button class="btn sm" data-act="attrToCrit" data-id="${a.id}">Convertir en criterio</button><button class="btn sm" data-act="archAttr" data-id="${a.id}">Archivar</button>`}<button class="btn sm ghost" data-act="delAttr" data-id="${a.id}">Borrar</button></div></td></tr>`;
+  const tbl = (list, ar) => `<div class="scroll"><table class="tbl"><thead><tr>${canEdit() ? '<th class="hcol"></th>' : ''}<th>Atributo</th><th>Tipo</th><th>${ar ? 'Valores' : 'Ítems con valor'}</th><th></th></tr></thead><tbody>${list.map(a => row(a, ar)).join('')}</tbody></table></div>`;
+  if (act.length) h += tbl(act, false);
+  if (arch.length) h += `<h3 class="osec">Archivados</h3><p class="hint">No se muestran en los ítems ni tienen columna en la Sheet. Sus valores quedan guardados: al restaurarlos vuelven la columna y los valores.</p>` + tbl(arch, true);
+  return h;
+}
+function attrForm(id){
+  const g = S.ui.g, a = id ? S.app[id] : {};
+  modal(id ? 'Editar atributo' : 'Nuevo atributo', `
+    <label class="fld" for="f_name"><span>Nombre</span><input id="f_name" value="${esc(a.name)}" placeholder="Ej.: Marca, Color, Enlace"><small class="gnhint">Es el encabezado de la columna en la pestaña del grupo.</small></label>
+    <label class="fld" for="f_atype"><span>Tipo de dato</span><select id="f_atype">${ATYPES.map(([k, l]) => `<option value="${k}" ${(a.type || '') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+    <label class="fld onlyopts" for="f_aopts" ${a.type === 'opts' ? '' : 'hidden'}><span>Opciones (separadas por coma)</span><input id="f_aopts" value="${esc(a.opts)}" placeholder="Ej.: Rojo, Azul, Negro"></label>
+    <p class="hint">Cambiar el tipo no modifica los valores ya cargados.</p>`, () => {
+    const name = v('f_name'); if (!name){ toast('Poné un nombre al atributo.'); return false }
+    if (/\[(c|f)_[\w-]+\]|\[criterio\]/i.test(name)){ toast('El nombre no puede incluir marcas entre corchetes.'); return false }
+    if (attrsOf(g, S.app, true).some(x => x.id !== id && (x.name || '').toLowerCase() === name.toLowerCase())){ toast('Ya hay un atributo con ese nombre en el grupo.'); return false }
+    if (!canEdit()) return;
+    const type = v('f_atype'), rec = {...a, t:'attr', g, name, type};
+    if (type === 'opts') rec.opts = v('f_aopts'); else delete rec.opts;
+    if (!type) delete rec.type;
+    const nid = id || uid('f'); if (!id) rec.ord = String(Math.max(0, ...attrsOf(g, S.app, true).map(x => +x.ord || 0)) + 1);
+    setRec(nid, rec); log(`${id ? 'Se editó' : 'Se agregó'} el atributo «${name}».`); commit();
+  });
+}
+/** Archiva: guarda los valores en el atributo y los quita de los ítems (la columna sale de la Sheet). */
+function archiveAttr(aid, valsFrom){
+  const a = S.app[aid]; if (!a) return; const m = {}, src = valsFrom || S.app;
+  items(a.g, src).forEach(it => { const val = it['x.' + aid]; if (val != null && val !== '') m[it.id] = val });
+  setRec(aid, {...a, arch:'si', vals:JSON.stringify(m)});
+  items(a.g).forEach(it => { if (S.app[it.id]['x.' + aid] != null){ const r = {...S.app[it.id]}; delete r['x.' + aid]; setRec(it.id, r) } });
+}
+/** Restaura: devuelve los valores guardados a los ítems que no tengan uno. */
+function restoreAttr(aid){
+  const a = S.app[aid]; if (!a) return; let m = {}; try{ m = JSON.parse(a.vals || '{}') }catch(e){}
+  Object.entries(m).forEach(([iid, val]) => { const it = S.app[iid]; if (it && it.t === 'item' && it.g === a.g && (it['x.' + aid] == null || it['x.' + aid] === '')) setRec(iid, {...it, ['x.' + aid]:val}) });
+  const r = {...a}; delete r.arch; delete r.vals; setRec(aid, r);
+}
+/** Después de sincronizar: si la columna se borró en la Sheet, guarda los valores que tenía la app; si se volvió a agregar, los devuelve. */
+function attrSyncFix(prev){
+  let ch = false;
+  recs('attr').forEach(a => {
+    const old = prev[a.id];
+    if (a.arch === 'si' && !a.vals && old && old.arch !== 'si'){ archiveAttr(a.id, prev); ch = true }
+    else if (a.arch !== 'si' && a.vals && old && old.arch === 'si'){ restoreAttr(a.id); ch = true }
+  });
+  return ch;
+}
+/** Copia la definición de atributos de otro grupo (nombre, tipo y opciones; sin valores). Quedan independientes. */
+function copyAttrsForm(){
+  const g = S.ui.g, src = groups().filter(x => x.id !== g && attrsOf(x.id).length); if (!src.length) return;
+  const have = new Set(attrsOf(g, S.app, true).map(a => (a.name || '').toLowerCase()));
+  const body = sid => attrsOf(sid).map(a => { const dup = have.has((a.name || '').toLowerCase());
+    return `<label><input type="checkbox" class="cpa" data-id="${a.id}" ${dup ? 'disabled' : 'checked'}> ${esc(a.name)} <span class="muted">· ${atypeName(a.type)}${a.type === 'opts' && attrOpts(a).length ? ': ' + esc(attrOpts(a).join(', ')) : ''}${dup ? ' · ya existe en este grupo' : ''}</span></label>` }).join('');
+  modal('Copiar atributos de otro grupo', `<p class="hint">Se copian el nombre, el tipo y las opciones, no los valores. Después cada grupo los maneja por separado: cambiar uno no modifica el otro.</p>
+    <label class="fld" for="f_cpg"><span>Grupo de origen</span><select id="f_cpg">${src.map(x => `<option value="${x.id}">${esc(x.name)}${x.arch ? ' (archivado)' : ''}</option>`).join('')}</select></label>
+    <div class="fld"><span>Atributos a copiar</span><div class="checks" id="f_cpl">${body(src[0].id)}</div></div>`, () => {
+    const pick = [...document.querySelectorAll('.cpa:checked:not(:disabled)')].map(x => S.app[x.dataset.id]).filter(Boolean);
+    if (!pick.length){ toast('Elegí al menos un atributo.'); return false }
+    if (!canEdit()) return;
+    let ord = Math.max(0, ...attrsOf(g, S.app, true).map(x => +x.ord || 0));
+    pick.forEach(a => { const r = {t:'attr', g, name:a.name, ord:String(++ord)}; if (a.type) r.type = a.type; if (a.opts) r.opts = a.opts; setRec(uid('f'), r) });
+    log(`Se copiaron ${pick.length} atributo${pick.length === 1 ? '' : 's'} de «${nameOf(v('f_cpg'))}».`); commit(); toast(pick.length === 1 ? 'Atributo copiado.' : pick.length + ' atributos copiados.');
+  }, 'Copiar');
+  copyAttrsForm.body = body;
+}
+function attrToCritForm(aid){
+  const a = S.app[aid]; if (!a) return;
+  const vals = items(a.g).map(it => it['x.' + aid]).filter(x => x != null && x !== '');
+  const numeric = vals.length > 0 && vals.every(x => !isNaN(Number(String(x).replace(',', '.'))));
+  const lv = [...new Set(vals.map(String))];
+  modal('Convertir en criterio', `<p>«${esc(a.name)}» pasa a ser un criterio del grupo y empieza a sumar puntaje. Los valores cargados se conservan.</p>
+    <label class="fld" for="f_ck"><span>Tipo de criterio</span><select id="f_ck"><option value="num" ${numeric ? 'selected' : ''}>Cuantitativo (número)</option><option value="qual" ${numeric ? '' : 'selected'}>Cualitativo (escala)</option></select></label>
+    <p class="hint">${numeric ? 'Todos los valores son números.' : `Escala con ${lv.length} nivel${lv.length === 1 ? '' : 'es'}: ${esc(lv.slice(0, 8).join(', '))}${lv.length > 8 ? '…' : ''}. Después ordenala de mejor a peor en Criterios.`} La columna de la Sheet cambia a la de un criterio.</p>`, () => {
+    if (!canEdit()) return;
+    const kind = v('f_ck');
+    let rid = (roots().find(r => (r.name || '').toLowerCase() === (a.name || '').toLowerCase()) || {}).id;
+    if (!rid){ rid = uid('r'); const root = {t:'root', name:uniqueRootName(a.name), kind}; if (kind === 'num') root.dir = 'max'; else root.scale = lv.join(', '); setRec(rid, root) }
+    const cid = uid('c'); setRec(cid, {t:'crit', g:a.g, root:rid, w:'1', ord:String(nextOrd(S.app, a.g, ''))});
+    items(a.g).forEach(it => { const r = {...S.app[it.id]}, val = r['x.' + aid]; if (val == null) return; delete r['x.' + aid]; if (val !== '') r['v.' + cid] = val; setRec(it.id, r) });
+    rmRec(aid); log(`El atributo «${a.name}» se convirtió en criterio.`); commit(); toast('Atributo convertido en criterio.');
+  }, 'Convertir');
+}
+
 /* ---------- Textos: métricas, ayudas de escritura y diferencias ---------- */
 const TXT_MAX = 49000;   // una celda de Google Sheets admite hasta 50.000 caracteres
 const METRICS = {
@@ -1680,9 +1816,10 @@ function makeBundle(gid, only){
   const setIds = only ? [...new Set(ins.map(n => n.set).filter(x => x && D[x]))] : setsOf(gid).map(s => s.id);
   const adjs = recs('adj').filter(a => setIds.includes(a.set));
   const rootIds = [...new Set([...uses.map(u => u.root), ...adjs.map(a => a.alt).filter(Boolean)])].filter(id => D[id]);
+  const atts = recs('attr').filter(a => a.g === gid);
   return {format:'compareit', v:1, app:APP_NAME + ' ' + APP_BUILD, at:now(), scope:only ? 'inst' : 'group',
     group:stripU({...g, id:gid}), roots:rootIds.map(id => stripU({...D[id], id})), uses:uses.map(stripU),
-    items:itemIds.filter(id => D[id]).map(id => stripU({...D[id], id})), sets:setIds.map(id => stripU({...D[id], id})), adjs:adjs.map(stripU),
+    items:itemIds.filter(id => D[id]).map(id => stripU({...D[id], id})), sets:setIds.map(id => stripU({...D[id], id})), adjs:adjs.map(stripU), attrs:atts.map(stripU),
     insts:ins.map(n => { const o = stripU(n); const ex = (S.ui.excl || {})[n.id]; if (ex && ex.length) o.excl = ex; return o })};
 }
 /** Crea una copia nueva e independiente a partir de un paquete. rootMode: keep | reuse | new */
@@ -1695,9 +1832,12 @@ function cloneBundle(B, opt){
     const id = uid('r'), rec = {...r}; delete rec.id; rec.t = 'root'; rec.name = uniqueRootName(r.name || 'Criterio'); setRec(id, rec); rootMap[r.id] = id;
   });
   const gid = uid('g'), grec = {...B.group}; delete grec.id; delete grec.arch; grec.t = 'group'; grec.name = opt.name; setRec(gid, grec);
-  B.uses.forEach(u => map[u.id] = uid('c')); B.items.forEach(i => map[i.id] = uid('i')); B.sets.forEach(s => map[s.id] = uid('s'));
+  B.uses.forEach(u => map[u.id] = uid('c')); B.items.forEach(i => map[i.id] = uid('i')); B.sets.forEach(s => map[s.id] = uid('s')); B.attrs.forEach(a => map[a.id] = uid('f'));
+  B.attrs.forEach(a => { const r = {...a}; delete r.id; r.t = 'attr'; r.g = gid;
+    if (r.vals){ try{ const m = JSON.parse(r.vals), o = {}; Object.keys(m).forEach(k => { if (map[k]) o[map[k]] = m[k] }); r.vals = JSON.stringify(o) }catch(e){ delete r.vals } }
+    setRec(map[a.id], r) });
   B.uses.forEach(u => { const r = {...u}; delete r.id; r.t = 'crit'; r.g = gid; r.root = rootMap[u.root] || u.root; if (r.p && map[r.p]) r.p = map[r.p]; else delete r.p; setRec(map[u.id], r) });
-  B.items.forEach(i => { const r = {}; Object.entries(i).forEach(([k, v]) => { if (k === 'id') return; if (k.startsWith('v.')){ const c = map[k.slice(2)]; if (c) r['v.' + c] = v } else r[k] = v }); r.t = 'item'; r.g = gid; setRec(map[i.id], r) });
+  B.items.forEach(i => { const r = {}; Object.entries(i).forEach(([k, v]) => { if (k === 'id') return; if (k.startsWith('v.') || k.startsWith('x.')){ const c = map[k.slice(2)]; if (c) r[k.slice(0, 2) + c] = v } else r[k] = v }); r.t = 'item'; r.g = gid; setRec(map[i.id], r) });
   B.sets.forEach(s => { const r = {...s}; delete r.id; r.t = 'set'; r.g = gid; setRec(map[s.id], r) });
   B.adjs.forEach(a => { if (!map[a.set] || !map[a.use]) return; const r = {...a}; delete r.id; r.t = 'adj'; r.g = gid; r.set = map[a.set]; r.use = map[a.use]; if (r.alt) r.alt = rootMap[r.alt] || r.alt; setRec(uid('a'), r) });
   const made = [];
@@ -1716,7 +1856,7 @@ function checkBundle(B){
   if (!B || B.format !== 'compareit') return 'No es un archivo de CompareIt.';
   if (B.v !== 1) return 'El archivo es de una versión de CompareIt que esta app no reconoce.';
   if (!B.group || !Array.isArray(B.uses) || !Array.isArray(B.items) || !Array.isArray(B.insts) || !Array.isArray(B.roots)) return 'El archivo está incompleto o dañado.';
-  B.sets = B.sets || []; B.adjs = B.adjs || []; return null;
+  B.sets = B.sets || []; B.adjs = B.adjs || []; B.attrs = B.attrs || []; return null;
 }
 
 /* réplica liviana de una instancia: mismos ítems (si cambiás un valor, cambia en ambas) */
@@ -2475,14 +2615,15 @@ function groupForm(id){
 }
 function itemForm(id){ itemFormInner(id); txtCount() }
 function itemFormInner(id){
-  const g = S.ui.g, it = id ? S.app[id] : {}, leaves = tree(g).filter(c => c.leaf && c.kind !== 'auto'), ins = insts(g), tx = isText(g);
+  const g = S.ui.g, it = id ? S.app[id] : {}, leaves = tree(g).filter(c => c.leaf && c.kind !== 'auto'), ins = insts(g), tx = isText(g), ats = attrsOf(g);
   const field = c => { const cur = it['v.' + c.id] ?? '';
     if (c.kind === 'qual') return `<label class="fld" for="f_v_${c.id}"><span>${esc(c.name)}</span><select id="f_v_${c.id}"><option value="">—</option>${levelsOf(c).map((o, i) => `<option value="${esc(o)}" ${o === cur ? 'selected' : ''}>${i + 1}. ${esc(o)}</option>`).join('')}${offOf(c).filter(o => o === cur).map(o => `<option value="${esc(o)}" selected>${esc(o)} (desestimado)</option>`).join('')}</select></label>`;
     return `<label class="fld" for="f_v_${c.id}"><span>${esc(c.name)}${c.unit ? ' (' + esc(c.unit) + ')' : ''}</span><input id="f_v_${c.id}" inputmode="decimal" value="${esc(cur)}"></label>` };
   modal(id ? 'Editar ítem' : 'Nuevo ítem', `
     <label class="fld" for="f_name"><span>Nombre</span><input id="f_name" value="${esc(it.name)}" ${tx ? 'placeholder="Ej.: Versión 2"' : ''}></label>
     ${tx ? `<label class="fld" for="f_txt"><span>Texto</span><textarea id="f_txt" rows="10">${esc(it.txt)}</textarea></label><p class="hint val" id="f_txt_c"></p>` : ''}
-    ${leaves.length ? `<div class="fgrid">${leaves.map(field).join('')}</div>` : tx ? '' : '<p class="hint">El grupo no tiene criterios: definilos para cargar valores.</p>'}
+    ${ats.length ? `<div class="fsec"><span class="eyebrow">Atributos</span><div class="fgrid">${ats.map(a => attrField(a, it['x.' + a.id])).join('')}</div></div>` : ''}
+    ${leaves.length ? `<div class="fsec">${ats.length ? '<span class="eyebrow">Criterios</span>' : ''}<div class="fgrid">${leaves.map(field).join('')}</div></div>` : tx ? '' : '<p class="hint">El grupo no tiene criterios: definilos para cargar valores.</p>'}
     <label class="fld" for="f_notes"><span>Notas</span><textarea id="f_notes" rows="2">${esc(it.notes)}</textarea></label>
     ${ins.length ? `<div class="fld"><span>Incluir en instancias</span><div class="checks">${ins.map(n => `<label><input type="checkbox" id="f_in_${n.id}" ${id && instIds(n).includes(id) ? 'checked' : ''}> ${esc(n.name)}</label>`).join('')}</div></div>` : ''}`, () => {
     const name = v('f_name'); if (!name){ toast('Poné un nombre al ítem.'); return false }
@@ -2490,6 +2631,7 @@ function itemFormInner(id){
     const nid = id || uid('i'); const rec = {...it, t:'item', g, name, notes:v('f_notes')}; 
     if (tx){ const t = document.getElementById('f_txt').value; if (t.trim()) rec.txt = t; else delete rec.txt }
     leaves.forEach(c => { const x = v('f_v_' + c.id); if (x) rec['v.' + c.id] = x; else delete rec['v.' + c.id] });
+    ats.forEach(a => { const x = v('f_x_' + a.id); if (x) rec['x.' + a.id] = x; else delete rec['x.' + a.id] });
     setRec(nid, rec); if (!id) placeOrd(items(g).map(x => x.id), nid, null, (x, o) => { if (String(S.app[x].ord || '') !== o) setRec(x, {...S.app[x], ord:o}) });
     ins.forEach(n => { const on = document.getElementById('f_in_' + n.id).checked; const list = instIds(n); const has = list.includes(nid);
       if (on !== has) setRec(n.id, {...S.app[n.id], items:(on ? [...list, nid] : list.filter(x => x !== nid)).join(',')}) });
@@ -2720,6 +2862,11 @@ const ACT = {
   newInst(){ instForm() }, editInst(){ instForm(curInst()?.id) },
   delInst(){ const n = curInst(); confirmDel(delText(S.app, 'inst', n.id), () => { if (!canEdit()) return; cascadeDel('app', 'inst', n.id); commit() }) },
   newItem(){ itemForm() }, editItem(el){ itemForm(el.dataset.id) },
+  newAttr(){ attrForm() }, copyAttrs(){ copyAttrsForm() }, editAttr(el){ attrForm(el.dataset.id) }, attrToCrit(el){ attrToCritForm(el.dataset.id) },
+  toggleAttrs(){ S.ui.attrsOff = !S.ui.attrsOff; save(); render() },
+  archAttr(el){ const a = S.app[el.dataset.id]; if (!a || !canEdit()) return; modal('Archivar atributo', `<p>«${esc(a.name)}» deja de mostrarse en los ítems y su columna sale de la pestaña del grupo. Los valores quedan guardados y vuelven si lo restaurás.</p>`, () => { if (!canEdit()) return; archiveAttr(a.id ? a.id : el.dataset.id); log(`Se archivó el atributo «${a.name}».`); commit() }, 'Archivar') },
+  unarchAttr(el){ if (!canEdit()) return; const a = S.app[el.dataset.id]; restoreAttr(el.dataset.id); log(`Se restauró el atributo «${a.name}».`); commit(); toast('Atributo restaurado.') },
+  delAttr(el){ const id = el.dataset.id; confirmDel(delText(S.app, 'attr', id), () => { if (!canEdit()) return; cascadeDel('app', 'attr', id); commit() }) },
   delItem(el){ const id = el.dataset.id; confirmDel(delText(S.app, 'item', id), () => { if (!canEdit()) return; cascadeDel('app', 'item', id); commit() }) },
   newCrit(el){ critForm(null, el.dataset.parent) }, editCrit(el){ critForm(el.dataset.id) },
   fromCatalog(){ catalogForm() }, replicate(el){ replicateForm(el.dataset.id) }, independize(el){ independizeForm(el.dataset.id) }, linkRoot(el){ linkRootForm(el.dataset.id) },
@@ -2793,6 +2940,8 @@ document.addEventListener('change', e => {
     rd.onload = () => { document.getElementById('f_imp_txt').value = rd.result; impPreview() }; rd.onerror = () => toast('No se pudo leer el archivo.'); rd.readAsText(f) }
   else if (t.id === 'f_gkind'){ document.querySelectorAll('.onlytxt').forEach(x => x.hidden = t.value !== 'text') }
   else if (t.classList.contains('aidchk')){ S.ui.aids = {...(S.ui.aids || {long:true, rep:true, fill:true}), [t.dataset.k]:t.checked}; save(); render() }
+  else if (t.id === 'f_cpg'){ document.getElementById('f_cpl').innerHTML = copyAttrsForm.body(t.value) }
+  else if (t.id === 'f_atype'){ document.querySelectorAll('.onlyopts').forEach(x => x.hidden = t.value !== 'opts') }
   else if (t.id === 'f_ref'){ const n = curInst(); if (n && canEdit()){ setRec(n.id, {...S.app[n.id], ref:t.value}); S.ui.diff = {...(S.ui.diff || {}), a:t.value}; commit(); toast('Texto de referencia actualizado.') } }
   else if (t.id === 'f_da' || t.id === 'f_db'){ S.ui.diff = {...(S.ui.diff || {}), [t.id === 'f_da' ? 'a' : 'b']:t.value}; save(); render() }
   else if (t.classList.contains('sx-on')){ const a = recs('adj').find(x => x.set === t.dataset.set && x.use === t.dataset.c); setAdj(t.dataset.set, t.dataset.c, {on:t.checked ? (a && a.on === 'si' ? 'si' : '') : 'no'}) }
