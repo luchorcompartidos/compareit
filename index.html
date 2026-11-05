@@ -615,7 +615,7 @@ tr.rowdrag{outline:2px dashed var(--accent);outline-offset:-2px}
 const SCHEMA = JSON.parse(document.getElementById('ci-schema').textContent);
 /** Fecha y hora de esta versión de la app (se completa sola al generar los archivos). */
 const APP_NAME = 'COMPAREIt(em)';
-const APP_BUILD = '04/11/2026 22:21';
+const APP_BUILD = '05/11/2026 15:24';
 const $ = s => document.querySelector(s);
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
@@ -938,11 +938,17 @@ async function sync(quiet, force){
       if (!same(out, a)) pulled++;
     }
     let newVer = vi.v;
+    // foto de la copia local al terminar la mezcla: lo que el usuario cambie mientras la Sheet guarda no se debe perder
+    const snap = {...S.app};
     if (Object.keys(up).length || dels.length){
       const res = await adapter.push(up, dels, vi.v); changed = true;
       if (res && res.v){ stale = !!res.stale; newVer = stale ? res.v + '*' : res.v }   // con '*' la próxima verificación vuelve a descargar
     }
     S.ver = newVer;
+    // cambios hechos durante el envío (edición, alta o borrado): se conservan y quedan pendientes para la próxima sincronización
+    let late = 0;
+    new Set([...Object.keys(snap), ...Object.keys(S.app)]).forEach(k => { if (S.app[k] !== snap[k]){ late++; if (S.app[k]) nApp[k] = S.app[k]; else delete nApp[k] } });
+    if (late) setTimeout(() => sync(true), 300);
     S.app = nApp; S.base = nBase; S.conflicts = conflicts; S.last = now();
     if (S.mode === 'app' && attrSyncFix(app)) setTimeout(() => sync(true, true), 400);   // valores de atributos archivados o restaurados desde la Sheet
     if (!quiet || pulled || pushed || conflicts.length)
