@@ -164,6 +164,10 @@ textarea{resize:vertical}
 .hidbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:8px 12px;margin-bottom:10px;border:1px dashed var(--line);border-radius:var(--r);background:var(--sunk);font-size:.88rem}
 .tbtn{margin-left:10px;background:transparent;border:1px solid color-mix(in srgb,var(--bg) 50%,transparent);color:var(--bg);border-radius:7px;padding:3px 10px;font:inherit;font-weight:600;cursor:pointer}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.warnb{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 2px;font-size:.78rem;font-weight:600;color:var(--warn)}.warnb span{background:color-mix(in srgb,var(--warn) 14%,var(--surface));border:1px solid color-mix(in srgb,var(--warn) 45%,var(--line));border-radius:999px;padding:2px 8px}
+.warnt{color:var(--warn);font-weight:600;text-transform:none;letter-spacing:0}
+.cov{font-size:.74rem;color:var(--muted);font-weight:400;margin-top:3px;white-space:normal}
+.cmp td.why{font-size:.84rem}
 .gnhint{font-weight:400;font-size:.78rem;color:var(--muted)}.gnhint .val{margin-left:4px}.gnhint.over{color:var(--dis)}
 .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 .hint{font-size:.82rem;color:var(--muted)}
@@ -611,7 +615,7 @@ tr.rowdrag{outline:2px dashed var(--accent);outline-offset:-2px}
 const SCHEMA = JSON.parse(document.getElementById('ci-schema').textContent);
 /** Fecha y hora de esta versión de la app (se completa sola al generar los archivos). */
 const APP_NAME = 'COMPAREIt(em)';
-const APP_BUILD = '04/11/2026 22:05';
+const APP_BUILD = '04/11/2026 22:21';
 const $ = s => document.querySelector(s);
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
@@ -808,14 +812,17 @@ function evaluate(g, its, inst, excl = new Set()){
       if (s == null) mark = 'na'; else if (allEq || vals.length < 2) mark = 'eq'; else if (s === hi) mark = 'adv'; else if (s === lo) mark = 'dis'; else mark = 'mid';
       const ov = inst && inst['o.' + it.id + '.' + c.id]; let manual = false;
       if (ov){ manual = true; mark = ov; s = ov === 'adv' ? 1 : ov === 'dis' ? 0 : 0.5 }
-      res[c.id][it.id] = {score:s, mark, manual, raw:c.kind === 'auto' ? autoVal(c, it, ctx) : (it['v.' + c.id] ?? '')};
+      res[c.id][it.id] = {score:s, mark, manual, raw:c.kind === 'auto' ? autoVal(c, it, ctx) : (it['v.' + c.id] ?? ''), why:c.kind === 'auto' ? autoWhy(c, it, ctx) : ''};
     });
   });
   const avg = (ids, itId) => { let sw = 0, ws = 0; ids.forEach(k => { if (off.has(k)) return; const s = res[k]?.[itId]?.score; if (s != null){ sw += s * W[k]; ws += W[k] } }); return ws ? sw / ws : null };
   [...list].reverse().forEach(c => { if (c.leaf) return; res[c.id] = {}; its.forEach(it => res[c.id][it.id] = {score:avg(c.kids, it.id)}) });
   const roots = list.filter(c => c.depth === 0).map(c => c.id);
   const total = {}; its.forEach(it => total[it.id] = avg(roots, it.id));
-  return {list, res, total, off};
+  // cobertura: en cuántos criterios (hoja, incluidos) se pudo evaluar cada ítem
+  const lv = list.filter(c => c.leaf && !off.has(c.id)), cov = {};
+  its.forEach(it => { const l2 = lv.filter(c => res[c.id][it.id].why !== 'referencia'); cov[it.id] = {n:l2.filter(c => res[c.id][it.id].score != null).length, of:l2.length} });
+  return {list, res, total, off, cov};
 }
 
 /* ---------- escritura local ---------- */
@@ -1112,12 +1119,15 @@ function viewCmp(g){
   if (isText(g.id)){ h += cmpModeBar(); const cv = S.ui.cview || 'score'; if (cv === 'texts') return h + viewTexts(its); if (cv === 'diff') return h + viewDiff(its) }
   if (!ev.list.length) return h + empty('El grupo no tiene criterios', 'Los criterios definen cómo se evalúan los ítems y de ellos salen las ventajas y desventajas.', 'goCrit', 'Definir criterios');
   const pct = x => x == null ? null : Math.round(x * 100);
-  const ranked = [...its].sort((a, b) => (ev.total[b.id] ?? -1) - (ev.total[a.id] ?? -1));
-  const rank = id => ranked.findIndex(x => x.id === id) + 1;
+  const ranked = its.filter(x => ev.total[x.id] != null).sort((a, b) => ev.total[b.id] - ev.total[a.id]);
+  const rank = id => ranked.findIndex(x => x.id === id) + 1;   // 0 = sin puntaje (no entra en el ranking)
+  const txg = isText(g.id);
   const head = `<tr><th class="sticky"><span class="eyebrow">Criterio</span></th>${its.map(it => { const p = pct(ev.total[it.id]); return `<th data-it="${it.id}"><span class="colrz" data-rz="col" title="Arrastrá para cambiar el ancho de todas las columnas" aria-hidden="true"></span>
       <div class="ieye">${eyeBtn('hideIt', it.id, it.name, 'title="Ocultar de esta comparación (no cuenta para el puntaje)"')}</div>
-      <div class="ith">${canMove ? `<button type="button" class="ithandle" id="ih_${it.id}" data-it="${it.id}" aria-label="Mover ${esc(it.name)}" title="Arrastrar para mover (o Alt + ← →)">⠿</button>` : ''}<span class="rank ${rank(it.id) === 1 ? 'r1' : ''}">${rank(it.id)}º</span>${esc(it.name)}</div>
-      <div class="tot"><span class="val">${p ?? '—'}</span><span class="muted">/100</span></div><div class="bar"><i style="width:${p ?? 0}%"></i></div></th>` }).join('')}</tr>`;
+      <div class="ith">${canMove ? `<button type="button" class="ithandle" id="ih_${it.id}" data-it="${it.id}" aria-label="Mover ${esc(it.name)}" title="Arrastrar para mover (o Alt + ← →)">⠿</button>` : ''}${rank(it.id) ? `<span class="rank ${rank(it.id) === 1 ? 'r1' : ''}">${rank(it.id)}º</span>` : ''}${esc(it.name)}</div>
+      ${txg && noText(it) ? `<div class="warnb"><span>⚠ Sin texto</span>${canEdit() ? `<button type="button" class="btn sm" data-act="editText" data-id="${it.id}">Cargar texto</button>` : ''}</div>` : ''}
+      <div class="tot"><span class="val">${p ?? '—'}</span><span class="muted">/100</span></div><div class="bar"><i style="width:${p ?? 0}%"></i></div>
+      ${p == null ? '<div class="cov">sin puntaje</div>' : ev.cov[it.id].n < ev.cov[it.id].of ? `<div class="cov" title="El puntaje se calcula solo con los criterios que tienen valor">evaluado en ${ev.cov[it.id].n} de ${ev.cov[it.id].of} criterios</div>` : ''}</th>` }).join('')}</tr>`;
   const rows = ev.list.map(c => {
     const pad = `style="padding-left:${10 + c.depth * 18}px"`, off = ev.off.has(c.id), bySet = !!c.setOff, byParent = off && !excl.has(c.id) && !bySet;
     const chk = `<input type="checkbox" class="cx" id="cx_${c.id}" data-c="${c.id}" ${off ? '' : 'checked'} ${byParent || bySet ? `disabled title="${bySet ? 'Excluido en el conjunto de esta instancia' : 'Desestimado junto con su criterio agrupador'}"` : ''} aria-label="Incluir ${esc(c.name)} en la comparación">`;
@@ -1125,6 +1135,7 @@ function viewCmp(g){
     if (!c.leaf) return `<tr class="par"><th class="sticky" ${pad}><label class="crl">${chk}<span><span class="cn">${esc(c.name)}</span><span class="cw">agrupa ${c.kids.length} · peso ${c.w || 1}</span></span></label></th>${its.map(it => { const p = pct(ev.res[c.id][it.id].score);
       return `<td>${p == null ? '<span class="muted">—</span>' : `<div class="mini"><div class="bar"><i style="width:${p}%"></i></div><span class="val">${p}</span></div>`}</td>` }).join('')}</tr>`;
     return `<tr><th class="sticky" ${pad}><label class="crl">${chk}<span><span class="cn">${esc(c.name)}</span><span class="cw">${critHint(c)} · peso ${c.w || 1}</span></span></label></th>${its.map(it => { const r = ev.res[c.id][it.id];
+      if (r.why && !r.manual) return `<td class="cell m-na why"><span class="muted">${esc(r.why)}</span></td>`;
       return `<td class="cell m-${r.mark}" data-act="cell" data-it="${it.id}" data-c="${c.id}"><span class="val">${esc(fmt(c, r.raw))}</span>${MK[r.mark] ? `<span class="mk">${MK[r.mark]}${r.manual ? ' ✎' : ''}</span>` : ''}</td>` }).join('')}</tr>`;
   }).join('');
   const ats = attrsOf(g.id), aOn = !S.ui.attrsOff;
@@ -1577,7 +1588,7 @@ function metricsOf(t){
     longsent:sents.filter(s => (s.match(WORD_RE) || []).length > 30).length,
     repeats:repeatHits(t).length, fillers:fillerHits(t).length,
     variety:wc ? +(100 * new Set(words.map(w => w.toLowerCase())).size / wc).toFixed(1) : 0,
-    readtime:+(wc / 230).toFixed(1),
+    readtime:+(wc / 230).toFixed(2),
     maxsent:sents.reduce((a, x) => Math.max(a, (x.match(WORD_RE) || []).length), 0),
     commas:sc ? +((t.match(/,/g) || []).length / sc).toFixed(1) : 0
   };
@@ -1585,11 +1596,19 @@ function metricsOf(t){
 }
 function inflLabel(p){ return p < 40 ? 'muy difícil' : p < 55 ? 'algo difícil' : p < 65 ? 'normal' : p < 80 ? 'bastante fácil' : 'muy fácil' }
 const fmtN = n => Number(n).toLocaleString('es-AR', {maximumFractionDigits:1});
-/** minutos de lectura: «menos de 1 min», «2,5 min» */
-const fmtMin = n => n > 0 && n < 1 ? 'menos de 1 min' : fmtN(n) + ' min';
-function autoVal(c, it, ctx){
+/** tiempo de lectura: «≈ 25 s» si es menos de un minuto, «2,5 min» */
+const fmtMin = n => n > 0 && n < 1 ? '≈ ' + Math.max(1, Math.round(n * 60)) + ' s' : fmtN(n) + ' min';
+const noText = it => !String((it && it.txt) || '').trim();
+/** Por qué una métrica automática no tiene valor (o '' si lo tiene): sin texto, referencia o sin referencia. */
+function autoWhy(c, it, ctx){
   if (!METRICS[c.metric] || !it) return '';
-  if (c.metric === 'sim'){ const r = ctx && refOf(ctx.inst, ctx.its); return r ? String(simOf(r.txt, it.txt)) : '' }
+  if (noText(it)) return 'sin texto';
+  if (c.metric === 'sim'){ const r = ctx && refOf(ctx.inst, ctx.its); if (!r || noText(r)) return 'sin referencia'; if (r.id === it.id) return 'referencia' }
+  return '';
+}
+function autoVal(c, it, ctx){
+  if (!METRICS[c.metric] || !it || autoWhy(c, it, ctx)) return '';
+  if (c.metric === 'sim'){ const r = refOf(ctx.inst, ctx.its); return String(simOf(r.txt, it.txt)) }
   return String(metricsOf(it.txt)[c.metric]);
 }
 /** Texto de referencia de una instancia: el elegido, o el primero de la instancia. */
@@ -1687,13 +1706,14 @@ function cmpModeBar(){
 function metricsTable(its){
   const ms = its.map(it => metricsOf(it.txt)), inst = curInst(), ref = refOf(inst, its);
   const cell = (k, m, it) => {
-    if (k === 'sim') return ref ? (it.id === ref.id ? '<span class="muted">referencia</span>' : fmtN(simOf(ref.txt, it.txt)) + '%') : '—';
+    if (noText(it)) return '<span class="muted">sin texto</span>';
+    if (k === 'sim') return !ref || noText(ref) ? '<span class="muted">sin referencia</span>' : it.id === ref.id ? '<span class="muted">referencia</span>' : fmtN(simOf(ref.txt, it.txt)) + '%';
     if (k === 'readtime') return fmtMin(m[k]);
     return fmtN(m[k]) + (k === 'inflesz' && m.words ? ` <span class="muted">${inflLabel(m[k])}</span>` : '') + (k === 'variety' ? '%' : '');
   };
   const rows = Object.entries(METRICS).map(([k, M]) => `<tr><th>${esc(M.label)}</th>${ms.map((m, x) => `<td class="val">${cell(k, m, its[x])}</td>`).join('')}</tr>`).join('');
   const refSel = inst && its.length > 1 ? `<label class="fld refsel" for="f_ref"><span>Texto de referencia (para «Similitud»)</span><select id="f_ref" ${canEdit() ? '' : 'disabled'}>${its.map(it => `<option value="${it.id}" ${ref && it.id === ref.id ? 'selected' : ''}>${esc(it.name)}</option>`).join('')}</select></label>` : '';
-  return `<div class="scroll"><table class="tbl mtbl"><thead><tr><th>Métrica</th>${its.map(it => `<th>${esc(it.name)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
+  return `<div class="scroll"><table class="tbl mtbl"><thead><tr><th>Métrica</th>${its.map(it => `<th>${esc(it.name)}${noText(it) ? ' <span class="warnt">⚠ sin texto</span>' : ''}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
     ${refSel}<p class="hint">Caracteres «sin espacios» excluye espacios, tabulaciones y saltos de línea; acentos y emojis cuentan como un carácter. Los conteos pueden diferir levemente de otros editores. Legibilidad: escala INFLESZ para español (menos de 40 muy difícil · 55 a 65 normal · más de 80 muy fácil). Tiempo de lectura: a unas 230 palabras por minuto. Similitud: % de palabras iguales al texto de referencia (100 % = sin cambios; 100 − similitud = % de cambio).</p>`;
 }
 function viewTexts(its){
