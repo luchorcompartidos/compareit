@@ -56,6 +56,12 @@ button{font:inherit;color:inherit}
 .shell{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:var(--side-w,240px) minmax(0,1fr);gap:28px;padding-block:22px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .side{display:flex;flex-direction:column;gap:8px;min-width:0;position:relative}
 .side-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}
+.side > .side-h:first-child{flex-wrap:wrap;row-gap:4px}
+@media (min-width:861px){
+  .side > .side-h:first-child{position:sticky;top:var(--top-h,58px);z-index:5;background:var(--bg);margin-top:-6px;padding-block:6px;box-shadow:0 6px 6px -6px rgb(0 0 0 / .12)}
+  body.side-unpin .side > .side-h:first-child{top:-8px;background:inherit;box-shadow:none}
+  body.side-unpin .side:hover > .side-h:first-child,body.side-unpin .side:has(:focus-visible) > .side-h:first-child{background:var(--surface)}
+}
 .glist{display:flex;flex-direction:column;gap:4px}
 .gitem{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid transparent;background:transparent;border-radius:var(--r);padding:9px 12px;cursor:pointer;width:100%}
 .gitem:hover{background:var(--sunk)}
@@ -457,9 +463,10 @@ th.drop-a{box-shadow:inset -3px 0 0 var(--accent)}
 @media (max-width:860px){ .gfold{border:1px solid var(--line);background:var(--surface);min-height:40px} }
 @media (min-width:861px){
   body.side-unpin .shell{grid-template-columns:52px minmax(0,1fr)}
-  body.side-unpin .side{width:52px;overflow:hidden;z-index:45;align-self:start;position:sticky;top:calc(var(--top-h,58px) + 8px);max-height:calc(100vh - var(--top-h,58px) - 16px);
+  body.side-unpin #main{grid-column:2}
+  body.side-unpin .side{width:52px;overflow-x:hidden;overflow-y:auto;scrollbar-width:none;z-index:28;position:fixed;left:max(max(16px,env(safe-area-inset-left,0px)),calc((100vw - 1400px) / 2 + 16px));top:calc(var(--top-h,58px) + 14px);max-height:calc(100vh - var(--top-h,58px) - 28px);
     background:var(--bg);border-radius:var(--r);transition:width .14s ease .12s,box-shadow .14s}
-  body.side-unpin .side:hover,body.side-unpin .side:has(:focus-visible){width:var(--side-w,240px);overflow-y:auto;background:var(--surface);box-shadow:0 10px 30px -8px rgb(0 0 0 / .3),0 0 0 1px var(--line);padding:8px;margin:-8px;transition-delay:0s}
+  body.side-unpin .side:hover,body.side-unpin .side:has(:focus-visible){width:var(--side-w,240px);overflow-y:auto;scrollbar-width:thin;background:var(--surface);box-shadow:0 10px 30px -8px rgb(0 0 0 / .3),0 0 0 1px var(--line);padding:8px;margin:-8px;transition-delay:0s}
   body.side-unpin .side:not(:hover):not(:has(:focus-visible)) :is(.eyebrow,.gname,.gmeta,.gfold,.side-h .btn:not(.pinb)){display:none}
   body.side-unpin .side:not(:hover):not(:has(:focus-visible)) .gini{display:flex}
   body.side-unpin .side:not(:hover):not(:has(:focus-visible)) .gitem{align-items:center;padding:7px 0}
@@ -472,9 +479,16 @@ th.drop-a{box-shadow:inset -3px 0 0 var(--accent)}
 .pinb.on{color:var(--accent)}.pinb:not(.on) svg{transform:rotate(35deg)}
 .colbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px;font-size:.86rem}
 .colchip{border-style:dashed}
-.itbl th.colh .colh-in{display:inline-flex;align-items:center;gap:4px}
+.itbl th.colh{white-space:normal;vertical-align:bottom}
+.colh-tools{display:flex;gap:2px;margin:-4px 0 2px -4px}.colh-t{display:block;max-width:9.5em;line-height:1.25}
+.itbl th.numh,.itbl td.val{padding-left:8px;padding-right:8px}
+.itbl td.tcell{white-space:normal;min-width:200px;max-width:300px}
+.itbl td.tcell strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.itbl td.tcell .cw{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub2{display:block;font-size:.74rem;color:var(--muted);font-family:inherit}
+.itbl td .acts .btn{padding-inline:9px}
 .cgrip,.ceye{border:0;background:transparent;color:var(--muted);cursor:grab;padding:2px 3px;border-radius:5px;display:inline-flex;align-items:center;touch-action:none;font:inherit}
-.ceye{cursor:pointer;opacity:.55}.colh:hover .ceye,.ceye:focus-visible{opacity:1}.cgrip:hover,.ceye:hover{color:var(--ink);background:var(--sunk)}
+.ceye{cursor:pointer;opacity:.55}.cgrip{font-size:.8rem}.colh:hover .ceye,.ceye:focus-visible{opacity:1}.cgrip:hover,.ceye:hover{color:var(--ink);background:var(--sunk)}
 .ceye svg{width:15px;height:15px}
 th.colh.coldrag{background:color-mix(in srgb,var(--accent) 16%,var(--sunk))}
 .sidebar-off{display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--top-h,58px));z-index:25;background:var(--bg);padding-block:8px;margin-block:-8px;box-shadow:0 1px 0 var(--line)}
@@ -640,7 +654,7 @@ tr.rowdrag{outline:2px dashed var(--accent);outline-offset:-2px}
 const SCHEMA = JSON.parse(document.getElementById('ci-schema').textContent);
 /** Fecha y hora de esta versión de la app (se completa sola al generar los archivos). */
 const APP_NAME = 'COMPAREIt(em)';
-const APP_BUILD = '12/11/2026 22:51';
+const APP_BUILD = '12/11/2026 23:16';
 const $ = s => document.querySelector(s);
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
@@ -1566,7 +1580,7 @@ function itemColDefs(g){
   if (isText(g)){
     defs.push({k:'chars', label:'Caracteres', cls:'val', td:it => { const m = metricsOf(it.txt), mx = maxOf(it); return `<span class="${mx && m.chars > mx ? 'cnt-over' : ''}" ${mx ? `title="Máximo: ${fmtN(mx)} caracteres"` : ''}>${fmtN(m.chars)}${mx ? ' / ' + fmtN(mx) : ''}</span>` }});
     defs.push({k:'charsns', label:'Sin espacios', cls:'val', td:it => fmtN(metricsOf(it.txt).charsns)});
-    defs.push({k:'inflesz', label:'Legibilidad', cls:'val', td:it => { const m = metricsOf(it.txt); return m.words ? fmtN(m.inflesz) + ' · ' + inflLabel(m.inflesz) : '—' }});
+    defs.push({k:'inflesz', label:'Legibilidad', cls:'val', td:it => { const m = metricsOf(it.txt); return m.words ? `${fmtN(m.inflesz)}<span class="sub2">${inflLabel(m.inflesz)}</span>` : '—' }});
     defs.push({k:'words', label:'Palabras', cls:'val', td:it => fmtN(metricsOf(it.txt).words)});
   } else tree(g).filter(c => c.leaf && c.kind !== 'auto').forEach(c => defs.push({k:'v.' + c.id, label:c.name, cls:'val', td:it => esc(fmt(c, it['v.' + c.id]))}));
   defs.push({k:'inst', label:'Instancias', cls:'', td:it => String(ins.filter(n => instIds(n).includes(it.id)).length)});
@@ -1590,8 +1604,8 @@ function itemsTable(g, its){
     ${C.hidden.length ? `<button class="btn sm ghost" data-act="colAll" data-v="show">Mostrar todas</button>` : ''}
     ${C.custom ? '<button class="btn sm ghost" data-act="colReset" title="Vuelve al orden original de las columnas">Orden original</button>' : ''}
     ${C.hidden.length ? `<span class="muted">Ocultas:</span>${C.hidden.map(d => `<button class="btn sm colchip" data-act="colShow" data-ck="${esc(d.k)}" title="Mostrar «${esc(d.label)}» en su lugar">${esc(d.label)} <span aria-hidden="true">✕</span></button>`).join('')}` : ''}</div>`;
-  const th = d => `<th class="colh" data-ck="${esc(d.k)}"><span class="colh-in"><button type="button" class="cgrip" data-ck="${esc(d.k)}" aria-label="Mover la columna ${esc(d.label)}" title="Arrastrá para mover la columna (o Alt + ← →)">⠿</button><span>${esc(d.label)}</span><button type="button" class="ceye" data-act="colHide" data-ck="${esc(d.k)}" aria-label="Ocultar la columna ${esc(d.label)}" title="Ocultar columna">${EYE}</button></span></th>`;
-  const firstTd = it => tx ? `<td><strong>${esc(it.name)}</strong><span class="cw">${esc((it.txt || 'Sin texto').replace(/\s+/g, ' ').slice(0, 70))}${(it.txt || '').length > 70 ? '…' : ''}</span></td>` : `<td><strong>${esc(it.name)}</strong></td>`;
+  const th = d => `<th class="colh ${d.cls === 'val' ? 'numh' : ''}" data-ck="${esc(d.k)}"><span class="colh-tools"><button type="button" class="cgrip" data-ck="${esc(d.k)}" aria-label="Mover la columna ${esc(d.label)}" title="Arrastrá para mover la columna (o Alt + ← →)">⠿</button><button type="button" class="ceye" data-act="colHide" data-ck="${esc(d.k)}" aria-label="Ocultar la columna ${esc(d.label)}" title="Ocultar columna">${EYE}</button></span><span class="colh-t">${esc(d.label)}</span></th>`;
+  const firstTd = it => tx ? `<td class="tcell"><strong>${esc(it.name)}</strong><span class="cw">${esc((it.txt || 'Sin texto').replace(/\s+/g, ' ').slice(0, 70))}${(it.txt || '').length > 70 ? '…' : ''}</span></td>` : `<td class="tcell"><strong>${esc(it.name)}</strong></td>`;
   const acts = it => `<td><div class="acts ed">${tx ? `<button class="btn sm" data-act="editText" data-id="${it.id}">Texto</button>` : ''}<button class="btn sm" data-act="editItem" data-id="${it.id}">Editar</button><button class="btn sm" data-act="dupItem" data-id="${it.id}">Replicar</button><button class="btn sm ghost" data-act="delItem" data-id="${it.id}">Borrar</button></div></td>`;
   return bar + `<div class="scroll"><table class="tbl itbl"><thead><tr>${canEdit() ? '<th class="hcol"></th>' : ''}<th class="hcol"><span class="sr">Ocultar</span></th><th>${first}</th>${C.vis.map(th).join('')}<th></th></tr></thead><tbody>
     ${its.map(it => `<tr>${canEdit() ? `<td class="hcol">${rowHandle(it.id)}</td>` : ''}<td class="hcol">${eyeBtn('hideItG', it.id, it.name, 'title="Ocultar en todo el grupo (solo en este dispositivo)"')}</td>${firstTd(it)}${C.vis.map(d => `<td class="${d.cls}">${d.td(it)}</td>`).join('')}${acts(it)}</tr>`).join('')}
@@ -2511,6 +2525,7 @@ S.lay = {...layBase(), ...(laySaved() || {})}; S.layUndo = [];
 const layKey = l => JSON.stringify({side:l.side, collapsed:!!l.collapsed, col:l.col || 0});
 const desk = () => innerWidth > 860;
 function topH(){ const t = document.querySelector('.top'); if (t) document.documentElement.style.setProperty('--top-h', t.offsetHeight + 'px') }
+try{ new ResizeObserver(() => { topH(); pinHead() }).observe(document.querySelector('.top')) }catch(e){}   // el encabezado puede cambiar de alto (letras, ancho de ventana)
 function applySide(){
   document.documentElement.style.setProperty('--side-w', S.lay.side + 'px'); topH();
   document.body.classList.toggle('side-unpin', !!S.lay.collapsed);
