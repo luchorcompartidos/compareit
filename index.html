@@ -654,7 +654,7 @@ tr.rowdrag{outline:2px dashed var(--accent);outline-offset:-2px}
 const SCHEMA = JSON.parse(document.getElementById('ci-schema').textContent);
 /** Fecha y hora de esta versión de la app (se completa sola al generar los archivos). */
 const APP_NAME = 'COMPAREIt(em)';
-const APP_BUILD = '12/11/2026 23:16';
+const APP_BUILD = '13/11/2026 12:24';
 const $ = s => document.querySelector(s);
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
@@ -1902,10 +1902,26 @@ function txtLimit(t){
 }
 /** Valida al guardar: con máximo y sin permiso para superarlo, el texto no puede quedar más largo. */
 function maxBlock(txt, cfg){ const n = gcount(txt); return cfg.max && !cfg.allow && n > cfg.max ? `El texto tiene ${fmtN(n)} caracteres y el máximo configurado es ${fmtN(cfg.max)}. Acortalo o marcá «Permitir escribir más que el máximo».` : '' }
+/**
+ * Alto del campo Texto: el mayor posible dentro de la ventana, dejando siempre a la vista las leyendas que tiene debajo.
+ * El texto largo se recorre con la barra de desplazamiento del propio campo. Se recalcula al abrir, al cambiar el tamaño
+ * de la ventana y cuando las leyendas cambian de alto (por ejemplo, al aparecer el aviso de máximo superado).
+ */
+function fitTxt(force){
+  const t = document.getElementById('f_txt'), body = document.getElementById('mBody'), last = document.getElementById('f_txt_h') || document.getElementById('f_txt_c');
+  if (!t || !body || !last || $('#modal').hidden) return;
+  const legH = Math.round(last.getBoundingClientRect().bottom - t.getBoundingClientRect().bottom);
+  if (!force && t.dataset.legH === String(legH)) return; t.dataset.legH = legH;
+  const keep = body.scrollTop; t.style.height = '200vh';            // lleva la ventana a su alto máximo para medir el espacio disponible
+  const top = t.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop;
+  const pad = parseFloat(getComputedStyle(body).paddingBottom) || 0;
+  t.style.height = Math.max(120, Math.floor(body.clientHeight - top - legH - pad - 2)) + 'px'; body.scrollTop = keep;
+}
+addEventListener('resize', () => fitTxt(true));
 /* editor de texto con contador */
 function textForm(id){
   const it = S.app[id]; if (!it) return;
-  modal('Texto de «' + it.name + '»', `<label class="fld" for="f_txt"><span>Texto</span><textarea id="f_txt" data-id="${id}" rows="14" ${canEdit() ? '' : 'readonly'}>${esc(it.txt)}</textarea></label><p class="hint" id="f_txt_max"></p><p class="hint val" id="f_txt_c"></p>${maxOf(it) ? '' : '<p class="hint">Podés fijar un máximo de caracteres desde «Editar» del ítem.</p>'}`, canEdit() ? () => {
+  modal('Texto de «' + it.name + '»', `<label class="fld" for="f_txt"><span>Texto</span><textarea id="f_txt" data-id="${id}" rows="14" ${canEdit() ? '' : 'readonly'}>${esc(it.txt)}</textarea></label><p class="hint" id="f_txt_max"></p><p class="hint val" id="f_txt_c"></p>${maxOf(it) ? '' : '<p class="hint" id="f_txt_h">Podés fijar un máximo de caracteres desde «Editar» del ítem.</p>'}`, canEdit() ? () => {
     const t = document.getElementById('f_txt').value; if (t.length > TXT_MAX){ toast('El texto supera el máximo de una celda de Google Sheets (49.000 caracteres).'); return false }
     const mb = maxBlock(t, maxCfg(S.app[id])); if (mb){ toast(mb); return false }
     const r = {...S.app[id]}; if (t.trim()) r.txt = t; else delete r.txt; put(id, r);
@@ -1919,6 +1935,7 @@ function txtCount(){ const t = document.getElementById('f_txt'), o = document.ge
   const cnt = max ? `<span class="${over ? 'cnt-over' : 'cnt'}">Caracteres escritos: ${fmtN(n)} / ${fmtN(max)} · ${over ? fmtN(max - n) : 'quedan ' + fmtN(max - n)}</span>` : `<span class="cnt">Caracteres escritos: ${fmtN(n)}</span>`;
   o.innerHTML = `${cnt} · ${fmtN(m.words)} palabras · ${fmtN(m.charsns)} sin espacios · ${fmtN(m.sentences)} oraciones` + (t.value.length > TXT_MAX ? ' · <span class="cnt-over">supera el máximo de 49.000 caracteres de una celda de Google Sheets</span>' : '');
   // leyenda fija: el máximo configurado
+  requestAnimationFrame(() => fitTxt());   // las leyendas pueden haber cambiado de alto
   if (fx){ fx.hidden = !max; fx.innerHTML = max ? `Máximo: ${fmtN(max)} caracteres (con espacios)${allow ? ' · se permite superarlo' : ' · no se permite superarlo'}.${over ? ` <span class="cnt-over">Se superó el Máximo de "${fmtN(max)}" caracteres configurado como valor Máximo.</span>` : ''}` : '' }
 }
 
