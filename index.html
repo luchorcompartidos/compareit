@@ -455,8 +455,28 @@ th.drop-a{box-shadow:inset -3px 0 0 var(--accent)}
 .eyeb{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;min-width:40px;min-height:40px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .eyeb[aria-pressed="true"]{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
 @media (max-width:860px){ .gfold{border:1px solid var(--line);background:var(--surface);min-height:40px} }
-body.side-off .shell{grid-template-columns:minmax(0,1fr)}
-body.side-off .side{display:none}
+@media (min-width:861px){
+  body.side-unpin .shell{grid-template-columns:52px minmax(0,1fr)}
+  body.side-unpin .side{width:52px;overflow:hidden;z-index:45;align-self:start;position:sticky;top:calc(var(--top-h,58px) + 8px);max-height:calc(100vh - var(--top-h,58px) - 16px);
+    background:var(--bg);border-radius:var(--r);transition:width .14s ease .12s,box-shadow .14s}
+  body.side-unpin .side:hover,body.side-unpin .side:has(:focus-visible){width:var(--side-w,240px);overflow-y:auto;background:var(--surface);box-shadow:0 10px 30px -8px rgb(0 0 0 / .3),0 0 0 1px var(--line);padding:8px;margin:-8px;transition-delay:0s}
+  body.side-unpin .side:not(:hover):not(:has(:focus-visible)) :is(.eyebrow,.gname,.gmeta,.gfold,.side-h .btn:not(.pinb)){display:none}
+  body.side-unpin .side:not(:hover):not(:has(:focus-visible)) .gini{display:flex}
+  body.side-unpin .side:not(:hover):not(:has(:focus-visible)) .gitem{align-items:center;padding:7px 0}
+  body.side-unpin .side:not(:hover):not(:has(:focus-visible)) .side-h{justify-content:center}
+  body.side-unpin .siderz{display:none}
+}
+.gini{display:none;width:34px;height:34px;border-radius:9px;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;letter-spacing:.02em;background:var(--sunk);color:var(--ink)}
+.gitem.on .gini{background:var(--accent);color:var(--accent-ink)}
+@media (max-width:860px){ .pinb{display:none} }
+.pinb.on{color:var(--accent)}.pinb:not(.on) svg{transform:rotate(35deg)}
+.colbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px;font-size:.86rem}
+.colchip{border-style:dashed}
+.itbl th.colh .colh-in{display:inline-flex;align-items:center;gap:4px}
+.cgrip,.ceye{border:0;background:transparent;color:var(--muted);cursor:grab;padding:2px 3px;border-radius:5px;display:inline-flex;align-items:center;touch-action:none;font:inherit}
+.ceye{cursor:pointer;opacity:.55}.colh:hover .ceye,.ceye:focus-visible{opacity:1}.cgrip:hover,.ceye:hover{color:var(--ink);background:var(--sunk)}
+.ceye svg{width:15px;height:15px}
+th.colh.coldrag{background:color-mix(in srgb,var(--accent) 16%,var(--sunk))}
 .sidebar-off{display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--top-h,58px));z-index:25;background:var(--bg);padding-block:8px;margin-block:-8px;box-shadow:0 1px 0 var(--line)}
 .siderz{position:absolute;top:0;bottom:0;right:-17px;width:10px;cursor:col-resize;touch-action:none;border-radius:4px}
 .siderz:hover,body.resizing .siderz{background:color-mix(in srgb,var(--accent) 25%,transparent)}
@@ -620,7 +640,7 @@ tr.rowdrag{outline:2px dashed var(--accent);outline-offset:-2px}
 const SCHEMA = JSON.parse(document.getElementById('ci-schema').textContent);
 /** Fecha y hora de esta versión de la app (se completa sola al generar los archivos). */
 const APP_NAME = 'COMPAREIt(em)';
-const APP_BUILD = '12/11/2026 16:12';
+const APP_BUILD = '12/11/2026 22:51';
 const $ = s => document.querySelector(s);
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
@@ -1050,23 +1070,27 @@ function renderStatus(){
   $('#appVer').textContent = $('#appVer2').textContent = APP_BUILD ? 'Versión ' + APP_NAME + ' ' + APP_BUILD : ''; $('#appVer').title = 'Fecha y hora de la última versión de la app';
 }
 
+const PIN = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M9 3h6l-1 6 3 3v2H7v-2l3-3-1-6zM12 14v7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+const pinBtn = () => { const on = !S.lay.collapsed; return `<button class="btn sm ghost sidecol pinb ${on ? 'on' : ''}" data-act="sidePin" aria-pressed="${on}" title="${on ? 'Desfijar la barra lateral: se compacta y se expande al pasar por encima' : 'Fijar la barra lateral (queda siempre expandida)'}" aria-label="${on ? 'Desfijar' : 'Fijar'} la barra lateral">${PIN}</button>` };
+/** iniciales para la barra compacta */
+const ini = n => { const w = String(n || '?').replace(/[^\p{L}\p{N}\s]/gu, ' ').trim().split(/\s+/).filter(Boolean); return ((w[0] || '?')[0] + (w[1] ? w[1][0] : (w[0] || '').slice(1, 2))).toUpperCase() };
 function renderSide(){
   const gs = activeGroups(), ar = archGroups(), nh = hiddenGroups().length, open = !!S.ui.archOpen;
-  const gbtn = g => `<button class="gitem ${S.ui.view === 'group' && S.ui.g === g.id ? 'on' : ''} ${g.arch ? 'garch' : ''}" data-act="pickGroup" data-id="${g.id}">
-      <span class="gname">${esc(g.name)}</span><span class="gmeta">${items(g.id).length} ítems · ${insts(g.id).length} instancias</span></button>`;
+  const gbtn = g => `<button class="gitem ${S.ui.view === 'group' && S.ui.g === g.id ? 'on' : ''} ${g.arch ? 'garch' : ''}" data-act="pickGroup" data-id="${g.id}" title="${esc(g.name)}">
+      <span class="gini" aria-hidden="true">${esc(ini(g.name))}</span><span class="gname">${esc(g.name)}</span><span class="gmeta">${items(g.id).length} ítems · ${insts(g.id).length} instancias</span></button>`;
   $('#side').innerHTML = `
-    <div class="side-h"><span class="eyebrow">Grupos</span><span class="row"><button class="btn sm ghost ed" data-act="newGroup">+ Grupo</button><button class="btn sm ghost ed sidecol" data-act="orderGroups" title="Ordenar grupos" aria-label="Ordenar grupos">⇅</button><button class="btn sm ghost sidecol" data-act="sideCollapse" title="Colapsar la barra lateral" aria-label="Colapsar la barra lateral">«</button></span></div>
+    <div class="side-h"><span class="eyebrow">Grupos</span><span class="row"><button class="btn sm ghost ed" data-act="newGroup">+ Grupo</button><button class="btn sm ghost ed sidecol" data-act="orderGroups" title="Ordenar grupos" aria-label="Ordenar grupos">⇅</button>${pinBtn()}</span></div>
     <div class="siderz" data-rz="side" title="Arrastrá para cambiar el ancho de la barra" aria-hidden="true"></div>
     <nav class="glist">${gs.map(gbtn).join('')}
       ${ar.length ? `<button class="gfold" data-act="toggleArch" aria-expanded="${open}"><span>${open ? '▾' : '▸'}</span> Archivados (${ar.length})</button>${open ? ar.map(gbtn).join('') : ''}` : ''}
       ${nh ? `<button class="gfold" data-act="openHidden">${EYE_OFF} Ocultos (${nh})</button>` : ''}</nav>
     <div class="side-h"><span class="eyebrow">Vistas</span></div>
-    <button class="gitem ${S.ui.view === 'plan' ? 'on' : ''}" data-act="openPlan"><span class="gname">Planilla</span><span class="gmeta">Todas las entidades en grilla</span></button>
-    <button class="gitem ed" data-act="importCmp"><span class="gname">Importar comparación</span><span class="gmeta">Desde un archivo o texto exportado</span></button>
+    <button class="gitem ${S.ui.view === 'plan' ? 'on' : ''}" data-act="openPlan" title="Planilla"><span class="gini" aria-hidden="true">▦</span><span class="gname">Planilla</span><span class="gmeta">Todas las entidades en grilla</span></button>
+    <button class="gitem ed" data-act="importCmp" title="Importar comparación"><span class="gini" aria-hidden="true">⇩</span><span class="gname">Importar comparación</span><span class="gmeta">Desde un archivo o texto exportado</span></button>
     <div class="side-h"><span class="eyebrow">Fuente de datos</span></div>
     ${REAL ? (S.sheet ? `<a class="gitem sheetbtn" href="${esc(S.sheet.url)}" target="_blank" rel="noopener"><span class="gname">Abrir planilla ↗</span><span class="gmeta">${esc(S.sheet.name)}</span></a>` : `<div class="gitem"><span class="gname">Google Sheet</span><span class="gmeta">${S.err ? 'Error: ver panel de sincronización' : 'Conectando…'}</span></div>`)
-    : `<button class="gitem sheetbtn ${S.ui.view === 'sheet' ? 'on' : ''}" data-act="openSheet"><span class="gname">Sheet simulada</span><span class="gmeta">Prueba de sincronización</span></button>
-    <button class="gitem" data-act="openSync"><span class="gname">Conectar a mi Sheet</span><span class="gmeta">Usar la planilla real</span></button>`}`;
+    : `<button class="gitem sheetbtn ${S.ui.view === 'sheet' ? 'on' : ''}" data-act="openSheet" title="Sheet simulada"><span class="gini" aria-hidden="true">▤</span><span class="gname">Sheet simulada</span><span class="gmeta">Prueba de sincronización</span></button>
+    <button class="gitem" data-act="openSync" title="Conectar a mi Sheet"><span class="gini" aria-hidden="true">⇄</span><span class="gname">Conectar a mi Sheet</span><span class="gmeta">Usar la planilla real</span></button>`}`;
 }
 
 function render(){
@@ -1086,7 +1110,7 @@ function renderMain(){
   else if ((!S.ui.g || !S.app[S.ui.g]) && groups().length){ m.innerHTML = `<div class="empty"><h3>No hay grupos visibles</h3><p>Tenés ${hiddenGroups().length} grupo${hiddenGroups().length === 1 ? '' : 's'} oculto${hiddenGroups().length === 1 ? '' : 's'} en este dispositivo.</p><button class="btn primary" data-act="openHidden">Ver ocultos</button></div>`; }
   else if (!S.ui.g || !S.app[S.ui.g]){ m.innerHTML = empty('No hay grupos todavía', 'Un grupo reúne ítems de la misma naturaleza (por ejemplo, notebooks) y se guarda como una pestaña de la Google Sheet.', 'newGroup', 'Crear grupo'); }
   else m.innerHTML = viewGroup({...S.app[S.ui.g], id:S.ui.g});
-  if (S.lay.collapsed) m.insertAdjacentHTML('afterbegin', `<div class="sidebar-off"><button class="btn sm" data-act="sideExpand" title="Volver a mostrar la barra lateral con su ancho fijado">» Mostrar barra lateral</button>${S.layUndo.length ? '<button class="btn sm ghost" data-act="layUndo">↶ Deshacer</button>' : ''}</div>`);
+  // barra lateral desfijada: compacta y se expande al pasar por encima (ver CSS body.side-unpin)
   { const st = m.querySelector('.sidebar-off'); document.documentElement.style.setProperty('--strip-h', st ? Math.max(0, st.offsetHeight - 16) + 'px' : '0px') }
   sizeCols(); pinHead();
   if (S.drawer) renderDrawer();
@@ -1098,7 +1122,7 @@ function viewGroup(g){
   <header class="gh"><div class="gh-t"><span class="eyebrow">Grupo · pestaña «${esc(g.name)}»</span><h1>${esc(g.name)}</h1>${g.desc ? `<p class="lead">${esc(g.desc)}</p>` : ''}</div>
     <div class="gh-a"><button class="btn sm ed" data-act="editGroup">Editar grupo</button><button class="btn sm ed" data-act="${g.arch ? 'unarchGroup' : 'archGroup'}">${g.arch ? 'Desarchivar' : 'Archivar'}</button><button class="btn sm" data-act="hideGroup">Ocultar</button><button class="btn sm ed" data-act="replGroup">Replicar grupo</button><button class="btn sm" data-act="exportCmp">Exportar</button><button class="btn sm ghost ed" data-act="delGroup">Borrar</button></div></header>
   <div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${S.ui.tab === k}" class="tab ${S.ui.tab === k ? 'on' : ''}" data-act="tab" data-k="${k}">${l}</button>`).join('')}</div>
-  ${S.ui.tab === 'items' ? viewItems(g) : S.ui.tab === 'attr' ? viewAttrs(g) : S.ui.tab === 'crit' ? viewCrit(g) : viewCmp(g)}`;
+  ${S.ui.tab === 'items' ? viewItems(g) : S.ui.tab === 'grid' ? viewPlan('app', g.id) : S.ui.tab === 'attr' ? viewAttrs(g) : S.ui.tab === 'crit' ? viewCrit(g) : viewCmp(g)}`;
 }
 
 const MK = {adv:'▲<span class="mkt"> Ventaja</span>', dis:'▼<span class="mkt"> Desventaja</span>', eq:'=<span class="mkt"> Similar</span>'};
@@ -1262,8 +1286,9 @@ function planCell(sk, t, key, D, rec, id, col, ro){
   return `<td class="${col.wide ? 'wide' : ''} ${col.type === 'num' ? 'num' : ''}"><input ${data} value="${esc(val)}" ${col.type === 'num' ? 'inputmode="decimal"' : ''} ${ro ? 'readonly' : ''} ${!rec && col.f === 'name' ? 'placeholder="Escribí para agregar…"' : ''}></td>`;
 }
 
-function viewPlan(sk){
+function viewPlan(sk, embed){   // embed = id de grupo: la grilla de ese grupo dentro de su vista (pestaña «Grilla»)
   const D = STORE[sk].get(), tabs = planTabs(D), uk = sk === 'app' ? 'planTab' : 'sheetTab';
+  if (embed) S.ui[uk] = embed;
   if (!tabs.find(x => x.key === S.ui[uk])) S.ui[uk] = tabs[0] ? tabs[0].key : 'group';
   const tab = tabs.find(x => x.key === S.ui[uk]) || {key:'group', t:'group', name:SCHEMA.group.tab};
   const ro = sk === 'app' && !canEdit();
@@ -1277,12 +1302,16 @@ function viewPlan(sk){
   </tbody></table>`;
   const isApp = sk === 'app';
   const title = isApp ? (S.sheet ? S.sheet.name : REAL ? 'Google Sheet' : 'Datos de la app') : 'Sheet simulada';
+  if (embed) return `${ro ? '<div class="banner"><strong>Modo «Cargar en la Sheet».</strong>&nbsp;La grilla es de solo lectura; editá en la Google Sheet.</div>' : ''}
+    <div class="instbar"><p class="muted">Los ítems del grupo como en su pestaña de la Google Sheet: editá cualquier celda directamente.</p><div class="row">${ro ? '' : '<button class="btn sm" data-act="planAdd">+ Fila</button>'}<button class="btn sm ghost" data-act="openPlan" title="Todas las pestañas: grupos, criterios, instancias…">Ver la Planilla completa</button></div></div>
+    <div class="gs"><div class="scroll" style="border:0;border-radius:0">${grid}</div></div>
+    <p class="hint">Tab o Enter guardan la celda; Enter baja a la fila siguiente.</p>`;
   return `<header class="gh"><div class="gh-t"><span class="eyebrow">${isApp ? 'Vista' : 'Herramienta de prueba'}</span><h1>${isApp ? 'Planilla' : 'Sheet simulada'}</h1>
       <p class="lead">${isApp ? 'Todos los datos de la app con las mismas pestañas que tu Google Sheet: una por grupo con sus ítems, y _Grupos, _Criterios (el catálogo), _Usos (qué criterios usa cada grupo), _Conjuntos y _Ajustes (variantes de los criterios) e _Instancias. Cada cambio se guarda al salir de la celda y se sincroniza.' : 'Imita la Google Sheet para probar la sincronización sin conexión real. Lo que edites acá lo toma la app en la próxima sincronización, como si lo hubieras cambiado en la Sheet.'}</p></div></header>
     ${ro ? '<div class="banner"><strong>Modo «Cargar en la Sheet».</strong>&nbsp;La planilla es de solo lectura; editá en la Google Sheet.</div>' : ''}
     <div class="gs"><div class="gs-bar"><span class="gs-title"><i></i>${esc(title)}</span>
       ${isApp ? (S.sheet ? `<a class="btn sm" href="${esc(S.sheet.url)}" target="_blank" rel="noopener">Abrir en Google Sheets ↗</a>` : '') : `<label class="switch"><input type="checkbox" id="f_online" ${S.online ? 'checked' : ''}> Conexión con la app</label>`}
-      ${ro ? '' : '<button class="btn sm" data-act="planAdd">+ Fila</button>'}<button class="btn sm primary" data-act="syncNow">Sincronizar ahora</button></div>
+      ${isApp && tab.t === 'item' && D[tab.key] ? `<button class="btn sm" data-act="pickGroup" data-id="${tab.key}" title="Volver a la vista del grupo con sus pestañas">← Ir al grupo «${esc(D[tab.key].name)}»</button>` : ''}${ro ? '' : '<button class="btn sm" data-act="planAdd">+ Fila</button>'}<button class="btn sm primary" data-act="syncNow">Sincronizar ahora</button></div>
       <div class="scroll" style="border:0;border-radius:0">${grid}</div>
       <div class="gs-tabs">${tabs.map(x => `<button class="${x.key === tab.key ? 'on' : ''}" data-act="planTab" data-sk="${sk}" data-k="${x.key}">${esc(x.name)}</button>`).join('')}</div></div>
     <p class="hint">Tab o Enter guardan la celda; Enter baja a la fila siguiente. Grupo y Padre se eligen por nombre; los ítems de una instancia se eligen tocando su celda.</p>`;
@@ -1402,11 +1431,7 @@ function viewItems(g){
   let h = `<div class="instbar"><p class="muted">${its.length} ítems en el grupo. Cada ítem es una fila de la pestaña «${esc(g.name)}».${canEdit() && its.length > 1 ? ' Arrastrá desde ⠿ para cambiar el orden<span class="kbd-only"> (o Alt + ↑ ↓)</span>.' : ''}${gh.size ? '' : ' Con el ojo ocultás un ítem en todo el grupo (solo en este dispositivo).'}</p><div class="row">${gh.size ? `<button class="btn sm" data-act="openItHidden" data-mode="group">Ocultos (${gh.size}) · Mostrar</button>` : ''}<button class="btn sm primary ed" data-act="newItem">+ Ítem</button></div></div>`;
   if (!its.length && gh.size) return h + empty('Todos los ítems están ocultos', 'Mostrá alguno para verlo en la lista.', 'openItHiddenG', 'Ver ocultos');
   if (!its.length) return h + empty('Sin ítems', 'Cargá el primer ítem desde acá o agregá una fila en la Sheet.', 'newItem', 'Agregar ítem');
-  h += `<div class="scroll"><table class="tbl"><thead><tr>${canEdit() ? '<th class="hcol"></th>' : ''}<th class="hcol"><span class="sr">Ocultar</span></th><th>Ítem</th>${ats.map(a => `<th class="ath">${esc(a.name)}</th>`).join('')}${leaves.map(c => `<th>${esc(c.name)}</th>`).join('')}<th>Instancias</th><th></th></tr></thead><tbody>
-    ${its.map(it => `<tr>${canEdit() ? `<td class="hcol">${rowHandle(it.id)}</td>` : ''}<td class="hcol">${eyeBtn('hideItG', it.id, it.name, 'title="Ocultar en todo el grupo (solo en este dispositivo)"')}</td><td><strong>${esc(it.name)}</strong></td>${ats.map(a => `<td class="aval">${fmtAttr(a, it['x.' + a.id])}</td>`).join('')}${leaves.map(c => `<td class="val">${esc(fmt(c, it['v.' + c.id]))}</td>`).join('')}
-      <td>${ins.filter(n => instIds(n).includes(it.id)).length}</td>
-      <td><div class="acts ed"><button class="btn sm" data-act="editItem" data-id="${it.id}">Editar</button><button class="btn sm" data-act="dupItem" data-id="${it.id}">Replicar</button><button class="btn sm ghost" data-act="delItem" data-id="${it.id}">Borrar</button></div></td></tr>`).join('')}
-  </tbody></table></div>`;
+  h += itemsTable(g.id, its);
   return h;
 }
 
@@ -1415,12 +1440,7 @@ function viewTextItems(g){
   let h = `<div class="instbar"><p class="muted">${its.length} textos en el grupo. Cada texto es una fila de la pestaña «${esc(g.name)}».${canEdit() && its.length > 1 ? ' Arrastrá desde ⠿ para cambiar el orden<span class="kbd-only"> (o Alt + ↑ ↓)</span>.' : ''}</p><div class="row">${gh.size ? `<button class="btn sm" data-act="openItHidden" data-mode="group">Ocultos (${gh.size}) · Mostrar</button>` : ''}<button class="btn sm primary ed" data-act="newItem">+ Texto</button></div></div>`;
   if (!its.length && gh.size) return h + empty('Todos los textos están ocultos', 'Mostrá alguno para verlo en la lista.', 'openItHiddenG', 'Ver ocultos');
   if (!its.length) return h + empty('Sin textos', 'Cargá el primer texto desde acá o pegalo en la columna «Texto» de la Sheet.', 'newItem', 'Agregar texto');
-  h += `<div class="scroll"><table class="tbl"><thead><tr>${canEdit() ? '<th class="hcol"></th>' : ''}<th class="hcol"><span class="sr">Ocultar</span></th><th>Texto</th>${ats.map(a => `<th class="ath">${esc(a.name)}</th>`).join('')}<th>Palabras</th><th>Caracteres</th><th>Sin espacios</th><th>Legibilidad</th><th>Instancias</th><th></th></tr></thead><tbody>
-    ${its.map(it => { const m = metricsOf(it.txt); return `<tr>${canEdit() ? `<td class="hcol">${rowHandle(it.id)}</td>` : ''}<td class="hcol">${eyeBtn('hideItG', it.id, it.name, 'title="Ocultar en todo el grupo (solo en este dispositivo)"')}</td><td><strong>${esc(it.name)}</strong><span class="cw">${esc((it.txt || 'Sin texto').replace(/\s+/g, ' ').slice(0, 70))}${(it.txt || '').length > 70 ? '…' : ''}</span></td>
-      ${ats.map(a => `<td class="aval">${fmtAttr(a, it['x.' + a.id])}</td>`).join('')}<td class="val">${fmtN(m.words)}</td><td class="val ${maxOf(it) && m.chars > maxOf(it) ? 'cnt-over' : ''}" ${maxOf(it) ? `title="Máximo: ${fmtN(maxOf(it))} caracteres"` : ''}>${fmtN(m.chars)}${maxOf(it) ? ' / ' + fmtN(maxOf(it)) : ''}</td><td class="val">${fmtN(m.charsns)}</td><td class="val">${m.words ? fmtN(m.inflesz) + ' · ' + inflLabel(m.inflesz) : '—'}</td>
-      <td>${ins.filter(n => instIds(n).includes(it.id)).length}</td>
-      <td><div class="acts ed"><button class="btn sm" data-act="editText" data-id="${it.id}">Texto</button><button class="btn sm" data-act="editItem" data-id="${it.id}">Editar</button><button class="btn sm" data-act="dupItem" data-id="${it.id}">Replicar</button><button class="btn sm ghost" data-act="delItem" data-id="${it.id}">Borrar</button></div></td></tr>` }).join('')}
-  </tbody></table></div>`;
+  h += itemsTable(g.id, its);
   return h;
 }
 /* ---------- Atributos: datos descriptivos de los ítems (no suman puntaje) ---------- */
@@ -1537,6 +1557,81 @@ function attrToCritForm(aid){
     rmRec(aid); log(`El atributo «${a.name}» se convirtió en criterio.`); commit(); toast('Atributo convertido en criterio.');
   }, 'Convertir');
 }
+
+/* ---------- columnas de la tabla de Ítems: orden manual y ocultas (por dispositivo y por grupo) ---------- */
+/** Columnas de datos (todas las que siguen a Ítem / Texto). */
+function itemColDefs(g){
+  const ins = insts(g), ats = attrsOf(g), defs = [];
+  ats.forEach(a => defs.push({k:'x.' + a.id, label:a.name, cls:'aval', td:it => fmtAttr(a, it['x.' + a.id])}));
+  if (isText(g)){
+    defs.push({k:'chars', label:'Caracteres', cls:'val', td:it => { const m = metricsOf(it.txt), mx = maxOf(it); return `<span class="${mx && m.chars > mx ? 'cnt-over' : ''}" ${mx ? `title="Máximo: ${fmtN(mx)} caracteres"` : ''}>${fmtN(m.chars)}${mx ? ' / ' + fmtN(mx) : ''}</span>` }});
+    defs.push({k:'charsns', label:'Sin espacios', cls:'val', td:it => fmtN(metricsOf(it.txt).charsns)});
+    defs.push({k:'inflesz', label:'Legibilidad', cls:'val', td:it => { const m = metricsOf(it.txt); return m.words ? fmtN(m.inflesz) + ' · ' + inflLabel(m.inflesz) : '—' }});
+    defs.push({k:'words', label:'Palabras', cls:'val', td:it => fmtN(metricsOf(it.txt).words)});
+  } else tree(g).filter(c => c.leaf && c.kind !== 'auto').forEach(c => defs.push({k:'v.' + c.id, label:c.name, cls:'val', td:it => esc(fmt(c, it['v.' + c.id]))}));
+  defs.push({k:'inst', label:'Instancias', cls:'', td:it => String(ins.filter(n => instIds(n).includes(it.id)).length)});
+  return defs;
+}
+const icCfg = g => ((S.ui.icols || {})[g]) || {};
+function icSave(g, patch){ S.ui.icols = {...(S.ui.icols || {}), [g]:{...icCfg(g), ...patch}}; save(); render() }
+/** Columnas en el orden del usuario; las nuevas (un atributo o criterio agregado después) entran en su lugar por defecto. */
+function itemCols(g){
+  const defs = itemColDefs(g), keys = defs.map(d => d.k), cfg = icCfg(g);
+  const out = (cfg.order || []).filter(k => keys.includes(k));
+  keys.forEach((k, i) => { if (out.includes(k)) return; const prev = keys.slice(0, i).reverse().find(x => out.includes(x)); out.splice(prev ? out.indexOf(prev) + 1 : 0, 0, k) });
+  const hide = new Set((cfg.hide || []).filter(k => keys.includes(k)));
+  const byK = Object.fromEntries(defs.map(d => [d.k, d]));
+  return {all:out.map(k => byK[k]), vis:out.filter(k => !hide.has(k)).map(k => byK[k]), hidden:out.filter(k => hide.has(k)).map(k => byK[k]), custom:!!(cfg.order && cfg.order.length && cfg.order.join() !== keys.join())};
+}
+function itemsTable(g, its){
+  const tx = isText(g), C = itemCols(g), first = tx ? 'Texto' : 'Ítem';
+  const bar = `<div class="colbar"><span class="muted">Columnas:</span>
+    ${C.vis.length ? `<button class="btn sm ghost" data-act="colAll" data-v="hide" title="Oculta todas las columnas que siguen a «${first}»">Ocultar todas</button>` : ''}
+    ${C.hidden.length ? `<button class="btn sm ghost" data-act="colAll" data-v="show">Mostrar todas</button>` : ''}
+    ${C.custom ? '<button class="btn sm ghost" data-act="colReset" title="Vuelve al orden original de las columnas">Orden original</button>' : ''}
+    ${C.hidden.length ? `<span class="muted">Ocultas:</span>${C.hidden.map(d => `<button class="btn sm colchip" data-act="colShow" data-ck="${esc(d.k)}" title="Mostrar «${esc(d.label)}» en su lugar">${esc(d.label)} <span aria-hidden="true">✕</span></button>`).join('')}` : ''}</div>`;
+  const th = d => `<th class="colh" data-ck="${esc(d.k)}"><span class="colh-in"><button type="button" class="cgrip" data-ck="${esc(d.k)}" aria-label="Mover la columna ${esc(d.label)}" title="Arrastrá para mover la columna (o Alt + ← →)">⠿</button><span>${esc(d.label)}</span><button type="button" class="ceye" data-act="colHide" data-ck="${esc(d.k)}" aria-label="Ocultar la columna ${esc(d.label)}" title="Ocultar columna">${EYE}</button></span></th>`;
+  const firstTd = it => tx ? `<td><strong>${esc(it.name)}</strong><span class="cw">${esc((it.txt || 'Sin texto').replace(/\s+/g, ' ').slice(0, 70))}${(it.txt || '').length > 70 ? '…' : ''}</span></td>` : `<td><strong>${esc(it.name)}</strong></td>`;
+  const acts = it => `<td><div class="acts ed">${tx ? `<button class="btn sm" data-act="editText" data-id="${it.id}">Texto</button>` : ''}<button class="btn sm" data-act="editItem" data-id="${it.id}">Editar</button><button class="btn sm" data-act="dupItem" data-id="${it.id}">Replicar</button><button class="btn sm ghost" data-act="delItem" data-id="${it.id}">Borrar</button></div></td>`;
+  return bar + `<div class="scroll"><table class="tbl itbl"><thead><tr>${canEdit() ? '<th class="hcol"></th>' : ''}<th class="hcol"><span class="sr">Ocultar</span></th><th>${first}</th>${C.vis.map(th).join('')}<th></th></tr></thead><tbody>
+    ${its.map(it => `<tr>${canEdit() ? `<td class="hcol">${rowHandle(it.id)}</td>` : ''}<td class="hcol">${eyeBtn('hideItG', it.id, it.name, 'title="Ocultar en todo el grupo (solo en este dispositivo)"')}</td>${firstTd(it)}${C.vis.map(d => `<td class="${d.cls}">${d.td(it)}</td>`).join('')}${acts(it)}</tr>`).join('')}
+  </tbody></table></div>`;
+}
+/** Guarda el orden visible y conserva el lugar de las columnas ocultas. */
+function colOrderSave(g, visKeys){
+  const C = itemCols(g), all = C.all.map(d => d.k), q = [...visKeys];
+  icSave(g, {order:all.map(k => visKeys.includes(k) ? q.shift() : k)});
+}
+let colMv = null;
+document.addEventListener('pointerdown', e => {
+  const h = e.target.closest && e.target.closest('.cgrip'); if (!h || e.button > 0) return;
+  e.preventDefault(); const th = h.closest('th'); th.classList.add('coldrag'); colMv = {th, row:th.parentNode, pid:e.pointerId, moved:false};
+});
+document.addEventListener('pointermove', e => {
+  const d = colMv; if (!d || e.pointerId !== d.pid) return; e.preventDefault();
+  const ths = [...d.row.querySelectorAll('th.colh')].filter(x => x !== d.th);
+  const before = ths.find(x => { const b = x.getBoundingClientRect(); return e.clientX < b.left + b.width / 2 });
+  if (before){ if (before !== d.th.nextSibling){ d.row.insertBefore(d.th, before); d.moved = true } }
+  else { const last = ths[ths.length - 1]; if (last && last.nextSibling !== d.th){ d.row.insertBefore(d.th, last.nextSibling); d.moved = true } }
+}, {passive:false});
+function endColMv(e){
+  const d = colMv; if (!d || e.pointerId !== d.pid) return; colMv = null; d.th.classList.remove('coldrag');
+  if (d.moved){ S.focusNext = null; colOrderSave(S.ui.g, [...d.row.querySelectorAll('th.colh')].map(x => x.dataset.ck)) }
+}
+document.addEventListener('pointerup', endColMv); document.addEventListener('pointercancel', endColMv);
+document.addEventListener('keydown', e => {
+  const t = e.target; if (!e.altKey || !t.classList || !t.classList.contains('cgrip') || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+  e.preventDefault(); e.stopPropagation(); const ks = [...t.closest('tr').querySelectorAll('th.colh')].map(x => x.dataset.ck), i = ks.indexOf(t.dataset.ck), j = i + (e.key === 'ArrowRight' ? 1 : -1);
+  if (j < 0 || j >= ks.length) return; [ks[i], ks[j]] = [ks[j], ks[i]]; const k = t.dataset.ck; colOrderSave(S.ui.g, ks);
+  setTimeout(() => { const b = document.querySelector(`.cgrip[data-ck="${CSS.escape(k)}"]`); if (b) b.focus() }, 0);
+}, true);
+const COL_ACT = {
+  colHide(el){ const g = S.ui.g, k = el.dataset.ck, d = itemCols(g).all.find(x => x.k === k); icSave(g, {hide:[...new Set([...(icCfg(g).hide || []), k])]});
+    toastAct(`Se ocultó la columna «${d ? d.label : k}».`, 'Deshacer', () => icSave(g, {hide:(icCfg(g).hide || []).filter(x => x !== k)})) },
+  colShow(el){ const g = S.ui.g; icSave(g, {hide:(icCfg(g).hide || []).filter(x => x !== el.dataset.ck)}) },
+  colAll(el){ const g = S.ui.g; icSave(g, {hide:el.dataset.v === 'hide' ? itemCols(g).all.map(d => d.k) : []}) },
+  colReset(){ icSave(S.ui.g, {order:[]}); toast('Columnas en su orden original.') }
+};
 
 /* ---------- Textos: métricas, ayudas de escritura y diferencias ---------- */
 const TXT_MAX = 49000;   // una celda de Google Sheets admite hasta 50.000 caracteres
@@ -2418,7 +2513,7 @@ const desk = () => innerWidth > 860;
 function topH(){ const t = document.querySelector('.top'); if (t) document.documentElement.style.setProperty('--top-h', t.offsetHeight + 'px') }
 function applySide(){
   document.documentElement.style.setProperty('--side-w', S.lay.side + 'px'); topH();
-  document.body.classList.toggle('side-off', !!S.lay.collapsed);
+  document.body.classList.toggle('side-unpin', !!S.lay.collapsed);
 }
 function layChange(patch){
   const prev = {...S.lay}, next = {...S.lay, ...patch};
@@ -2497,6 +2592,7 @@ function pinHead(){
 }
 let phRaf = 0; addEventListener('scroll', () => { if (!phRaf) phRaf = requestAnimationFrame(() => { phRaf = 0; pinHead() }) }, {passive:true});
 const LAY_ACT = {
+  sidePin(){ layChange({collapsed:!S.lay.collapsed}); toast(S.lay.collapsed ? 'Barra lateral desfijada: pasá por encima para expandirla.' : 'Barra lateral fijada.') },
   sideCollapse(){ layChange({collapsed:true}) },
   sideExpand(){ layChange({collapsed:false}) },
   layUndo(){ const p = S.layUndo.pop(); if (!p) return; S.lay = p; applySide(); render(); toast('Se deshizo el último cambio de vista.') },
@@ -2933,7 +3029,7 @@ const ACT = {
   syncNow(){ sync(false, true).then(() => planPoll(true)) },
   pickGroup(el){ S.ui.view = 'group'; S.ui.g = el.dataset.id; save(); render() },
   openSheet(){ S.ui.view = 'sheet'; save(); render() },
-  tab(el){ if (el.dataset.k === 'grid'){ S.ui.view = 'plan'; S.ui.planTab = S.ui.g; save(); render(); return } S.ui.tab = el.dataset.k; save(); render() },
+  tab(el){ S.ui.tab = el.dataset.k; save(); render() },
   pickSet(el){ S.ui.cset = {...(S.ui.cset || {}), [S.ui.g]:el.dataset.id}; save(); render() },
   newSet(el){ setForm(null, el.dataset.from) }, editSet(el){ setForm(el.dataset.id) }, saveAsSet(){ saveAsSetForm() },
   delSet(el){ const id = el.dataset.id; confirmDel(delText(S.app, 'set', id), () => { if (!canEdit()) return; cascadeDel('app', 'set', id); commit() }) },
@@ -3074,7 +3170,7 @@ const ACT = {
     log('Datos de ejemplo restablecidos.'); fixUi(); save(); render() }, 'Restablecer', true) }
 };
 
-Object.assign(ACT, LAY_ACT);
+Object.assign(ACT, LAY_ACT, COL_ACT);
 document.addEventListener('click', e => {
   const ai = e.target.closest && e.target.closest('[data-ai]');
   if (ai){ ai.parentNode.querySelectorAll('[data-ai]').forEach(b => b.classList.toggle('on', b === ai)); document.getElementById('f_ai_kind').value = ai.dataset.ai; aiRefresh(); return }
