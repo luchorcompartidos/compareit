@@ -79,7 +79,7 @@ body.ro .ed{display:none!important}
 .gh-t{display:flex;flex-direction:column;gap:4px;min-width:0}
 .lead{color:var(--muted);max-width:65ch}
 .gh-a{display:flex;gap:8px}
-.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;position:sticky;top:calc(var(--top-h,58px) + var(--strip-h,0px));z-index:24;background:var(--bg)}
 .tab{border:0;background:transparent;padding:9px 14px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;white-space:nowrap}
 .tab.on{color:var(--ink);border-bottom-color:var(--accent)}
 
@@ -168,6 +168,9 @@ textarea{resize:vertical}
 .warnt{color:var(--warn);font-weight:600;text-transform:none;letter-spacing:0}
 .cov{font-size:.74rem;color:var(--muted);font-weight:400;margin-top:3px;white-space:normal}
 .cmp td.why{font-size:.84rem}
+.maxrow{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:flex-end}.maxrow .fld{flex:0 1 200px}.chkl{display:flex;flex:1 1 240px;gap:8px;align-items:center;justify-content:flex-start;font-size:.88rem;font-weight:500;min-height:40px}.chkl input{width:auto;flex:none;margin:0}
+.cnt{font-weight:600;color:var(--ink)}.cnt-over{font-weight:700;color:var(--dis)}
+.warnb.over span{color:var(--dis);background:color-mix(in srgb,var(--dis) 10%,var(--surface));border-color:color-mix(in srgb,var(--dis) 40%,var(--line))}
 .gnhint{font-weight:400;font-size:.78rem;color:var(--muted)}.gnhint .val{margin-left:4px}.gnhint.over{color:var(--dis)}
 .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 .hint{font-size:.82rem;color:var(--muted)}
@@ -608,14 +611,16 @@ tr.rowdrag{outline:2px dashed var(--accent);outline-offset:-2px}
   {"f":"_o","h":"Ajustes","type":"overrides"}]},
  "item": {"tab":"(una pestaña por grupo)","label":"Ítems","single":"Ítem","newName":"Nuevo ítem","prefix":"i","perGroup":1,"cols":[
   {"f":"name","h":"Nombre","type":"text","req":1,"wide":1},
-  {"f":"notes","h":"Notas","type":"text","wide":1}]}
+  {"f":"notes","h":"Notas","type":"text","wide":1},
+  {"f":"maxc","h":"Máx. caracteres","type":"num","txt":1},
+  {"f":"maxok","h":"Permitir superar el máximo","type":"enum","opts":[["si","Sí"]],"txt":1}]}
 }</script>
 <script>
 /* ---------- utilidades ---------- */
 const SCHEMA = JSON.parse(document.getElementById('ci-schema').textContent);
 /** Fecha y hora de esta versión de la app (se completa sola al generar los archivos). */
 const APP_NAME = 'COMPAREIt(em)';
-const APP_BUILD = '05/11/2026 15:24';
+const APP_BUILD = '12/11/2026 16:12';
 const $ = s => document.querySelector(s);
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
@@ -1082,6 +1087,7 @@ function renderMain(){
   else if (!S.ui.g || !S.app[S.ui.g]){ m.innerHTML = empty('No hay grupos todavía', 'Un grupo reúne ítems de la misma naturaleza (por ejemplo, notebooks) y se guarda como una pestaña de la Google Sheet.', 'newGroup', 'Crear grupo'); }
   else m.innerHTML = viewGroup({...S.app[S.ui.g], id:S.ui.g});
   if (S.lay.collapsed) m.insertAdjacentHTML('afterbegin', `<div class="sidebar-off"><button class="btn sm" data-act="sideExpand" title="Volver a mostrar la barra lateral con su ancho fijado">» Mostrar barra lateral</button>${S.layUndo.length ? '<button class="btn sm ghost" data-act="layUndo">↶ Deshacer</button>' : ''}</div>`);
+  { const st = m.querySelector('.sidebar-off'); document.documentElement.style.setProperty('--strip-h', st ? Math.max(0, st.offsetHeight - 16) + 'px' : '0px') }
   sizeCols(); pinHead();
   if (S.drawer) renderDrawer();
 }
@@ -1131,6 +1137,7 @@ function viewCmp(g){
   const head = `<tr><th class="sticky"><span class="eyebrow">Criterio</span></th>${its.map(it => { const p = pct(ev.total[it.id]); return `<th data-it="${it.id}"><span class="colrz" data-rz="col" title="Arrastrá para cambiar el ancho de todas las columnas" aria-hidden="true"></span>
       <div class="ieye">${eyeBtn('hideIt', it.id, it.name, 'title="Ocultar de esta comparación (no cuenta para el puntaje)"')}</div>
       <div class="ith">${canMove ? `<button type="button" class="ithandle" id="ih_${it.id}" data-it="${it.id}" aria-label="Mover ${esc(it.name)}" title="Arrastrar para mover (o Alt + ← →)">⠿</button>` : ''}${rank(it.id) ? `<span class="rank ${rank(it.id) === 1 ? 'r1' : ''}">${rank(it.id)}º</span>` : ''}${esc(it.name)}</div>
+      ${txg && maxOf(it) && gcount(it.txt) > maxOf(it) ? `<div class="warnb over"><span title="Máximo configurado: ${fmtN(maxOf(it))} caracteres">⚠ Supera el máximo (${fmtN(gcount(it.txt))} / ${fmtN(maxOf(it))})</span></div>` : ''}
       ${txg && noText(it) ? `<div class="warnb"><span>⚠ Sin texto</span>${canEdit() ? `<button type="button" class="btn sm" data-act="editText" data-id="${it.id}">Cargar texto</button>` : ''}</div>` : ''}
       <div class="tot"><span class="val">${p ?? '—'}</span><span class="muted">/100</span></div><div class="bar"><i style="width:${p ?? 0}%"></i></div>
       ${p == null ? '<div class="cov">sin puntaje</div>' : ev.cov[it.id].n < ev.cov[it.id].of ? `<div class="cov" title="El puntaje se calcula solo con los criterios que tienen valor">evaluado en ${ev.cov[it.id].n} de ${ev.cov[it.id].of} criterios</div>` : ''}</th>` }).join('')}</tr>`;
@@ -1200,7 +1207,7 @@ function planCols(t, key, D){
   const acols = attrsOf(key, D).map(a => a.type === 'opts' ? {f:'x.' + a.id, h:a.name, type:'enum', opts:attrOpts(a).map(o => [o, o])} : {f:'x.' + a.id, h:a.name, type:a.type === 'num' ? 'num' : 'text', wide:a.type === 'long' ? 1 : 0});
   return [s.cols[0], ...((D[key] || {}).kind === 'text' ? [{f:'txt', h:'Texto', type:'longtext', wide:1}] : []), ...acols, ...leaves.map(c => c.kind === 'qual'
     ? {f:'v.' + c.id, h:c.name, type:'enum', opts:[...levelsOf(c).map((o, i) => [o, (i + 1) + '. ' + o]), ...offOf(c).map(o => [o, o + ' (desestimado)'])]}
-    : {f:'v.' + c.id, h:c.name + (c.unit ? ' (' + c.unit + ')' : ''), type:'num'}), ...s.cols.slice(1)];
+    : {f:'v.' + c.id, h:c.name + (c.unit ? ' (' + c.unit + ')' : ''), type:'num'}), ...s.cols.slice(1).filter(c => !c.txt || (D[key] || {}).kind === 'text')];
 }
 function planRows(t, key, D){
   if (SCHEMA[t].perGroup) return items(key, D);
@@ -1410,7 +1417,7 @@ function viewTextItems(g){
   if (!its.length) return h + empty('Sin textos', 'Cargá el primer texto desde acá o pegalo en la columna «Texto» de la Sheet.', 'newItem', 'Agregar texto');
   h += `<div class="scroll"><table class="tbl"><thead><tr>${canEdit() ? '<th class="hcol"></th>' : ''}<th class="hcol"><span class="sr">Ocultar</span></th><th>Texto</th>${ats.map(a => `<th class="ath">${esc(a.name)}</th>`).join('')}<th>Palabras</th><th>Caracteres</th><th>Sin espacios</th><th>Legibilidad</th><th>Instancias</th><th></th></tr></thead><tbody>
     ${its.map(it => { const m = metricsOf(it.txt); return `<tr>${canEdit() ? `<td class="hcol">${rowHandle(it.id)}</td>` : ''}<td class="hcol">${eyeBtn('hideItG', it.id, it.name, 'title="Ocultar en todo el grupo (solo en este dispositivo)"')}</td><td><strong>${esc(it.name)}</strong><span class="cw">${esc((it.txt || 'Sin texto').replace(/\s+/g, ' ').slice(0, 70))}${(it.txt || '').length > 70 ? '…' : ''}</span></td>
-      ${ats.map(a => `<td class="aval">${fmtAttr(a, it['x.' + a.id])}</td>`).join('')}<td class="val">${fmtN(m.words)}</td><td class="val">${fmtN(m.chars)}</td><td class="val">${fmtN(m.charsns)}</td><td class="val">${m.words ? fmtN(m.inflesz) + ' · ' + inflLabel(m.inflesz) : '—'}</td>
+      ${ats.map(a => `<td class="aval">${fmtAttr(a, it['x.' + a.id])}</td>`).join('')}<td class="val">${fmtN(m.words)}</td><td class="val ${maxOf(it) && m.chars > maxOf(it) ? 'cnt-over' : ''}" ${maxOf(it) ? `title="Máximo: ${fmtN(maxOf(it))} caracteres"` : ''}>${fmtN(m.chars)}${maxOf(it) ? ' / ' + fmtN(maxOf(it)) : ''}</td><td class="val">${fmtN(m.charsns)}</td><td class="val">${m.words ? fmtN(m.inflesz) + ' · ' + inflLabel(m.inflesz) : '—'}</td>
       <td>${ins.filter(n => instIds(n).includes(it.id)).length}</td>
       <td><div class="acts ed"><button class="btn sm" data-act="editText" data-id="${it.id}">Texto</button><button class="btn sm" data-act="editItem" data-id="${it.id}">Editar</button><button class="btn sm" data-act="dupItem" data-id="${it.id}">Replicar</button><button class="btn sm ghost" data-act="delItem" data-id="${it.id}">Borrar</button></div></td></tr>` }).join('')}
   </tbody></table></div>`;
@@ -1762,17 +1769,49 @@ function viewDiff(its){
     <p class="hint">Si un párrafo cambió de lugar, se ve como quitado en un lado y agregado en el otro.</p>`;
 }
 
+/* ---------- máximo de caracteres del texto de un ítem (opcional, por ítem) ---------- */
+const gcount = t => graphemes(String(t || '').normalize('NFC')).length;   // caracteres con espacios, como la métrica
+const maxOf = it => { const n = parseInt(String((it && it.maxc) || '').replace(/\D/g, ''), 10); return n > 0 ? n : 0 };
+/** Configuración vigente: la del formulario si está abierto, si no la del ítem. */
+function maxCfg(it){
+  const mi = document.getElementById('f_maxc'), ok = document.getElementById('f_maxok');
+  if (mi) return {max:parseInt(mi.value.replace(/\D/g, ''), 10) || 0, allow:!!(ok && ok.checked)};
+  return {max:maxOf(it), allow:(it || {}).maxok === 'si'};
+}
+const maxFields = it => `<div class="maxrow"><label class="fld" for="f_maxc"><span>Máx. caracteres <span class="muted">(opcional)</span></span><input id="f_maxc" inputmode="numeric" value="${esc(it.maxc || '')}" placeholder="Sin máximo"></label>
+  <label class="chkl"><input type="checkbox" id="f_maxok" ${it.maxok === 'si' ? 'checked' : ''}> Permitir escribir más que el máximo</label></div>`;
+/** Limita la escritura si no se permite superar el máximo (no recorta un texto que ya lo superaba: solo impide que crezca). */
+function txtLimit(t){
+  const it = S.app[t.dataset.id] || {}, {max, allow} = maxCfg(it);
+  const prev = t.dataset.prev ?? t.value, n = gcount(t.value), np = gcount(prev);
+  if (max && !allow && n > max && n > np){
+    if (np >= max){ const pos = Math.max(0, t.selectionStart - (t.value.length - prev.length)); t.value = prev; t.setSelectionRange(pos, pos) }
+    else t.value = graphemes(t.value.normalize('NFC')).slice(0, max).join('');
+    toast(`Llegaste al máximo de ${fmtN(max)} caracteres configurado para este ítem.`);
+  }
+  t.dataset.prev = t.value;
+}
+/** Valida al guardar: con máximo y sin permiso para superarlo, el texto no puede quedar más largo. */
+function maxBlock(txt, cfg){ const n = gcount(txt); return cfg.max && !cfg.allow && n > cfg.max ? `El texto tiene ${fmtN(n)} caracteres y el máximo configurado es ${fmtN(cfg.max)}. Acortalo o marcá «Permitir escribir más que el máximo».` : '' }
 /* editor de texto con contador */
 function textForm(id){
   const it = S.app[id]; if (!it) return;
-  modal('Texto de «' + it.name + '»', `<label class="fld" for="f_txt"><span>Texto</span><textarea id="f_txt" rows="14" ${canEdit() ? '' : 'readonly'}>${esc(it.txt)}</textarea></label><p class="hint val" id="f_txt_c"></p>`, canEdit() ? () => {
+  modal('Texto de «' + it.name + '»', `<label class="fld" for="f_txt"><span>Texto</span><textarea id="f_txt" data-id="${id}" rows="14" ${canEdit() ? '' : 'readonly'}>${esc(it.txt)}</textarea></label><p class="hint" id="f_txt_max"></p><p class="hint val" id="f_txt_c"></p>${maxOf(it) ? '' : '<p class="hint">Podés fijar un máximo de caracteres desde «Editar» del ítem.</p>'}`, canEdit() ? () => {
     const t = document.getElementById('f_txt').value; if (t.length > TXT_MAX){ toast('El texto supera el máximo de una celda de Google Sheets (49.000 caracteres).'); return false }
+    const mb = maxBlock(t, maxCfg(S.app[id])); if (mb){ toast(mb); return false }
     const r = {...S.app[id]}; if (t.trim()) r.txt = t; else delete r.txt; put(id, r);
   } : null);
   txtCount();
 }
 function txtCount(){ const t = document.getElementById('f_txt'), o = document.getElementById('f_txt_c'); if (!t || !o) return; const m = metricsOf(t.value);
-  o.textContent = `${fmtN(m.words)} palabras · ${fmtN(m.chars)} caracteres con espacios · ${fmtN(m.charsns)} sin espacios · ${fmtN(m.sentences)} oraciones` + (t.value.length > TXT_MAX ? ' · supera el máximo de 49.000 caracteres' : '') }
+  if (t.dataset.prev === undefined) t.dataset.prev = t.value;   // punto de partida para limitar la escritura
+  const {max, allow} = maxCfg(S.app[t.dataset.id]), n = m.chars, over = max && n > max, fx = document.getElementById('f_txt_max');
+  // leyenda variable: caracteres escritos (en rojo y en negativo si se superó el máximo)
+  const cnt = max ? `<span class="${over ? 'cnt-over' : 'cnt'}">Caracteres escritos: ${fmtN(n)} / ${fmtN(max)} · ${over ? fmtN(max - n) : 'quedan ' + fmtN(max - n)}</span>` : `<span class="cnt">Caracteres escritos: ${fmtN(n)}</span>`;
+  o.innerHTML = `${cnt} · ${fmtN(m.words)} palabras · ${fmtN(m.charsns)} sin espacios · ${fmtN(m.sentences)} oraciones` + (t.value.length > TXT_MAX ? ' · <span class="cnt-over">supera el máximo de 49.000 caracteres de una celda de Google Sheets</span>' : '');
+  // leyenda fija: el máximo configurado
+  if (fx){ fx.hidden = !max; fx.innerHTML = max ? `Máximo: ${fmtN(max)} caracteres (con espacios)${allow ? ' · se permite superarlo' : ' · no se permite superarlo'}.${over ? ` <span class="cnt-over">Se superó el Máximo de "${fmtN(max)}" caracteres configurado como valor Máximo.</span>` : ''}` : '' }
+}
 
 /* ---------- Opción A: consigna para pegar en Claude (sin claves ni costos extra) ---------- */
 const AI_CRITS = [
@@ -2451,6 +2490,7 @@ function pinHead(){
   const bar = document.querySelector('.top'), strip = document.querySelector('.sidebar-off');
   let top = bar ? bar.getBoundingClientRect().bottom : 0;
   if (strip){ const r = strip.getBoundingClientRect(); if (r.top <= top + 1) top = Math.max(top, r.bottom) }
+  const tabs = document.querySelector('#main .tabs'); if (tabs){ const r = tabs.getBoundingClientRect(); if (r.top <= top + 1) top = Math.max(top, r.bottom) }   // pestañas inmovilizadas
   const r = t.getBoundingClientRect(), hh = t.tHead.getBoundingClientRect().height;
   const off = Math.min(Math.max(0, top - r.top), Math.max(0, r.height - hh));   // fijo mientras se ve la tabla; se suelta con el final de la última fila
   t.style.setProperty('--hy', off + 'px'); t.classList.toggle('pinned', off > 0);
@@ -2717,15 +2757,18 @@ function itemFormInner(id){
     return `<label class="fld" for="f_v_${c.id}"><span>${esc(c.name)}${c.unit ? ' (' + esc(c.unit) + ')' : ''}</span><input id="f_v_${c.id}" inputmode="decimal" value="${esc(cur)}"></label>` };
   modal(id ? 'Editar ítem' : 'Nuevo ítem', `
     <label class="fld" for="f_name"><span>Nombre</span><input id="f_name" value="${esc(it.name)}" ${tx ? 'placeholder="Ej.: Versión 2"' : ''}></label>
-    ${tx ? `<label class="fld" for="f_txt"><span>Texto</span><textarea id="f_txt" rows="10">${esc(it.txt)}</textarea></label><p class="hint val" id="f_txt_c"></p>` : ''}
+    ${tx ? `${maxFields(it)}<label class="fld" for="f_txt"><span>Texto</span><textarea id="f_txt" data-id="${id || ''}" rows="10">${esc(it.txt)}</textarea></label><p class="hint" id="f_txt_max"></p><p class="hint val" id="f_txt_c"></p>` : ''}
     ${ats.length ? `<div class="fsec"><span class="eyebrow">Atributos</span><div class="fgrid">${ats.map(a => attrField(a, it['x.' + a.id])).join('')}</div></div>` : ''}
     ${leaves.length ? `<div class="fsec">${ats.length ? '<span class="eyebrow">Criterios</span>' : ''}<div class="fgrid">${leaves.map(field).join('')}</div></div>` : tx ? '' : '<p class="hint">El grupo no tiene criterios: definilos para cargar valores.</p>'}
     <label class="fld" for="f_notes"><span>Notas</span><textarea id="f_notes" rows="2">${esc(it.notes)}</textarea></label>
     ${ins.length ? `<div class="fld"><span>Incluir en instancias</span><div class="checks">${ins.map(n => `<label><input type="checkbox" id="f_in_${n.id}" ${id && instIds(n).includes(id) ? 'checked' : ''}> ${esc(n.name)}</label>`).join('')}</div></div>` : ''}`, () => {
     const name = v('f_name'); if (!name){ toast('Poné un nombre al ítem.'); return false }
     if (tx && document.getElementById('f_txt').value.length > TXT_MAX){ toast('El texto supera el máximo de una celda de Google Sheets (49.000 caracteres).'); return false }
+    if (tx){ const mv = v('f_maxc'); if (mv && !/^\d+$/.test(mv.replace(/\./g, ''))){ toast('«Máx. caracteres» tiene que ser un número entero.'); return false }
+      const mb = maxBlock(document.getElementById('f_txt').value, maxCfg()); if (mb){ toast(mb); return false } }
     const nid = id || uid('i'); const rec = {...it, t:'item', g, name, notes:v('f_notes')}; 
-    if (tx){ const t = document.getElementById('f_txt').value; if (t.trim()) rec.txt = t; else delete rec.txt }
+    if (tx){ const t = document.getElementById('f_txt').value; if (t.trim()) rec.txt = t; else delete rec.txt;
+      const mx = maxCfg().max; if (mx) rec.maxc = String(mx); else delete rec.maxc; if (document.getElementById('f_maxok').checked) rec.maxok = 'si'; else delete rec.maxok }
     leaves.forEach(c => { const x = v('f_v_' + c.id); if (x) rec['v.' + c.id] = x; else delete rec['v.' + c.id] });
     ats.forEach(a => { const x = v('f_x_' + a.id); if (x) rec['x.' + a.id] = x; else delete rec['x.' + a.id] });
     setRec(nid, rec); if (!id) placeOrd(items(g).map(x => x.id), nid, null, (x, o) => { if (String(S.app[x].ord || '') !== o) setRec(x, {...S.app[x], ord:o}) });
@@ -2833,7 +2876,8 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('input', e => { const t = e.target; if (t.classList && t.classList.contains('sc-in') && SE){ SE.rows[+t.dataset.i].label = t.value }
   if (t.classList && t.classList.contains('sc-on') && SE){ SE.rows[+t.dataset.i].off = !t.checked; scRender('sc_on_' + t.dataset.i) }
-  if (t.id === 'f_txt') txtCount();
+  if (t.id === 'f_txt'){ txtLimit(t); txtCount() }
+  if (t.id === 'f_maxc' || t.id === 'f_maxok') txtCount();
   if (t.id === 'f_imp_txt') impPreview();
   if (t.id && t.id.startsWith('f_ai_') && t.id !== 'f_ai_resp' && t.id !== 'f_ai_prompt') aiRefresh();
   if (t.id === 'f_cat_q'){ const q = t.value.trim().toLowerCase(); document.querySelectorAll('.catrow').forEach(r => r.hidden = !!q && !r.dataset.n.includes(q)) } });
