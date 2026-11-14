@@ -654,7 +654,9 @@ tr.rowdrag{outline:2px dashed var(--accent);outline-offset:-2px}
 const SCHEMA = JSON.parse(document.getElementById('ci-schema').textContent);
 /** Fecha y hora de esta versión de la app (se completa sola al generar los archivos). */
 const APP_NAME = 'COMPAREIt(em)';
-const APP_BUILD = '13/11/2026 12:24';
+const APP_VERSION = 'v0.2';   // número de versión (el mismo tag que crea el workflow de GitHub al publicar)
+const APP_BUILD = '14/11/2026 14:18';
+const APP_VER_TXT = 'Versión ' + APP_NAME + (APP_VERSION ? ' ' + APP_VERSION : '') + (APP_BUILD ? ' · ' + APP_BUILD : '');
 const $ = s => document.querySelector(s);
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
@@ -1081,7 +1083,7 @@ function renderStatus(){
   $('#m_app').classList.toggle('on', S.mode === 'app'); $('#m_sheet').classList.toggle('on', S.mode === 'sheet');
   document.body.classList.toggle('ro', S.mode === 'sheet');
   $('#srcBadge').textContent = $('#srcBadge2').textContent = REAL ? 'Sheet real' : 'Simulación';
-  $('#appVer').textContent = $('#appVer2').textContent = APP_BUILD ? 'Versión ' + APP_NAME + ' ' + APP_BUILD : ''; $('#appVer').title = 'Fecha y hora de la última versión de la app';
+  $('#appVer').textContent = $('#appVer2').textContent = APP_VER_TXT; $('#appVer').title = 'Número de versión, y fecha y hora en que se generó';
 }
 
 const PIN = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M9 3h6l-1 6 3 3v2H7v-2l3-3-1-6zM12 14v7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>';
@@ -2019,7 +2021,7 @@ function makeBundle(gid, only){
   const adjs = recs('adj').filter(a => setIds.includes(a.set));
   const rootIds = [...new Set([...uses.map(u => u.root), ...adjs.map(a => a.alt).filter(Boolean)])].filter(id => D[id]);
   const atts = recs('attr').filter(a => a.g === gid);
-  return {format:'compareit', v:1, app:APP_NAME + ' ' + APP_BUILD, at:now(), scope:only ? 'inst' : 'group',
+  return {format:'compareit', v:1, app:APP_VER_TXT, at:now(), scope:only ? 'inst' : 'group',
     group:stripU({...g, id:gid}), roots:rootIds.map(id => stripU({...D[id], id})), uses:uses.map(stripU),
     items:itemIds.filter(id => D[id]).map(id => stripU({...D[id], id})), sets:setIds.map(id => stripU({...D[id], id})), adjs:adjs.map(stripU), attrs:atts.map(stripU),
     insts:ins.map(n => { const o = stripU(n); const ex = (S.ui.excl || {})[n.id]; if (ex && ex.length) o.excl = ex; return o })};
@@ -2816,7 +2818,7 @@ function renderDrawer(){
         <p class="hint">Sin marcar, la app arranca con lo que ya tenga la planilla. Funciona con el archivo HTML abierto en tu navegador; desde claude.ai la conexión está bloqueada.</p>
         <div class="row"><button class="btn sm primary" data-act="apiConnect">Probar y conectar</button></div>`}
       ${MODE === 'api' ? `<p class="muted">Conectada por URL. <button class="btn sm ghost" data-act="apiDisconnect">Desconectar</button></p>` : ''}</section>
-    <section class="dr-sec"><span class="eyebrow">Versión de la app</span><p>${APP_BUILD ? 'Versión ' + esc(APP_NAME) + ' ' + esc(APP_BUILD) + ' (hora de Argentina)' : '—'}</p></section>
+    <section class="dr-sec"><span class="eyebrow">Versión de la app</span><p>${esc(APP_VER_TXT)}${APP_BUILD ? ' (hora de Argentina)' : ''}</p></section>
     <section class="dr-sec"><span class="eyebrow">Estado</span>
       <p>${S.syncing ? 'Sincronizando…' : !S.online || !S.reach ? 'Sin conexión: trabajás sobre la copia local y los cambios quedan en cola.' : 'Conectado con la Google Sheet.'}</p>
       ${S.err ? `<div class="errbox"><strong>Error real devuelto:</strong><code>${esc(S.err)}</code></div>` : ''}
